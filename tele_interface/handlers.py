@@ -301,7 +301,6 @@ def inline_calendar_handler(bot, update, user):
 def skip_lesson_main_menu_button(bot, update, user):
     available_grouptraining_dates = select_tr_days_for_skipping(user)
     if available_grouptraining_dates:
-        print(available_grouptraining_dates)
         bot.send_message(user.id,
                          'Выбери дату тренировки для отмены.\n'
                          '✅ -- дни, доступные для отмены.',

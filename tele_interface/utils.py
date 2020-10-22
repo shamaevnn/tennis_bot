@@ -9,6 +9,7 @@ from django.db.models import (ExpressionWrapper,
                               Count,
                               DurationField)
 from django.db.models.functions import TruncDate
+from pytz import timezone
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton as inlinebutt, \
     InlineKeyboardMarkup as inlinemark
 
@@ -110,6 +111,24 @@ def separate_callback_data(data):
     return data.split(";")
 
 
+def generate_times_to_remove(start_time: time, end_time: time):
+    times_to_remove = []
+    start = start_time
+    while start < end_time:
+        if start.minute == 0:
+            start = time(start.hour, 30)
+        elif start.minute == 30:
+            hour = start.hour + 1
+            start = time(hour, 0)
+        times_to_remove.append(start)
+    del times_to_remove[-1]
+    return times_to_remove
+
+
+def moscow_datetime(date_time):
+    return date_time.astimezone(timezone('Europe/Moscow'))
+
+
 def get_available_dt_time4ind_train(duration: float):
     # todo: какой-то пиздец, без пол литра не разберешься, хз шо с этим делать
     poss_date = date.today()
@@ -126,28 +145,29 @@ def get_available_dt_time4ind_train(duration: float):
         poss_date += timedelta(days=1)
         possible_dates.append(poss_date)
 
-    #почему я ищу только среди существующих tr_days --- хз
-    tr_days = GroupTrainingDay.objects.filter(date__in=possible_dates, start_time__gte=start_time).annotate(
+    exist_tr_days = GroupTrainingDay.objects.filter(date__in=possible_dates, start_time__gte=start_time).annotate(
         end_time=ExpressionWrapper(F('start_time') + F('duration'), output_field=DateTimeField()),
         date_tmp=TruncDate('date')).values('date_tmp', 'start_time', 'end_time').order_by('date', 'start_time')
 
     #todo: полное копирование списка, мдэээ, надо что-то с этим делать
-    poss_date_time_dict = {day['date_tmp']: possible_times[:] for day in tr_days}
+    poss_date_time_dict = {day['date_tmp']: possible_times[:] for day in exist_tr_days}
 
-    for day in tr_days:
-        times_to_remove = []
-        start = day['start_time']
-        while start < day['end_time']:
-            if start.minute == 0:
-                start = time(start.hour, 30)
-            elif start.minute == 30:
-                hour = start.hour + 1
-                start = time(hour, 0)
-            times_to_remove.append(start)
-        del times_to_remove[-1]
+    for day in exist_tr_days:
+        times_to_remove = generate_times_to_remove(day['start_time'], day['end_time'])
         for x in times_to_remove:
             if x in poss_date_time_dict[day['date_tmp']]:
                 poss_date_time_dict[day['date_tmp']].remove(x)
+
+    for tr_day_date in possible_dates:
+        if not tr_day_date in poss_date_time_dict:
+            poss_date_time_dict[tr_day_date] = possible_times[:]
+            if tr_day_date == date.today():
+                times_to_remove = generate_times_to_remove(time(8, 0, 0), moscow_datetime(datetime.now()).time())
+            else:
+                times_to_remove = []
+            for x in times_to_remove:
+                if x in poss_date_time_dict[tr_day_date]:
+                    poss_date_time_dict[tr_day_date].remove(x)
 
     poss_date_for_train = []
     for poss_date in poss_date_time_dict:
@@ -167,7 +187,7 @@ def select_tr_days_for_skipping(user):
         'id').values('date', 'start_time')
     available_grouptraining_dates = [x['date'] for x in tmp  # учитываем время до отмены, вычитаем 3 часа, т.к. на сервере -3 часа
                                      if datetime.combine(x['date'],
-                                                         x['start_time']) - datetime.now() - timedelta(hours=3) >
+                                                         x['start_time']) - moscow_datetime(datetime.now()) >
                                      user.time_before_cancel]
     return available_grouptraining_dates
 
@@ -178,7 +198,7 @@ def get_potential_days_for_group_training(user):
         Count('group__users', distinct=True),
         Count('visitors', distinct=True),
         max_players=F('group__max_players'),
-        diff=ExpressionWrapper(F('start_time') + F('date') - datetime.now() - timedelta(hours=3),
+        diff=ExpressionWrapper(F('start_time') + F('date') - moscow_datetime(datetime.now()),
                                output_field=DurationField())).filter(
                                                                     max_players__gt=F('visitors__count') + F('group__users__count') - F('absent__count'),
                                                                     diff__gte=timedelta(hours=1),
@@ -198,7 +218,7 @@ def create_calendar(purpose_of_calendar, year=None, month=None, dates_to_highlig
     :param int month: Month to use in the calendar, if None the current month is used.
     :return: Returns the InlineKeyboardMarkup object with the calendar.
     """
-    now = datetime.now()
+    now = moscow_datetime(datetime.now())
     if year is None: year = now.year
     if month is None: month = now.month
     data_ignore = create_callback_data(purpose_of_calendar, CLNDR_IGNORE, year, month, 0)

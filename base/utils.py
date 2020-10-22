@@ -1,3 +1,4 @@
+from pytz import timezone
 from telegram import (ReplyKeyboardMarkup)
 from tele_interface.manage_data import (
     ADMIN_TIME_SCHEDULE_BUTTON,
@@ -66,3 +67,7 @@ def send_alert_about_changing_tr_day_status(tr_day, new_is_available: bool, bot)
                                                                  tr_day.start_time)
 
     send_message(group_members.union(visitors), text, bot, construct_main_menu())
+
+
+def moscow_datetime(date_time):
+    return date_time.astimezone(timezone('Europe/Moscow')).replace(tzinfo=None)

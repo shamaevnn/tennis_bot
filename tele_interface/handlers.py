@@ -5,7 +5,7 @@ from .utils import (handler_decor,
                     create_calendar, construct_time_menu_for_group_lesson, construct_detail_menu_for_skipping,
                     construct_time_menu_4ind_lesson, )
 from base.utils import (construct_main_menu,
-                        from_digit_to_month, send_message, DT_BOT_FORMAT, TM_TIME_SCHEDULE_FORMAT, )
+                        from_digit_to_month, send_message, DT_BOT_FORMAT, TM_TIME_SCHEDULE_FORMAT, moscow_datetime, )
 from base.models import (User,
                          GroupTrainingDay,
                          TrainingGroup,)
@@ -117,7 +117,7 @@ def user_main_info(bot, update, user):
 
     number_of_add_games = 'Количество отыгрышей: <b>{}</b>\n\n'.format(user.bonus_lesson)
 
-    today = date.today()
+    today = moscow_datetime(datetime.now()).date()
     first_day = today - timedelta(days=today.day - 1)
     number_of_days_in_month = monthrange(today.year, today.month)[1]
     last_day = date(today.year, today.month, number_of_days_in_month)
@@ -172,8 +172,7 @@ def process_calendar_selection(bot, update, user):
         training_days = get_potential_days_for_group_training(user)
         highlight_dates = list(training_days.values_list('date', flat=True))
     elif re.findall(rf'({CLNDR_ACTION_TAKE_IND})(\d.\d)', purpose):
-        duration = re.findall(rf'({CLNDR_ACTION_TAKE_IND})(\d.\d)', purpose)[0][1]
-        highlight_dates, _ = get_available_dt_time4ind_train(float(duration))
+        highlight_dates = None
 
     if action == CLNDR_IGNORE:
         bot.answer_callback_query(callback_query_id=query.id)
@@ -203,8 +202,7 @@ def process_calendar_selection(bot, update, user):
             text = 'Выбери дату тренировки\n' \
                    '✅ -- дни, доступные для групповых тренировок'
         elif re.findall(rf'({CLNDR_ACTION_TAKE_IND})(\d.\d)', purpose):
-            text = 'Выбери дату индивидуальной тренировки\n' \
-                   '✅ -- дни, доступные для индивидуальных тренировок'
+            text = 'Выбери дату индивидуальной тренировки'
         bot.edit_message_text(text=text,
                               chat_id=query.message.chat_id,
                               message_id=query.message.message_id,
@@ -217,10 +215,11 @@ def process_calendar_selection(bot, update, user):
 @handler_decor(check_status=True)
 def inline_calendar_handler(bot, update, user):
     selected, purpose, date_my = process_calendar_selection(bot, update, user)
+    today_date = moscow_datetime(datetime.now()).date()
     if selected:
         date_comparison = date(date_my.year, date_my.month, date_my.day)
         if purpose == CLNDR_ACTION_SKIP:
-            if date_comparison < date.today():
+            if date_comparison < today_date:
                 text = 'Тренировка уже прошла, ее нельзя отменить.\n' \
                        '✅ -- дни, доступные для отмены.'
                 markup = create_calendar(CLNDR_ACTION_SKIP, date_my.year, date_my.month, select_tr_days_for_skipping(user))
@@ -246,7 +245,7 @@ def inline_calendar_handler(bot, update, user):
         elif purpose == CLNDR_ACTION_TAKE_GROUP:
             training_days = get_potential_days_for_group_training(user)
             highlight_dates = list(training_days.values_list('date', flat=True))
-            if date_comparison < date.today():
+            if date_comparison < today_date:
                 text = 'Тренировка уже прошла, на нее нельзя записаться.\n' \
                        '✅ -- дни, доступные для групповых тренировок'
                 markup = create_calendar(purpose, date_my.year, date_my.month, highlight_dates)
@@ -266,29 +265,27 @@ def inline_calendar_handler(bot, update, user):
 
         elif re.findall(rf'({CLNDR_ACTION_TAKE_IND})(\d.\d)', purpose):
             duration = re.findall(rf'({CLNDR_ACTION_TAKE_IND})(\d.\d)', purpose)[0][1]
-            available_days, date_time_dict = get_available_dt_time4ind_train(float(duration))
-            if date_comparison < date.today():
-                text = 'Это уже в прошлом, давай не будем об этом.\n' \
-                       '✅ -- дни, доступные для индивидуальных тренировок'
-                markup = create_calendar(CLNDR_ACTION_SKIP, date_my.year, date_my.month, available_days)
+            date_time_dict = get_available_dt_time4ind_train(float(duration), date_comparison)
+            if date_comparison < today_date:
+                text = 'Это уже в прошлом, давай не будем об этом.'
+                markup = create_calendar(f'{CLNDR_ACTION_TAKE_IND}{duration}', date_my.year, date_my.month)
             else:
-                date_my = date(date_my.year, date_my.month, date_my.day)
 
                 poss_time_for_train = []
-                if date_time_dict.get(date_my):
-                    for i in range(len(date_time_dict[date_my]) - int(float(duration) * 2)):
-                        if datetime.combine(date_my,
-                                            date_time_dict[date_my][i + int(float(duration) * 2)]) - datetime.combine(
-                                date_my, date_time_dict[date_my][i]) == timedelta(hours=float(duration)):
-                            poss_time_for_train.append(date_time_dict[date_my][i])
+                if date_time_dict.get(date_comparison):
+                    for i in range(len(date_time_dict[date_comparison]) - int(float(duration) * 2)):
+                        if datetime.combine(date_comparison,
+                                            date_time_dict[date_comparison][i + int(float(duration) * 2)]) - datetime.combine(
+                                date_comparison, date_time_dict[date_comparison][i]) == timedelta(hours=float(duration)):
+                            poss_time_for_train.append(date_time_dict[date_comparison][i])
 
-                    markup = construct_time_menu_4ind_lesson(SELECT_PRECISE_IND_TIME, poss_time_for_train, date_my,
-                                                              float(duration), user)
+                    markup = construct_time_menu_4ind_lesson(SELECT_PRECISE_IND_TIME, poss_time_for_train,
+                                                             date_comparison,
+                                                             float(duration), user)
                     text = 'Выбери время'
                 else:
-                    text = 'Нельзя записаться на этот день, выбери другой.\n' \
-                           '✅ -- дни, доступные для индивидуальных тренировок.'
-                    markup = create_calendar(purpose, date_my.year, date_my.month, available_days)
+                    text = 'Нельзя записаться на этот день, выбери другой.'
+                    markup = create_calendar(purpose, date_my.year, date_my.month)
 
         bot.edit_message_text(text,
                               chat_id=update.callback_query.message.chat_id,
@@ -384,7 +381,7 @@ def take_lesson(bot, update, user):
                    'В данный момент у тебя нет отыгрышей.\n' \
                    '<b> Занятие будет стоить 600₽ </b>\n' \
                    '✅ -- дни, доступные для групповых тренировок.'
-        training_days = get_potential_days_for_group_training(user).filter(date__gte=date.today())
+        training_days = get_potential_days_for_group_training(user).filter(date__gte=moscow_datetime(datetime.now()).date())
         highlight_dates = list(training_days.values_list('date', flat=True))
         markup = create_calendar(CLNDR_ACTION_TAKE_GROUP, dates_to_highlight=highlight_dates)
 
@@ -414,8 +411,7 @@ def take_lesson(bot, update, user):
 @handler_decor()
 def select_dt_for_ind_lesson(bot, update, user):
     duration = float(update.callback_query.data[len(SELECT_DURATION_FOR_IND_TRAIN):])
-    available_days, _ = get_available_dt_time4ind_train(duration)
-    buttons = create_calendar(f'{CLNDR_ACTION_TAKE_IND}{duration}', dates_to_highlight=available_days)
+    buttons = create_calendar(f'{CLNDR_ACTION_TAKE_IND}{duration}')
     bot.edit_message_text('Выбери дату тренировки.',
                           reply_markup=buttons,
                           chat_id=update.callback_query.message.chat_id,

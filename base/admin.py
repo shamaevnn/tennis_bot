@@ -1,5 +1,4 @@
 from django.contrib import admin
-from datetime import date
 # Register your models here.
 from django.utils.http import urlencode
 
@@ -132,7 +131,7 @@ class GroupTrainingDayAdmin(admin.ModelAdmin):
         if request.GET:
             return super().changelist_view(request, extra_context=extra_context)
 
-        today_date = date.today()
+        today_date = moscow_datetime(datetime.now()).date()
         params = ['month', 'year']
         field_keys = ['{}__{}'.format(self.date_hierarchy, i) for i in params]
         field_values = [getattr(today_date, i) for i in params]

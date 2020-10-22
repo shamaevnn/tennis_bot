@@ -5,7 +5,7 @@ from django import forms
 from django.db.models import Q, F, Case, When, Sum, IntegerField
 from django.utils import timezone
 from datetime import timedelta, datetime, date
-from base.utils import construct_main_menu, send_message
+from base.utils import construct_main_menu, send_message, moscow_datetime
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 
@@ -260,7 +260,7 @@ class Payment(models.Model):
 
         base_query = GroupTrainingDay.objects.filter(Q(visitors__in=[self.player]) | Q(group__users__in=[self.player]),
                                                      date__gte=begin_day_month,
-                                                     date__lte=date.today(),
+                                                     date__lte=moscow_datetime(datetime.now()).date(),
                                                      is_available=True,
                                                      date__month=month).exclude(absent__in=[self.player])
 

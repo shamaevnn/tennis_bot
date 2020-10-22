@@ -49,9 +49,14 @@ def permission_for_ind_train(bot, update, user):
                         f'Не забудь!'
 
         else:
-            admin_text = 'Хорошо, сообщу игроку, что тренировка отменена.'
+            admin_text = 'Хорошо, сообщу {} {}, что тренировка  {} \n<b>{} — {}</b> отменена.'.format(player.last_name,
+                                                                                                      player.first_name,
+                                                                                                      tr_day.date.strftime(
+                                                                                                          DT_BOT_FORMAT),
+                                                                                                      start_time,
+                                                                                                      end_time)
 
-            user_text = f'Внимание!!! Индивидуальная тренировка <b> {tr_day.date.strftime(DT_BOT_FORMAT)}</b>\n' \
+            user_text = f'Внимание!!!\nИндивидуальная тренировка <b> {tr_day.date.strftime(DT_BOT_FORMAT)}</b>\n' \
                         f'в <b>{start_time} — {end_time}</b>\n' \
                         f'<b>ОТМЕНЕНА</b>'
 
@@ -70,6 +75,7 @@ def permission_for_ind_train(bot, update, user):
         admin_text,
         chat_id=update.callback_query.message.chat_id,
         message_id=update.callback_query.message.message_id,
+        parse_mode='HTML',
     )
 
 

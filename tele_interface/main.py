@@ -23,7 +23,7 @@ from tele_interface.handlers import (
     confirm_group_lesson,
     skip_lesson,
     get_help,
-    inline_calendar_handler,
+    inline_calendar_handler, skip_lesson_whem_geq_2,
 )
 from tele_interface.manage_data import (
     SELECT_PRECISE_GROUP_TIME,
@@ -34,7 +34,7 @@ from tele_interface.manage_data import (
     SHOW_INFO_ABOUT_SKIPPING_DAY,
     SKIP_LESSON_BUTTON,
     TAKE_LESSON_BUTTON,
-    MY_DATA_BUTTON, HELP_BUTTON,
+    MY_DATA_BUTTON, HELP_BUTTON, SELECT_SKIP_TIME_BUTTON,
 )
 from tennis_bot.config import TELEGRAM_TOKEN
 
@@ -59,6 +59,7 @@ def add_handlers(updater):
     dp.add_handler(CallbackQueryHandler(choose_type_of_training, pattern='^{}'.format(TAKE_LESSON_BUTTON)))
     dp.add_handler(CallbackQueryHandler(confirm_group_lesson, pattern='^{}'.format(CONFIRM_GROUP_LESSON)))
     dp.add_handler(CallbackQueryHandler(skip_lesson, pattern='^{}'.format(SHOW_INFO_ABOUT_SKIPPING_DAY)))
+    dp.add_handler(CallbackQueryHandler(skip_lesson_whem_geq_2, pattern='^{}'.format(SELECT_SKIP_TIME_BUTTON)))
     dp.add_handler(CallbackQueryHandler(inline_calendar_handler))
 
 

@@ -17,7 +17,8 @@ from base.models import (User,
                          TrainingGroup,)
 from base.utils import TM_TIME_SCHEDULE_FORMAT, from_digit_to_month, DT_BOT_FORMAT, moscow_datetime
 from tele_interface.manage_data import SHOW_INFO_ABOUT_SKIPPING_DAY, from_eng_to_rus_day_week, CLNDR_IGNORE, CLNDR_DAY, \
-    CLNDR_PREV_MONTH, CLNDR_NEXT_MONTH, CLNDR_ACTION_BACK, CLNDR_ACTION_TAKE_IND
+    CLNDR_PREV_MONTH, CLNDR_NEXT_MONTH, CLNDR_ACTION_BACK, CLNDR_ACTION_TAKE_IND, CLNDR_ACTION_SKIP, \
+    SELECT_SKIP_TIME_BUTTON
 
 from tennis_bot.settings import DEBUG
 
@@ -179,7 +180,7 @@ def select_tr_days_for_skipping(user):
                                           date__gte=moscow_datetime(datetime.now()).date()).exclude(
         absent__in=[user]).order_by('id').distinct(
         'id').values('date', 'start_time')
-    available_grouptraining_dates = [x['date'] for x in tmp  # учитываем время до отмены, вычитаем 3 часа, т.к. на сервере -3 часа
+    available_grouptraining_dates = [x['date'] for x in tmp
                                      if datetime.combine(x['date'],
                                                          x['start_time']) - moscow_datetime(datetime.now()) >
                                      user.time_before_cancel]
@@ -285,6 +286,34 @@ def construct_detail_menu_for_skipping(training_day, purpose, group_name, group_
                              callback_data=create_callback_data(purpose, CLNDR_ACTION_BACK, training_day.date.year, training_day.date.month, 0))
     ]]
     return InlineKeyboardMarkup(buttons), text
+
+
+def construct_menu_skipping_much_lesson(tr_days):
+    """
+    Make a menu when one day contains two or more lessons for skipping
+    """
+    buttons = []
+    row = []
+    date_info = tr_days.first().date
+    for tr_day in tr_days:
+        end_time = datetime.combine(tr_day.date, tr_day.start_time) + tr_day.duration
+        row.append(
+            inlinebutt(
+                f'{tr_day.start_time.strftime(TM_TIME_SCHEDULE_FORMAT)} — {end_time.strftime(TM_TIME_SCHEDULE_FORMAT)}',
+                callback_data="{}{}".format(SELECT_SKIP_TIME_BUTTON, tr_day.id))
+        )
+        if len(row) >= 2:
+            buttons.append(row)
+            row = []
+    if len(row):
+        buttons.append(row)
+
+    buttons.append([
+        inlinebutt('⬅️ назад',
+                   callback_data=create_callback_data(CLNDR_ACTION_SKIP, CLNDR_ACTION_BACK, date_info.year, date_info.month, 0))
+    ])
+
+    return inlinemark(buttons)
 
 
 def construct_time_menu_4ind_lesson(button_text, poss_training_times: list, day: datetime.date, duration: float, user):

@@ -277,7 +277,7 @@ def construct_detail_menu_for_skipping(training_day, purpose, group_name, group_
     end_time = datetime.combine(training_day.date, training_day.start_time) + training_day.duration
     time = f'{training_day.start_time.strftime(TM_TIME_SCHEDULE_FORMAT)} — {end_time.strftime(TM_TIME_SCHEDULE_FORMAT)}'
     day_of_week = from_eng_to_rus_day_week[calendar.day_name[training_day.date.weekday()]]
-    text = f'<b>{training_day.date.strftime(DT_BOT_FORMAT)} ({day_of_week})\n{time}\n</b>' + group_name + group_players
+    text = f'<b>{training_day.date.strftime(DT_BOT_FORMAT)} ({day_of_week})\n{time}\n</b>' + group_name + '\n' + group_players
 
     buttons = [[
         InlineKeyboardButton('Пропустить', callback_data=SHOW_INFO_ABOUT_SKIPPING_DAY + f'{training_day.id}')

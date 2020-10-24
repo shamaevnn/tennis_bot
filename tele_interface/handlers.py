@@ -595,10 +595,14 @@ def confirm_group_lesson(bot, update, user):
         send_message(admins, admit_message_text, admin_bot)
 
 
-def make_group_name_group_players_info_for_skipping(training_day):
-    if not training_day.is_individual:
-        group_name = f"{training_day.group.name}\n"
-        group_players = f'Игроки группы:\n{info_about_users(training_day.group.users)}\n'
+def make_group_name_group_players_info_for_skipping(tr_day):
+    all_players = tr_day.group.users.union(tr_day.visitors.all()).difference(tr_day.absent.all()).values('first_name',
+                                                                                                         'last_name')
+    all_players = '\n'.join((f"{x['first_name']} {x['last_name']}" for x in all_players))
+
+    if not tr_day.is_individual:
+        group_name = f"{tr_day.group.name}\n"
+        group_players = f'Присутствующие:\n{all_players}\n'
     else:
         group_name = "🧞‍♂индивидуальная тренировка🧞‍♂️\n"
         group_players = ''

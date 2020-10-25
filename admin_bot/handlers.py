@@ -175,10 +175,10 @@ def info_about_users(users, for_admin=False, payment=False):
     if for_admin:
         if payment:
             return '\n'.join(
-                (f"<b>{x['id']}</b>. {x['player__first_name']} {x['player__last_name']} -- {x['fact_amount']}₽,"
+                (f"<b>{x['id']}</b>. {x['player__last_name']} {x['player__first_name']} -- {x['fact_amount']}₽,"
                  f" {x['theory_amount']}₽, {x['n_fact_visiting']}"
                  for x in users.values('player__first_name', 'player__last_name', 'fact_amount', 'theory_amount',
-                                       'n_fact_visiting', 'id')))
+                                       'n_fact_visiting', 'id').order_by('player__last_name', 'player__first_name')))
         else:
             return '\n'.join(
                 (f"{i + 1}. {x['first_name']} {x['last_name']}" for i, x in enumerate(users.values('first_name',

@@ -9,7 +9,6 @@ from telegram import (InlineKeyboardButton as inlinebutt,
                       InlineKeyboardMarkup as inlinemark,)
 
 import datetime
-import telegram
 import sys
 import logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
@@ -19,7 +18,6 @@ logger = logging.getLogger(__name__)
 def admin_handler_decor():
     """
     декоратор для всех handlers в телеграм боте
-    :param bot:
     :return:
     """
 
@@ -38,20 +36,13 @@ def admin_handler_decor():
                 user_details = update.message.from_user
 
             user = User.objects.get(id=user_details.id)
-
+            res = None
             if user.is_staff:
                 try:
                     res = func(bot, update, user)
-                except telegram.error.BadRequest as error:
-                    if 'Message is not modified:' in error.message:
-                        pass
-                    else:
-                        res = [bot.send_message(user.id, 'ошибкааааа ' + str(error))]
-                        tb = sys.exc_info()[2]
-                        raise error.with_traceback(tb)
                 except Exception as e:
-
-                    res = [bot.send_message(user.id, 'ошибка, блин ' + str(e))]
+                    msg = f'{e}\n\nчто-то пошло не так, напиши @ta2asho'
+                    res = [bot.send_message(user.id, msg)]
                     tb = sys.exc_info()[2]
                     raise e.with_traceback(tb)
             else:
@@ -60,7 +51,7 @@ def admin_handler_decor():
                     "Привет! я переехал на @TennisTula_bot",
                     parse_mode='HTML',
                 )
-            return
+            return res
         return wrapper
     return decor
 

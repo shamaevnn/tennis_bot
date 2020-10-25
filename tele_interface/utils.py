@@ -83,16 +83,9 @@ def handler_decor(check_status=False):
                             bot.send_message(user.id, 'Тренер еще не одобрил.')
                     else:
                         res = func(bot, update, user)
-                except telegram.error.BadRequest as error:
-                    if 'Message is not modified:' in error.message:
-                        pass
-                    else:
-                        res = [bot.send_message(user.id, 'упс')]
-                        tb = sys.exc_info()[2]
-                        raise error.with_traceback(tb)
                 except Exception as e:
-
-                    res = [bot.send_message(user.id, e)]
+                    msg = f'{e}\n\nЧто-то пошло не так, напиши @ta2asho'
+                    res = [bot.send_message(user.id, msg)]
                     tb = sys.exc_info()[2]
                     raise e.with_traceback(tb)
 

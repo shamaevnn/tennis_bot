@@ -1,16 +1,20 @@
 import calendar
 
-from base.models import User, GroupTrainingDay
-from base.utils import construct_admin_main_menu, DT_BOT_FORMAT, TM_TIME_SCHEDULE_FORMAT
+from telegram.ext import ConversationHandler
+from django.core.exceptions import ObjectDoesNotExist
+from base.models import User, GroupTrainingDay, Payment, TrainingGroup
+from base.utils import construct_admin_main_menu, DT_BOT_FORMAT, TM_TIME_SCHEDULE_FORMAT, construct_menu_months, \
+    construct_menu_groups, from_digit_to_month, moscow_datetime
 from tele_interface.manage_data import PERMISSION_FOR_IND_TRAIN, SHOW_GROUPDAY_INFO, \
     from_eng_to_rus_day_week, CLNDR_ADMIN_VIEW_SCHEDULE, CLNDR_ACTION_BACK, CLNDR_NEXT_MONTH, CLNDR_DAY, CLNDR_IGNORE, \
-    CLNDR_PREV_MONTH, ADMIN_SITE
+    CLNDR_PREV_MONTH, ADMIN_SITE, PAYMENT_YEAR, PAYMENT_YEAR_MONTH, PAYMENT_YEAR_MONTH_GROUP, PAYMENT_START_CHANGE, \
+    PAYMENT_CONFIRM_OR_CANCEL
 from tele_interface.utils import create_calendar, separate_callback_data, create_callback_data
 from .utils import admin_handler_decor, day_buttons_coach_info
 from tennis_bot.config import TELEGRAM_TOKEN
 from datetime import date, datetime, timedelta
 from telegram import (InlineKeyboardButton as inlinebutt,
-                      InlineKeyboardMarkup as inlinemark, InlineKeyboardButton, )
+                      InlineKeyboardMarkup as inlinemark, InlineKeyboardButton)
 
 import datetime
 import telegram
@@ -153,27 +157,35 @@ def show_coach_schedule(bot, update, user):
 
 @admin_handler_decor()
 def redirect_to_site(bot, update, user):
-    buttons = []
-    buttons.append([
+    buttons = [[
         InlineKeyboardButton('Сайт', url='http://vladlen82.fvds.ru/admin/base/'),
-    ])
+    ]]
     bot.send_message(user.id,
                      ADMIN_SITE,
                      reply_markup=inlinemark(buttons))
 
 
-def info_about_users(users, for_admin=False):
+def info_about_users(users, for_admin=False, payment=False):
     """
+    :param payment: info about payment or not
     :param for_admin: show info for admin or not (number instead of smile)
     :param users: User instance
     :return: (first_name + last_name + \n){1,} -- str
     """
     if for_admin:
-        return '\n'.join(
-            (f"{i + 1}. {x['first_name']} {x['last_name']}" for i, x in enumerate(users.values('first_name', 'last_name'))))
+        if payment:
+            return '\n'.join(
+                (f"<b>{x['id']}</b>. {x['player__first_name']} {x['player__last_name']} -- {x['fact_amount']}₽,"
+                 f" {x['theory_amount']}₽, {x['n_fact_visiting']}"
+                 for x in users.values('player__first_name', 'player__last_name', 'fact_amount', 'theory_amount',
+                                       'n_fact_visiting', 'id')))
+        else:
+            return '\n'.join(
+                (f"{i + 1}. {x['first_name']} {x['last_name']}" for i, x in enumerate(users.values('first_name',
+                                                                                                   'last_name'))))
     else:
         return '\n'.join(
-                (f"👤{x['first_name']} {x['last_name']}" for i, x in enumerate(users.values('first_name', 'last_name'))))
+            (f"👤{x['first_name']} {x['last_name']}" for x in users.values('first_name', 'last_name')))
 
 
 @admin_handler_decor()
@@ -206,7 +218,8 @@ def show_traingroupday_info(bot, update, user):
 
     buttons = [[
         inlinebutt('⬅️ назад',
-                   callback_data=create_callback_data(CLNDR_ADMIN_VIEW_SCHEDULE, CLNDR_DAY, tr_day.date.year, tr_day.date.month, tr_day.date.day)),
+                   callback_data=create_callback_data(CLNDR_ADMIN_VIEW_SCHEDULE, CLNDR_DAY, tr_day.date.year,
+                                                      tr_day.date.month, tr_day.date.day)),
     ]]
 
     bot.edit_message_text(text,
@@ -214,3 +227,174 @@ def show_traingroupday_info(bot, update, user):
                           message_id=update.callback_query.message.message_id,
                           parse_mode='HTML',
                           reply_markup=inlinemark(buttons))
+
+
+@admin_handler_decor()
+def start_payment(bot, update, user):
+    text = 'Выбери год'
+    now_date = moscow_datetime(datetime.datetime.now()).date()
+    buttons = [[
+        inlinebutt('2020', callback_data=f'{PAYMENT_YEAR}0')
+        ,
+        inlinebutt('2021', callback_data=f'{PAYMENT_YEAR}1')
+    ], [
+        inlinebutt('К группам', callback_data=f'{PAYMENT_YEAR_MONTH}{now_date.year-2020}|{now_date.month}')
+    ]]
+    if update.callback_query:
+        bot.edit_message_text(text,
+                              chat_id=update.callback_query.message.chat_id,
+                              message_id=update.callback_query.message.message_id,
+                              parse_mode='HTML',
+                              reply_markup=inlinemark(buttons))
+    else:
+        bot.send_message(user.id,
+                         text,
+                         reply_markup=inlinemark(buttons))
+
+
+@admin_handler_decor()
+def year_payment(bot, update, user):
+    year = update.callback_query.data[len(PAYMENT_YEAR):]
+    text = 'Выбери месяц'
+    buttons = construct_menu_months(Payment.MONTHS, f'{PAYMENT_YEAR_MONTH}{year}|')
+    bot.edit_message_text(text,
+                          chat_id=update.callback_query.message.chat_id,
+                          message_id=update.callback_query.message.message_id,
+                          parse_mode='HTML',
+                          reply_markup=buttons)
+
+
+@admin_handler_decor()
+def month_payment(bot, update, user):
+    year, month = update.callback_query.data[len(PAYMENT_YEAR_MONTH):].split('|')
+    text = f'{int(year)+2020}--{from_digit_to_month[int(month)]}\nВыбери группу'
+    banda_groups = TrainingGroup.objects.filter(name__iregex=r'БАНДА')
+    buttons = construct_menu_groups(banda_groups, f'{PAYMENT_YEAR_MONTH_GROUP}{year}|{month}|')
+    bot.edit_message_text(text,
+                          chat_id=update.callback_query.message.chat_id,
+                          message_id=update.callback_query.message.message_id,
+                          parse_mode='HTML',
+                          reply_markup=buttons)
+
+    return ConversationHandler.END
+
+
+@admin_handler_decor()
+def group_payment(bot, update, user):
+    year, month, group_id = update.callback_query.data[len(PAYMENT_YEAR_MONTH_GROUP):].split('|')
+
+    if int(group_id) == 0:
+        title = 'Оставшиеся\n\n'
+        payments = Payment.objects.filter(month=month, year=year).exclude(player__traininggroup__name__iregex='БАНДА')
+
+    else:
+        payments = Payment.objects.filter(player__traininggroup__id=group_id, month=month, year=year)
+        group = TrainingGroup.objects.get(id=group_id)
+        title = f'{group.name}\n\n'
+
+    for payment in payments:
+        payment.save()
+    text = title + '<b>id</b>. Имя Фамилия -- факт₽, теория₽, кол-во посещений\n\n' + info_about_users(payments,
+                                                                                                       for_admin=True,
+                                                                                                       payment=True)
+
+    markup = inlinemark([[
+        inlinebutt('Изменить данные', callback_data=f'{PAYMENT_START_CHANGE}{year}|{month}|{group_id}')
+    ], [
+        inlinebutt('⬅️ назад', callback_data=f'{PAYMENT_YEAR_MONTH}{year}|{month}')
+    ]])
+
+    bot.edit_message_text(text,
+                          chat_id=update.callback_query.message.chat_id,
+                          message_id=update.callback_query.message.message_id,
+                          parse_mode='HTML',
+                          reply_markup=markup)
+
+
+START_CHANGE_PAYMENT, CONFIRM_OR_CANCEL = range(2)
+
+
+@admin_handler_decor()
+def change_payment_data(bot, update, user):
+    year, month, _ = update.callback_query.data[len(PAYMENT_START_CHANGE):].split('|')
+    text = 'Для того, чтобы внести данные об оплате, введи данные в формате \n\n' \
+           'id сумма_в_рублях через пробел, например, 18 3600\n\n'
+
+    markup = inlinemark([[
+        inlinebutt(f'{int(year) + 2020} -- {from_digit_to_month[int(month)]}',
+                   callback_data=f'{PAYMENT_YEAR_MONTH}{year}|{month}')
+    ]])
+
+    bot.send_message(user.id,
+                     text,
+                     reply_markup=markup)
+    return START_CHANGE_PAYMENT
+
+
+@admin_handler_decor()
+def get_id_amount(bot, update, user):
+    try:
+        payment_id, amount = update.message.text.split(' ')
+        payment_id = int(payment_id)
+        amount = int(amount)
+        payment = Payment.objects.select_related('player').get(id=payment_id)
+
+        text = f'{payment.player.first_name} {payment.player.last_name}\n' \
+               f'Год: {2020 + int(payment.year)}\n' \
+               f'Месяц: {from_digit_to_month[int(payment.month)]}\n' \
+               f'<b>{payment.fact_amount}₽ ➡ {amount}₽</b>'
+        buttons = inlinemark([[
+            inlinebutt('Подтвердить', callback_data=f'{PAYMENT_CONFIRM_OR_CANCEL}YES|{payment_id}|{amount}')
+            ,
+            inlinebutt('Отмена', callback_data=f'{PAYMENT_CONFIRM_OR_CANCEL}NO|{payment_id}|{payment_id}')
+        ]])
+        bot.send_message(user.id,
+                         text,
+                         reply_markup=buttons,
+                         parse_mode='HTML')
+
+    except ValueError:
+        text = 'Ошибка, скорее всего неправильно ввел id или сумму -- не ввел через пробел или есть лишние символы\n/cancel'
+        bot.send_message(user.id,
+                         text)
+
+    except ObjectDoesNotExist:
+        text = 'Нет такого объекта в базе данных -- неправильный id\n/cancel'
+        bot.send_message(user.id,
+                         text)
+
+    return CONFIRM_OR_CANCEL
+
+
+@admin_handler_decor()
+def confirm_or_cancel_changing_payment(bot, update, user):
+    permission, payment_id, amount = update.callback_query.data[len(PAYMENT_CONFIRM_OR_CANCEL):].split('|')
+    payment = Payment.objects.get(id=payment_id)
+    if permission == 'NO':
+        text = 'Ну как хочешь'
+    else:
+        payment.fact_amount = int(amount)
+        payment.save()
+
+        text = 'Изменения внесены'
+
+    markup = inlinemark([[
+        inlinebutt(f'{int(payment.year) + 2020} -- {from_digit_to_month[int(payment.month)]}',
+                   callback_data=f'{PAYMENT_YEAR_MONTH}{payment.year}|{payment.month}')
+    ]])
+
+    bot.edit_message_text(text,
+                          chat_id=update.callback_query.message.chat_id,
+                          message_id=update.callback_query.message.message_id,
+                          parse_mode='HTML',
+                          reply_markup=markup)
+
+    return ConversationHandler.END
+
+
+@admin_handler_decor()
+def cancel(bot, update, user):
+    update.message.reply_text('Вот так вот, да?',
+                              reply_markup=construct_admin_main_menu())
+
+    return ConversationHandler.END

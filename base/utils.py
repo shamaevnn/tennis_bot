@@ -4,7 +4,7 @@ from tele_interface.manage_data import (
     ADMIN_TIME_SCHEDULE_BUTTON,
     MY_DATA_BUTTON,
     SKIP_LESSON_BUTTON,
-    TAKE_LESSON_BUTTON, HELP_BUTTON, ADMIN_SITE, ADMIN_PAYMENT, PAYMENT_YEAR_MONTH_GROUP, PAYMENT_YEAR, )
+    TAKE_LESSON_BUTTON, HELP_BUTTON, ADMIN_SITE, ADMIN_PAYMENT, PAYMENT_YEAR_MONTH_GROUP, PAYMENT_YEAR, BACK_BUTTON, )
 
 import telegram
 
@@ -13,11 +13,6 @@ DT_BOT_FORMAT = '%Y.%m.%d'
 TM_HOUR_BOT_FORMAT = '%H'
 TM_DAY_BOT_FORMAT = '%d'
 TM_TIME_SCHEDULE_FORMAT = '%H:%M'
-
-from_digit_to_month = {
-        1: 'Январь', 2: 'Февраль', 3: 'Март', 4: 'Апрель', 5: 'Май', 6: 'Июнь',
-        7: 'Июль', 8: 'Август', 9: 'Сентябрь', 10: 'Октябрь', 11: 'Ноябрь', 12: 'Декабрь',
-    }
 
 
 def send_message(users, message: str, bot, markup=None):
@@ -87,7 +82,7 @@ def construct_menu_months(months, button_text):
         buttons.append(row)
 
     buttons.append([
-        InlineKeyboardButton('⬅️ назад',
+        InlineKeyboardButton(f'{BACK_BUTTON}',
                              callback_data=f'{ADMIN_PAYMENT}'),
     ])
 
@@ -111,7 +106,7 @@ def construct_menu_groups(groups, button_text):
 
     year, month, _ = button_text[len(PAYMENT_YEAR_MONTH_GROUP):].split('|')
     buttons.append([
-        InlineKeyboardButton('⬅️ назад',
+        InlineKeyboardButton(f'{BACK_BUTTON}',
                              callback_data=f'{PAYMENT_YEAR}{year}'),
     ])
     return InlineKeyboardMarkup(buttons)

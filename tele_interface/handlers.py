@@ -6,7 +6,7 @@ from .utils import (handler_decor,
                     construct_time_menu_4ind_lesson, construct_menu_skipping_much_lesson,
                     )
 from base.utils import (construct_main_menu,
-                        from_digit_to_month, send_message, DT_BOT_FORMAT, TM_TIME_SCHEDULE_FORMAT, moscow_datetime,
+                        send_message, DT_BOT_FORMAT, TM_TIME_SCHEDULE_FORMAT, moscow_datetime,
                         )
 from base.models import (User,
                          GroupTrainingDay,
@@ -21,6 +21,7 @@ from .manage_data import (
     CONFIRM_GROUP_LESSON,
     SHOW_INFO_ABOUT_SKIPPING_DAY, TAKE_LESSON_BUTTON, CLNDR_IGNORE, CLNDR_DAY, CLNDR_PREV_MONTH, CLNDR_NEXT_MONTH,
     CLNDR_ACTION_BACK, CLNDR_ACTION_SKIP, CLNDR_ACTION_TAKE_GROUP, CLNDR_ACTION_TAKE_IND, SELECT_SKIP_TIME_BUTTON,
+    BACK_BUTTON, from_digit_to_month,
 )
 from calendar import monthrange
 from tennis_bot.config import ADMIN_TELEGRAM_TOKEN
@@ -416,7 +417,7 @@ def take_lesson(bot, update, user):
         ], [
             inline_button('2 часа', callback_data=SELECT_DURATION_FOR_IND_TRAIN + '2.0')
         ], [
-            inline_button('⬅️ назад',
+            inline_button(f'{BACK_BUTTON}',
                           callback_data=TAKE_LESSON_BUTTON),
         ]]
         markup = inline_markup(buttons)
@@ -515,7 +516,7 @@ def select_precise_group_lesson_time(bot, update, user):
     buttons = [[
         inline_button('Записаться', callback_data=f"{CONFIRM_GROUP_LESSON}{tr_day_id}")
     ], [
-        inline_button('⬅️ назад',
+        inline_button(f'{BACK_BUTTON}',
                       callback_data=create_callback_data(CLNDR_ACTION_TAKE_GROUP, CLNDR_DAY, tr_day.date.year,
                                                          tr_day.date.month, tr_day.date.day))
     ]]
@@ -579,7 +580,7 @@ def confirm_group_lesson(bot, update, user):
             else:
                 text = 'Упс, похоже уже не осталось свободных мест на это время, выбери другое.'
                 buttons = [[
-                    inline_button('⬅️ назад',
+                    inline_button(f'{BACK_BUTTON}',
                                   callback_data=create_callback_data(CLNDR_ACTION_TAKE_GROUP, CLNDR_DAY,
                                                                      tr_day.date.year, tr_day.date.month,
                                                                      tr_day.date.day))
@@ -588,7 +589,7 @@ def confirm_group_lesson(bot, update, user):
         else:  # если пытается записаться в свою группу
             text = 'Ну ты чего?🤕 \nЭто же твоя группа, выбери другое время.'
             buttons = [[
-                inline_button('⬅️ назад',
+                inline_button(f'{BACK_BUTTON}',
                               callback_data=SELECT_PRECISE_GROUP_TIME + f'{tr_day_id}')
             ]]
             markup = inline_markup(buttons)

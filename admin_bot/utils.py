@@ -2,7 +2,7 @@ from base.models import User
 from functools import wraps
 
 from base.utils import  TM_TIME_SCHEDULE_FORMAT
-from tele_interface.manage_data import  CLNDR_ADMIN_VIEW_SCHEDULE, CLNDR_ACTION_BACK
+from tele_interface.manage_data import CLNDR_ADMIN_VIEW_SCHEDULE, CLNDR_ACTION_BACK, BACK_BUTTON
 from tele_interface.utils import create_callback_data
 from tennis_bot.settings import DEBUG
 from telegram import (InlineKeyboardButton as inlinebutt,
@@ -79,7 +79,7 @@ def day_buttons_coach_info(tr_days, button_text):
         buttons.append(row)
 
     buttons.append([
-        inlinebutt('⬅️ назад',
+        inlinebutt(f'{BACK_BUTTON}',
                    callback_data=create_callback_data(CLNDR_ADMIN_VIEW_SCHEDULE, CLNDR_ACTION_BACK, tr_days.first().date.year, tr_days.first().date.month, 0)),
     ])
 

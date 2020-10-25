@@ -4,11 +4,11 @@ from telegram.ext import ConversationHandler
 from django.core.exceptions import ObjectDoesNotExist
 from base.models import User, GroupTrainingDay, Payment, TrainingGroup
 from base.utils import construct_admin_main_menu, DT_BOT_FORMAT, TM_TIME_SCHEDULE_FORMAT, construct_menu_months, \
-    construct_menu_groups, from_digit_to_month, moscow_datetime
+    construct_menu_groups, moscow_datetime
 from tele_interface.manage_data import PERMISSION_FOR_IND_TRAIN, SHOW_GROUPDAY_INFO, \
     from_eng_to_rus_day_week, CLNDR_ADMIN_VIEW_SCHEDULE, CLNDR_ACTION_BACK, CLNDR_NEXT_MONTH, CLNDR_DAY, CLNDR_IGNORE, \
     CLNDR_PREV_MONTH, ADMIN_SITE, PAYMENT_YEAR, PAYMENT_YEAR_MONTH, PAYMENT_YEAR_MONTH_GROUP, PAYMENT_START_CHANGE, \
-    PAYMENT_CONFIRM_OR_CANCEL
+    PAYMENT_CONFIRM_OR_CANCEL, BACK_BUTTON, from_digit_to_month
 from tele_interface.utils import create_calendar, separate_callback_data, create_callback_data
 from .utils import admin_handler_decor, day_buttons_coach_info
 from tennis_bot.config import TELEGRAM_TOKEN
@@ -217,7 +217,7 @@ def show_traingroupday_info(bot, update, user):
     text = general_info + users_info
 
     buttons = [[
-        inlinebutt('⬅️ назад',
+        inlinebutt(f'{BACK_BUTTON}',
                    callback_data=create_callback_data(CLNDR_ADMIN_VIEW_SCHEDULE, CLNDR_DAY, tr_day.date.year,
                                                       tr_day.date.month, tr_day.date.day)),
     ]]
@@ -301,7 +301,7 @@ def group_payment(bot, update, user):
     markup = inlinemark([[
         inlinebutt('Изменить данные', callback_data=f'{PAYMENT_START_CHANGE}{year}|{month}|{group_id}')
     ], [
-        inlinebutt('⬅️ назад', callback_data=f'{PAYMENT_YEAR_MONTH}{year}|{month}')
+        inlinebutt(f'{BACK_BUTTON}', callback_data=f'{PAYMENT_YEAR_MONTH}{year}|{month}')
     ]])
 
     bot.edit_message_text(text,
@@ -394,7 +394,7 @@ def confirm_or_cancel_changing_payment(bot, update, user):
 
 @admin_handler_decor()
 def cancel(bot, update, user):
-    update.message.reply_text('Вот так вот, да?',
+    update.message.reply_text('Вот так вот значит, да?',
                               reply_markup=construct_admin_main_menu())
 
     return ConversationHandler.END

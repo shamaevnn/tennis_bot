@@ -3,7 +3,7 @@ from .utils import (handler_decor,
                     get_available_dt_time4ind_train, select_tr_days_for_skipping,
                     get_potential_days_for_group_training, separate_callback_data, create_callback_data,
                     create_calendar, construct_time_menu_for_group_lesson, construct_detail_menu_for_skipping,
-                    construct_time_menu_4ind_lesson, construct_menu_skipping_much_lesson,
+                    construct_time_menu_4ind_lesson, construct_menu_skipping_much_lesson, balls_lessons_payment,
                     )
 from base.utils import (construct_main_menu,
                         send_message, DT_BOT_FORMAT, TM_TIME_SCHEDULE_FORMAT, moscow_datetime,
@@ -121,37 +121,17 @@ def user_main_info(bot, update, user):
     number_of_add_games = 'Количество отыгрышей: <b>{}</b>\n\n'.format(user.bonus_lesson)
 
     today = moscow_datetime(datetime.now()).date()
-    first_day = today - timedelta(days=today.day - 1)
     number_of_days_in_month = monthrange(today.year, today.month)[1]
     last_day = date(today.year, today.month, number_of_days_in_month)
     next_month = last_day + timedelta(days=1)
-    number_of_days_in_next_month = monthrange(next_month.year, next_month.month)[1]
-    last_day_in_next_month = date(next_month.year, next_month.month, number_of_days_in_next_month)
 
-    tr_days_this_month = GroupTrainingDay.objects.filter(date__gte=first_day, date__lte=last_day, is_available=True)
-    tr_days_next_month = GroupTrainingDay.objects.filter(date__gte=next_month, date__lte=last_day_in_next_month,
-                                                         is_available=True)
+    should_pay_this_month, balls_this_month, _ = balls_lessons_payment(today.year, today.month, user)
+    should_pay_money_next, balls_next_month, _ = balls_lessons_payment(next_month.year, next_month.month, user)
 
-    if user.status == User.STATUS_TRAINING:
-        tr_days_num_this_month = tr_days_this_month.filter(group__users__in=[user],
-                                                           group__status=TrainingGroup.STATUS_GROUP)
-        tr_days_num_next_month = tr_days_next_month.filter(group__users__in=[user],
-                                                           group__status=TrainingGroup.STATUS_GROUP)
-
-    elif user.status == User.STATUS_ARBITRARY:
-        tr_days_num_this_month = tr_days_this_month.filter(visitors__in=[user])
-        tr_days_num_next_month = tr_days_next_month.filter(visitors__in=[user])
-
-    balls_this_month = tr_days_this_month.filter(Q(visitors__in=[user]) | Q(group__users__in=[user])).count()
-
-    balls_next_month = tr_days_num_next_month.filter(Q(visitors__in=[user]) | Q(group__users__in=[user])).count()
-
-    should_pay_money_next = tr_days_num_next_month.count() * User.tarif_for_status[user.status]
-    should_pay_this_month = tr_days_num_this_month.count() * User.tarif_for_status[user.status]
     should_pay_info = 'В этом месяце ({}) <b>нужно заплатить {} ₽ + {} ₽ за мячи.</b>\n' \
                       'В следующем месяце ({}) <b>нужно заплатить {} ₽ + {} ₽ за мячи</b>.'.format(
-        from_digit_to_month[today.month], should_pay_this_month, 100 * round(balls_this_month / 4),
-        from_digit_to_month[next_month.month], should_pay_money_next, 100 * round(balls_next_month / 4))
+        from_digit_to_month[today.month], should_pay_this_month, balls_this_month,
+        from_digit_to_month[next_month.month], should_pay_money_next, balls_next_month)
 
     text = intro + group_info + number_of_add_games + should_pay_info
 

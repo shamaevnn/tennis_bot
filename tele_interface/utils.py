@@ -342,3 +342,20 @@ def construct_time_menu_4ind_lesson(button_text, poss_training_times: list, day:
     ])
 
     return inlinemark(buttons)
+
+
+def balls_lessons_payment(year, month, user):
+    tr_days_this_month = GroupTrainingDay.objects.filter(date__year=year, date__month=month, is_available=True)
+    num_of_group_lessons = 0
+    if user.status == User.STATUS_TRAINING:
+        tr_days_num_this_month = tr_days_this_month.filter(group__users__in=[user],
+                                                           group__status=TrainingGroup.STATUS_GROUP)
+        num_of_group_lessons = tr_days_num_this_month.count()
+    elif user.status == User.STATUS_ARBITRARY:
+        tr_days_num_this_month = tr_days_this_month.filter(visitors__in=[user])
+
+    balls_this_month = tr_days_this_month.filter(Q(visitors__in=[user]) | Q(group__users__in=[user])).count()
+    should_pay_this_month = tr_days_num_this_month.count() * User.tarif_for_status[user.status]
+    should_pay_balls = 100 * round(balls_this_month / 4)
+
+    return should_pay_this_month, should_pay_balls, num_of_group_lessons

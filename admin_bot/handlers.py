@@ -2,7 +2,7 @@ import calendar
 
 from telegram.ext import ConversationHandler
 from django.core.exceptions import ObjectDoesNotExist
-from base.models import User, GroupTrainingDay, Payment, TrainingGroup
+from base.models import User, GroupTrainingDay, Payment, TrainingGroup, StaticData
 from base.utils import construct_admin_main_menu, DT_BOT_FORMAT, TM_TIME_SCHEDULE_FORMAT, construct_menu_months, \
     construct_menu_groups, moscow_datetime
 from tele_interface.manage_data import PERMISSION_FOR_IND_TRAIN, SHOW_GROUPDAY_INFO, \
@@ -176,8 +176,8 @@ def info_about_users(users, for_admin=False, payment=False):
         if payment:
             return '\n'.join(
                 (f"<b>{x['id']}</b>. {x['player__last_name']} {x['player__first_name']} -- {x['fact_amount']}₽,"
-                 f" {x['theory_amount']}₽, {x['n_fact_visiting']}"
-                 for x in users.values('player__first_name', 'player__last_name', 'fact_amount', 'theory_amount',
+                 f" {x['n_fact_visiting']}"
+                 for x in users.values('player__first_name', 'player__last_name', 'fact_amount',
                                        'n_fact_visiting', 'id').order_by('player__last_name', 'player__first_name')))
         else:
             return '\n'.join(
@@ -238,7 +238,7 @@ def start_payment(bot, update, user):
         ,
         inlinebutt('2021', callback_data=f'{PAYMENT_YEAR}1')
     ], [
-        inlinebutt('К группам', callback_data=f'{PAYMENT_YEAR_MONTH}{now_date.year-2020}|{now_date.month}')
+        inlinebutt('К группам', callback_data=f'{PAYMENT_YEAR_MONTH}{now_date.year - 2020}|{now_date.month}')
     ]]
     if update.callback_query:
         bot.edit_message_text(text,
@@ -267,7 +267,7 @@ def year_payment(bot, update, user):
 @admin_handler_decor()
 def month_payment(bot, update, user):
     year, month = update.callback_query.data[len(PAYMENT_YEAR_MONTH):].split('|')
-    text = f'{int(year)+2020}--{from_digit_to_month[int(month)]}\nВыбери группу'
+    text = f'{int(year) + 2020}--{from_digit_to_month[int(month)]}\nВыбери группу'
     banda_groups = TrainingGroup.objects.filter(name__iregex=r'БАНДА')
     buttons = construct_menu_groups(banda_groups, f'{PAYMENT_YEAR_MONTH_GROUP}{year}|{month}|')
     bot.edit_message_text(text,
@@ -284,19 +284,40 @@ def group_payment(bot, update, user):
     year, month, group_id = update.callback_query.data[len(PAYMENT_YEAR_MONTH_GROUP):].split('|')
 
     if int(group_id) == 0:
-        title = 'Оставшиеся\n\n'
+        title = 'Оставшиеся\n'
         payments = Payment.objects.filter(month=month, year=year).exclude(player__traininggroup__name__iregex='БАНДА')
-
+        n_lessons_info = 'Кол-во занятий: хз\n'
+        should_pay = 'хз'
+        should_pay_balls = 'хз'
     else:
         payments = Payment.objects.filter(player__traininggroup__id=group_id, month=month, year=year)
         group = TrainingGroup.objects.get(id=group_id)
-        title = f'{group.name}\n\n'
+        n_lessons = GroupTrainingDay.objects.filter(date__month=month, date__year=int(year)+2020, group=group).count()
+        n_lessons_info = f'Кол-во занятий: {n_lessons}\n'
+        if group.status == TrainingGroup.STATUS_GROUP:
+            if group.max_players == 6:
+                should_pay = n_lessons * 400
+            elif group.max_players == 4:
+                should_pay = n_lessons * 550
+            elif group.max_players == 2:
+                should_pay = n_lessons * 800
+            else:
+                should_pay = 400
+        elif group.status == TrainingGroup.STATUS_SECTION:
+            should_pay = StaticData.objects.first().tarif_section
+        elif group.status == TrainingGroup.STATUS_FEW:
+            should_pay = n_lessons * StaticData.objects.first().tarif_few
+
+        should_pay_balls = 100 * round(n_lessons / 4)
+        title = f'{group.name}\n'
 
     for payment in payments:
         payment.save()
-    text = title + '<b>id</b>. Имя Фамилия -- факт₽, теория₽, кол-во посещений\n\n' + info_about_users(payments,
-                                                                                                       for_admin=True,
-                                                                                                       payment=True)
+
+    date_info = f'{from_digit_to_month[int(month)]} {int(year) + 2020}\n'
+    payment_info = f'<b>{should_pay}</b>₽ + {should_pay_balls}₽ за мячи\n\n'
+    text = title + date_info + n_lessons_info + payment_info + '<b>id</b>. Имя Фамилия -- факт₽, кол-во посещений\n\n' + \
+           info_about_users(payments, for_admin=True, payment=True)
 
     markup = inlinemark([[
         inlinebutt('Изменить данные', callback_data=f'{PAYMENT_START_CHANGE}{year}|{month}|{group_id}')

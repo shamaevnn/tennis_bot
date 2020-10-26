@@ -345,10 +345,11 @@ def balls_lessons_payment(year, month, user):
         tr_days_num_this_month = tr_days_this_month.filter(group__users__in=[user],
                                                            group__status=TrainingGroup.STATUS_GROUP).distinct()
         num_of_group_lessons = tr_days_num_this_month.count()
+        balls_this_month = tr_days_num_this_month.count()
     elif user.status == User.STATUS_ARBITRARY:
         tr_days_num_this_month = tr_days_this_month.filter(visitors__in=[user]).distinct()
+        balls_this_month = 0
 
-    balls_this_month = tr_days_this_month.filter(Q(visitors__in=[user]) | Q(group__users__in=[user])).distinct().count()
     should_pay_this_month = tr_days_num_this_month.count() * User.tarif_for_status[user.status]
     should_pay_balls = 100 * round(balls_this_month / 4)
 

@@ -219,27 +219,32 @@ class GroupTrainingDayForm(forms.ModelForm):
                         ' с продолжительностью {}.'.format(train.start_time, train.duration))
 
             # send alert to players about changing lesson parameters
-            changed_data_custom = []
-            before_after_text = ''
-            if 'start_time' in self.changed_data:
-                changed_data_custom.append('время начала тренировки')
-                before_after_text += self.instance.start_time.strftime(TM_TIME_SCHEDULE_FORMAT)
-                before_after_text += f" 🔜 {self.cleaned_data.get('start_time').strftime(TM_TIME_SCHEDULE_FORMAT)}\n"
-            if 'duration' in self.changed_data:
-                changed_data_custom.append('продолжительность занятия')
-                before_after_text += str(self.instance.duration)
-                before_after_text += f" 🔜 {self.cleaned_data.get('duration')}\n"
-            if 'date' in self.changed_data:
-                changed_data_custom.append('дата проведения занятия')
-                before_after_text += self.instance.date.strftime(DT_BOT_FORMAT)
-                before_after_text += f" 🔜 {self.cleaned_data.get('date').strftime(DT_BOT_FORMAT)}"
+            # check only existing tr_days
+            if GroupTrainingDay.objects.filter(group=self.cleaned_data.get('group'), date=self.cleaned_data.get('date'),
+                                               start_time=self.cleaned_data.get('start_time'),
+                                               duration=self.cleaned_data.get('duration'),
+                                               ).count():
+                changed_data_custom = []
+                before_after_text = ''
+                if 'start_time' in self.changed_data:
+                    changed_data_custom.append('время начала тренировки')
+                    before_after_text += self.instance.start_time.strftime(TM_TIME_SCHEDULE_FORMAT)
+                    before_after_text += f" 🔜 {self.cleaned_data.get('start_time').strftime(TM_TIME_SCHEDULE_FORMAT)}\n"
+                if 'duration' in self.changed_data:
+                    changed_data_custom.append('продолжительность занятия')
+                    before_after_text += str(self.instance.duration)
+                    before_after_text += f" 🔜 {self.cleaned_data.get('duration')}\n"
+                if 'date' in self.changed_data:
+                    changed_data_custom.append('дата проведения занятия')
+                    before_after_text += self.instance.date.strftime(DT_BOT_FORMAT)
+                    before_after_text += f" 🔜 {self.cleaned_data.get('date').strftime(DT_BOT_FORMAT)}"
 
-            day_of_week = from_eng_to_rus_day_week[calendar.day_name[self.instance.date.weekday()]]
-            text = f'⚠️ATTENTION⚠️\n' \
-                   f'Изменились следующие параметры тренировки {self.instance.date.strftime(DT_BOT_FORMAT)}' \
-                   f' ({day_of_week}): {", ".join(changed_data_custom)}\n' \
-                   f'{before_after_text}'
-            send_alert_about_changing_tr_day_time(self.instance, text, bot)
+                day_of_week = from_eng_to_rus_day_week[calendar.day_name[self.instance.date.weekday()]]
+                text = f'⚠️ATTENTION⚠️\n' \
+                       f'Изменились следующие параметры тренировки {self.instance.date.strftime(DT_BOT_FORMAT)}' \
+                       f' ({day_of_week}): {", ".join(changed_data_custom)}\n' \
+                       f'{before_after_text}'
+                send_alert_about_changing_tr_day_time(self.instance, text, bot)
 
         if 'is_available' in self.changed_data:  # если статут дня меняется, то отсылаем алерт об изменении
             send_alert_about_changing_tr_day_status(self.instance, self.cleaned_data.get('is_available'), bot)

@@ -1,5 +1,6 @@
 import calendar
 
+from django.db.models import Sum
 from telegram.ext import ConversationHandler
 from django.core.exceptions import ObjectDoesNotExist
 from base.models import User, GroupTrainingDay, Payment, TrainingGroup, StaticData
@@ -89,10 +90,10 @@ def admin_calendar_selection(bot, update):
         return True, purpose, date(int(year), int(month), int(day))
     elif action == CLNDR_PREV_MONTH:
         pre = curr - timedelta(days=1)
-        bot_edit_message(bot, query.mesage.text, update, create_calendar(purpose, int(pre.year), int(pre.month)))
+        bot_edit_message(bot, query.message.text, update, create_calendar(purpose, int(pre.year), int(pre.month)))
     elif action == CLNDR_NEXT_MONTH:
         ne = curr + timedelta(days=31)
-        bot_edit_message(bot, query.mesage.text, update, create_calendar(purpose, int(ne.year), int(ne.month)))
+        bot_edit_message(bot, query.message.text, update, create_calendar(purpose, int(ne.year), int(ne.month)))
     elif action == CLNDR_ACTION_BACK:
         if purpose == CLNDR_ADMIN_VIEW_SCHEDULE:
             text = 'Тренировочные дни'
@@ -226,7 +227,13 @@ def year_payment(bot, update, user):
 @admin_handler_decor()
 def month_payment(bot, update, user):
     year, month = update.callback_query.data[len(PAYMENT_YEAR_MONTH):].split('|')
-    text = f'{int(year) + 2020}--{from_digit_to_month[int(month)]}\nВыбери группу'
+
+    amount_for_this_month = Payment.objects.filter(year=year, month=month).aggregate(sigma=Sum('fact_amount'))
+
+    text = f'{int(year) + 2020}--{from_digit_to_month[int(month)]}\n' \
+           f'<b>Итого заплатили: {amount_for_this_month["sigma"]}</b>\n' \
+           f'Выбери группу'
+
     banda_groups = TrainingGroup.objects.filter(name__iregex=r'БАНДА')
     markup = construct_menu_groups(banda_groups, f'{PAYMENT_YEAR_MONTH_GROUP}{year}|{month}|')
     bot_edit_message(bot, text, update, markup)
@@ -241,11 +248,13 @@ def group_payment(bot, update, user):
     if int(group_id) == 0:
         title = 'Оставшиеся\n'
         payments = Payment.objects.filter(month=month, year=year).exclude(player__traininggroup__name__iregex='БАНДА')
+        paid_this_month = payments.aggregate(sigma=Sum('fact_amount'))
         n_lessons_info = 'Кол-во занятий: хз\n'
         should_pay = 'хз'
         should_pay_balls = 'хз'
     else:
         payments = Payment.objects.filter(player__traininggroup__id=group_id, month=month, year=year)
+        paid_this_month = payments.aggregate(sigma=Sum('fact_amount'))
         group = TrainingGroup.objects.get(id=group_id)
         n_lessons = GroupTrainingDay.objects.filter(date__month=month, date__year=int(year)+2020, group=group).count()
         n_lessons_info = f'Кол-во занятий: {n_lessons}\n'
@@ -270,9 +279,11 @@ def group_payment(bot, update, user):
         payment.save()
 
     date_info = f'{from_digit_to_month[int(month)]} {int(year) + 2020}\n'
-    payment_info = f'<b>{should_pay}</b>₽ + {should_pay_balls}₽ за мячи\n\n'
-    text = title + date_info + n_lessons_info + payment_info + '<b>id</b>. Имя Фамилия -- факт₽, кол-во посещений\n\n' + \
-           info_about_users(payments, for_admin=True, payment=True)
+    payment_info = f'Должны <b>{should_pay}</b>₽ + {should_pay_balls}₽ за мячи\n'
+    this_month_payment_info = f'Итого заплатили: {paid_this_month["sigma"]}\n\n'
+    text = f"{title}{date_info}{n_lessons_info}{payment_info}{this_month_payment_info}" \
+           f"<b>id</b>. Имя Фамилия -- факт₽, кол-во посещений\n\n" \
+           f"{info_about_users(payments, for_admin=True, payment=True)}"
 
     markup = inlinemark([[
         inlinebutt('Изменить данные', callback_data=f'{PAYMENT_START_CHANGE}{year}|{month}|{group_id}')

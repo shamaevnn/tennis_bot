@@ -110,3 +110,11 @@ def construct_menu_groups(groups, button_text):
                              callback_data=f'{PAYMENT_YEAR}{year}'),
     ])
     return InlineKeyboardMarkup(buttons)
+
+
+def bot_edit_message(bot, text, update, markup=None):
+    bot.edit_message_text(text=text,
+                          chat_id=update.callback_query.message.chat_id,
+                          message_id=update.callback_query.message.message_id,
+                          parse_mode='HTML',
+                          reply_markup=markup)

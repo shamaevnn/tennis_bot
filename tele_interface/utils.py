@@ -165,7 +165,6 @@ def get_available_dt_time4ind_train(duration: float, tr_day_date=moscow_datetime
             if datetime.combine(poss_date, poss_date_time_dict[poss_date][i + int(duration * 2)]) - datetime.combine(
                     poss_date, poss_date_time_dict[poss_date][i]) == timedelta(hours=duration):
                 poss_date_for_train.append(poss_date)
-    # available_days = sorted(list(set(poss_date_for_train)))
 
     return poss_date_time_dict
 

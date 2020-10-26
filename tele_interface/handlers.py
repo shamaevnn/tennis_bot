@@ -6,7 +6,7 @@ from .utils import (handler_decor,
                     construct_time_menu_4ind_lesson, construct_menu_skipping_much_lesson, balls_lessons_payment,
                     )
 from base.utils import (construct_main_menu,
-                        send_message, DT_BOT_FORMAT, TM_TIME_SCHEDULE_FORMAT, moscow_datetime,
+                        send_message, DT_BOT_FORMAT, TM_TIME_SCHEDULE_FORMAT, moscow_datetime, bot_edit_message,
                         )
 from base.models import (User,
                          GroupTrainingDay,
@@ -161,23 +161,16 @@ def process_calendar_selection(bot, update, user):
     if action == CLNDR_IGNORE:
         bot.answer_callback_query(callback_query_id=query.id)
     elif action == CLNDR_DAY:
-        bot.edit_message_text(text=query.message.text,
-                              chat_id=query.message.chat_id,
-                              message_id=query.message.message_id
-                              )
+        bot_edit_message(bot, query.message.text, update)
         return True, purpose, datetime(int(year), int(month), int(day))
     elif action == CLNDR_PREV_MONTH:
         pre = curr - timedelta(days=1)
-        bot.edit_message_text(text=query.message.text,
-                              chat_id=query.message.chat_id,
-                              message_id=query.message.message_id,
-                              reply_markup=create_calendar(purpose, int(pre.year), int(pre.month), highlight_dates))
+        bot_edit_message(bot, query.message.text, update, create_calendar(purpose, int(pre.year), int(pre.month),
+                                                                          highlight_dates))
     elif action == CLNDR_NEXT_MONTH:
         ne = curr + timedelta(days=31)
-        bot.edit_message_text(text=query.message.text,
-                              chat_id=query.message.chat_id,
-                              message_id=query.message.message_id,
-                              reply_markup=create_calendar(purpose, int(ne.year), int(ne.month), highlight_dates))
+        bot_edit_message(bot, query.message.text, update, create_calendar(purpose, int(ne.year), int(ne.month),
+                                                                          highlight_dates))
     elif action == CLNDR_ACTION_BACK:
         if purpose == CLNDR_ACTION_SKIP:
             text = 'Выбери дату тренировки для отмены.\n' \
@@ -187,10 +180,8 @@ def process_calendar_selection(bot, update, user):
                    '✅ -- дни, доступные для групповых тренировок'
         elif re.findall(rf'({CLNDR_ACTION_TAKE_IND})(\d.\d)', purpose):
             text = 'Выбери дату индивидуальной тренировки'
-        bot.edit_message_text(text=text,
-                              chat_id=query.message.chat_id,
-                              message_id=query.message.message_id,
-                              reply_markup=create_calendar(purpose, int(year), int(month), highlight_dates))
+        bot_edit_message(bot, text, update, create_calendar(purpose, int(year), int(month), highlight_dates))
+
     else:
         bot.answer_callback_query(callback_query_id=query.id, text="Something went wrong!")
     return False, purpose, []
@@ -276,11 +267,7 @@ def inline_calendar_handler(bot, update, user):
                     text = 'Нельзя записаться на этот день, выбери другой.'
                     markup = create_calendar(purpose, date_my.year, date_my.month)
 
-        bot.edit_message_text(text,
-                              chat_id=update.callback_query.message.chat_id,
-                              message_id=update.callback_query.message.message_id,
-                              reply_markup=markup,
-                              parse_mode='HTML')
+        bot_edit_message(bot, text, update, markup)
 
 
 @handler_decor(check_status=True)
@@ -304,21 +291,15 @@ def skip_lesson_whem_geq_2(bot, update, user):
     training_day = GroupTrainingDay.objects.get(id=tr_day_id)
     group_name, group_players = make_group_name_group_players_info_for_skipping(training_day)
     markup, text = construct_detail_menu_for_skipping(training_day, CLNDR_ACTION_SKIP, group_name, group_players)
-    bot.edit_message_text(text,
-                          chat_id=update.callback_query.message.chat_id,
-                          message_id=update.callback_query.message.message_id,
-                          reply_markup=markup,
-                          parse_mode='HTML')
+    bot_edit_message(bot, text, update, markup)
 
 
 @handler_decor(check_status=True)
 def skip_lesson(bot, update, user):
     tr_day_id = update.callback_query.data[len(SHOW_INFO_ABOUT_SKIPPING_DAY):]
     training_day = GroupTrainingDay.objects.get(id=tr_day_id)
-    bot.edit_message_text('Окей, занятие <b>{}</b> отменено'.format(training_day.date.strftime(DT_BOT_FORMAT)),
-                          chat_id=update.callback_query.message.chat.id,
-                          message_id=update.callback_query.message.message_id,
-                          parse_mode='HTML')
+    text = 'Окей, занятие <b>{}</b> отменено'.format(training_day.date.strftime(DT_BOT_FORMAT))
+    bot_edit_message(bot, text, update)
 
     if training_day.is_individual:
         training_day.delete()
@@ -351,23 +332,18 @@ def skip_lesson(bot, update, user):
 
 @handler_decor(check_status=True)
 def choose_type_of_training(bot, update, user):
-    buttons = [[
+    markup = inline_markup([[
         inline_button('Индивидуальная', callback_data=SELECT_TRAINING_TYPE + 'ind')
     ], [
         inline_button('Групповая', callback_data=SELECT_TRAINING_TYPE + 'group')
-    ]]
+    ]])
     text = 'Выбери тип тренировки.'
     if update.callback_query:
-        bot.edit_message_text(
-            text,
-            reply_markup=inline_markup(buttons),
-            chat_id=update.callback_query.message.chat_id,
-            message_id=update.callback_query.message.message_id,
-        )
+        bot_edit_message(bot, text, update, markup)
     else:
         bot.send_message(user.id,
                          text,
-                         reply_markup=inline_markup(buttons))
+                         reply_markup=markup)
 
 
 @handler_decor(check_status=True)
@@ -403,23 +379,15 @@ def take_lesson(bot, update, user):
         markup = inline_markup(buttons)
         text = 'Выбери продолжительность занятия'
 
-    bot.edit_message_text(
-        text,
-        reply_markup=markup,
-        chat_id=update.callback_query.message.chat_id,
-        message_id=update.callback_query.message.message_id,
-        parse_mode='HTML',
-    )
+    bot_edit_message(bot, text, update, markup)
 
 
 @handler_decor()
 def select_dt_for_ind_lesson(bot, update, user):
     duration = float(update.callback_query.data[len(SELECT_DURATION_FOR_IND_TRAIN):])
-    buttons = create_calendar(f'{CLNDR_ACTION_TAKE_IND}{duration}')
-    bot.edit_message_text('Выбери дату тренировки.',
-                          reply_markup=buttons,
-                          chat_id=update.callback_query.message.chat_id,
-                          message_id=update.callback_query.message.message_id, )
+    markup = create_calendar(f'{CLNDR_ACTION_TAKE_IND}{duration}')
+    text = 'Выбери дату тренировки.'
+    bot_edit_message(bot, text, update, markup)
 
 
 @handler_decor()
@@ -438,26 +406,24 @@ def select_precise_ind_lesson_time(bot, update, user):
     tr_day = GroupTrainingDay.objects.create(group=group, date=date_dt, start_time=st_time_obj, duration=duration,
                                              is_individual=True)
 
-    bot.edit_message_text(f"Сообщу тренеру, что ты хочешь прийти на индивидуальное занятие"
-                          f" <b>{day_dt} ({day_of_week}) </b>\n"
-                          f"Время: <b>{start_time} — {end_time}</b>",
-                          chat_id=update.callback_query.message.chat_id,
-                          message_id=update.callback_query.message.message_id,
-                          parse_mode='HTML')
+    text = f"Сообщу тренеру, что ты хочешь прийти на индивидуальное занятие"\
+           f" <b>{day_dt} ({day_of_week}) </b>\n"\
+           f"Время: <b>{start_time} — {end_time}</b>"
+    bot_edit_message(bot, text, update)
 
     admin_bot = telegram.Bot(ADMIN_TELEGRAM_TOKEN)
     admins = User.objects.filter(is_staff=True, is_blocked=False)
-    buttons = [[
+    markup = inline_markup([[
         inline_button('Да', callback_data=f"{PERMISSION_FOR_IND_TRAIN}yes|{user.id}|{tr_day.id}")
     ], [
         inline_button('Нет', callback_data=f"{PERMISSION_FOR_IND_TRAIN}no|{user.id}|{tr_day.id}")
-    ]]
+    ]])
     text = f"<b>{user.first_name} {user.last_name} — {user.phone_number}</b>\n" \
            f"Хочет прийти на индивидуальное занятие <b>{day_dt} ({day_of_week}) </b>" \
            f" в <b>{start_time} — {end_time}</b>\n" \
            f"<b>Разрешить?</b>"
 
-    send_message(admins, text, admin_bot, markup=inline_markup(buttons))
+    send_message(admins, text, admin_bot, markup=markup)
 
 
 @handler_decor()
@@ -493,21 +459,15 @@ def select_precise_group_lesson_time(bot, update, user):
            f'👥Присутствующие:\n{all_players}\n\n' \
            f'Свободных мест: {n_free_places}'
 
-    buttons = [[
+    markup = inline_markup([[
         inline_button('Записаться', callback_data=f"{CONFIRM_GROUP_LESSON}{tr_day_id}")
     ], [
         inline_button(f'{BACK_BUTTON}',
                       callback_data=create_callback_data(CLNDR_ACTION_TAKE_GROUP, CLNDR_DAY, tr_day.date.year,
                                                          tr_day.date.month, tr_day.date.day))
-    ]]
+    ]])
 
-    bot.edit_message_text(
-        text,
-        chat_id=update.callback_query.message.chat_id,
-        message_id=update.callback_query.message.message_id,
-        parse_mode='HTML',
-        reply_markup=inline_markup(buttons)
-    )
+    bot_edit_message(bot, text, update, markup)
 
 
 @handler_decor()
@@ -574,13 +534,7 @@ def confirm_group_lesson(bot, update, user):
             ]]
             markup = inline_markup(buttons)
 
-    bot.edit_message_text(
-        text,
-        chat_id=update.callback_query.message.chat_id,
-        message_id=update.callback_query.message.message_id,
-        parse_mode='HTML',
-        reply_markup=markup
-    )
+    bot_edit_message(bot, text, update, markup)
 
     if admit_message_text:
         admin_bot = telegram.Bot(ADMIN_TELEGRAM_TOKEN)

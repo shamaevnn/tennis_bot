@@ -4,7 +4,7 @@ from telegram.ext import ConversationHandler
 from django.core.exceptions import ObjectDoesNotExist
 from base.models import User, GroupTrainingDay, Payment, TrainingGroup, StaticData
 from base.utils import construct_admin_main_menu, DT_BOT_FORMAT, TM_TIME_SCHEDULE_FORMAT, construct_menu_months, \
-    construct_menu_groups, moscow_datetime
+    construct_menu_groups, moscow_datetime, bot_edit_message
 from tele_interface.manage_data import PERMISSION_FOR_IND_TRAIN, SHOW_GROUPDAY_INFO, \
     from_eng_to_rus_day_week, CLNDR_ADMIN_VIEW_SCHEDULE, CLNDR_ACTION_BACK, CLNDR_NEXT_MONTH, CLNDR_DAY, CLNDR_IGNORE, \
     CLNDR_PREV_MONTH, ADMIN_SITE, PAYMENT_YEAR, PAYMENT_YEAR_MONTH, PAYMENT_YEAR_MONTH_GROUP, PAYMENT_START_CHANGE, \
@@ -75,12 +75,7 @@ def permission_for_ind_train(bot, update, user):
     else:
         admin_text = 'Тренировка уже отменена.'
 
-    bot.edit_message_text(
-        admin_text,
-        chat_id=update.callback_query.message.chat_id,
-        message_id=update.callback_query.message.message_id,
-        parse_mode='HTML',
-    )
+    bot_edit_message(bot, admin_text, update)
 
 
 def admin_calendar_selection(bot, update):
@@ -95,33 +90,20 @@ def admin_calendar_selection(bot, update):
     if action == CLNDR_IGNORE:
         bot.answer_callback_query(callback_query_id=query.id)
     elif action == CLNDR_DAY:
-        bot.edit_message_text(text=query.message.text,
-                              chat_id=query.message.chat_id,
-                              message_id=query.message.message_id
-                              )
+        bot_edit_message(bot, query.message.text, update)
         return True, purpose, date(int(year), int(month), int(day))
     elif action == CLNDR_PREV_MONTH:
         pre = curr - timedelta(days=1)
-        bot.edit_message_text(text=query.message.text,
-                              chat_id=query.message.chat_id,
-                              message_id=query.message.message_id,
-                              reply_markup=create_calendar(purpose, int(pre.year), int(pre.month)))
+        bot_edit_message(bot, query.mesage.text, update, create_calendar(purpose, int(pre.year), int(pre.month)))
     elif action == CLNDR_NEXT_MONTH:
         ne = curr + timedelta(days=31)
-        bot.edit_message_text(text=query.message.text,
-                              chat_id=query.message.chat_id,
-                              message_id=query.message.message_id,
-                              reply_markup=create_calendar(purpose, int(ne.year), int(ne.month)))
+        bot_edit_message(bot, query.mesage.text, update, create_calendar(purpose, int(ne.year), int(ne.month)))
     elif action == CLNDR_ACTION_BACK:
         if purpose == CLNDR_ADMIN_VIEW_SCHEDULE:
             text = 'Тренировочные дни'
         else:
             text = 'Тренировочные дни'
-
-        bot.edit_message_text(text=text,
-                              chat_id=query.message.chat_id,
-                              message_id=query.message.message_id,
-                              reply_markup=create_calendar(purpose, int(year), int(month)))
+        bot_edit_message(bot, text, update, create_calendar(purpose, int(year), int(month)))
     else:
         bot.answer_callback_query(callback_query_id=query.id, text="Something went wrong!")
     return False, purpose, []
@@ -141,11 +123,7 @@ def inline_calendar_handler(bot, update, user):
             else:
                 text = 'Нет тренировок в этот день'
                 markup = create_calendar(purpose, date_my.year, date_my.month)
-        bot.edit_message_text(text,
-                              chat_id=update.callback_query.message.chat_id,
-                              message_id=update.callback_query.message.message_id,
-                              reply_markup=markup,
-                              parse_mode='HTML')
+        bot_edit_message(bot, text, update, markup)
 
 
 @admin_handler_decor()
@@ -216,52 +194,41 @@ def show_traingroupday_info(bot, update, user):
     users_info = group_name + group_players + visitors + absents
     text = general_info + users_info
 
-    buttons = [[
+    markup = inlinemark([[
         inlinebutt(f'{BACK_BUTTON}',
                    callback_data=create_callback_data(CLNDR_ADMIN_VIEW_SCHEDULE, CLNDR_DAY, tr_day.date.year,
                                                       tr_day.date.month, tr_day.date.day)),
-    ]]
+    ]])
 
-    bot.edit_message_text(text,
-                          chat_id=update.callback_query.message.chat_id,
-                          message_id=update.callback_query.message.message_id,
-                          parse_mode='HTML',
-                          reply_markup=inlinemark(buttons))
+    bot_edit_message(bot, text, update, markup)
 
 
 @admin_handler_decor()
 def start_payment(bot, update, user):
     text = 'Выбери год'
     now_date = moscow_datetime(datetime.datetime.now()).date()
-    buttons = [[
+    markup = inlinemark([[
         inlinebutt('2020', callback_data=f'{PAYMENT_YEAR}0')
         ,
         inlinebutt('2021', callback_data=f'{PAYMENT_YEAR}1')
     ], [
         inlinebutt('К группам', callback_data=f'{PAYMENT_YEAR_MONTH}{now_date.year - 2020}|{now_date.month}')
-    ]]
+    ]])
     if update.callback_query:
-        bot.edit_message_text(text,
-                              chat_id=update.callback_query.message.chat_id,
-                              message_id=update.callback_query.message.message_id,
-                              parse_mode='HTML',
-                              reply_markup=inlinemark(buttons))
+        bot_edit_message(bot, text, update, markup)
+
     else:
         bot.send_message(user.id,
                          text,
-                         reply_markup=inlinemark(buttons))
+                         reply_markup=markup)
 
 
 @admin_handler_decor()
 def year_payment(bot, update, user):
     year = update.callback_query.data[len(PAYMENT_YEAR):]
     text = 'Выбери месяц'
-    buttons = construct_menu_months(Payment.MONTHS, f'{PAYMENT_YEAR_MONTH}{year}|')
-    bot.edit_message_text(text,
-                          chat_id=update.callback_query.message.chat_id,
-                          message_id=update.callback_query.message.message_id,
-                          parse_mode='HTML',
-                          reply_markup=buttons)
+    markup = construct_menu_months(Payment.MONTHS, f'{PAYMENT_YEAR_MONTH}{year}|')
+    bot_edit_message(bot, text, update, markup)
 
 
 @admin_handler_decor()
@@ -269,12 +236,8 @@ def month_payment(bot, update, user):
     year, month = update.callback_query.data[len(PAYMENT_YEAR_MONTH):].split('|')
     text = f'{int(year) + 2020}--{from_digit_to_month[int(month)]}\nВыбери группу'
     banda_groups = TrainingGroup.objects.filter(name__iregex=r'БАНДА')
-    buttons = construct_menu_groups(banda_groups, f'{PAYMENT_YEAR_MONTH_GROUP}{year}|{month}|')
-    bot.edit_message_text(text,
-                          chat_id=update.callback_query.message.chat_id,
-                          message_id=update.callback_query.message.message_id,
-                          parse_mode='HTML',
-                          reply_markup=buttons)
+    markup = construct_menu_groups(banda_groups, f'{PAYMENT_YEAR_MONTH_GROUP}{year}|{month}|')
+    bot_edit_message(bot, text, update, markup)
 
     return ConversationHandler.END
 
@@ -325,11 +288,7 @@ def group_payment(bot, update, user):
         inlinebutt(f'{BACK_BUTTON}', callback_data=f'{PAYMENT_YEAR_MONTH}{year}|{month}')
     ]])
 
-    bot.edit_message_text(text,
-                          chat_id=update.callback_query.message.chat_id,
-                          message_id=update.callback_query.message.message_id,
-                          parse_mode='HTML',
-                          reply_markup=markup)
+    bot_edit_message(bot, text, update, markup)
 
 
 START_CHANGE_PAYMENT, CONFIRM_OR_CANCEL = range(2)
@@ -404,11 +363,7 @@ def confirm_or_cancel_changing_payment(bot, update, user):
                    callback_data=f'{PAYMENT_YEAR_MONTH}{payment.year}|{payment.month}')
     ]])
 
-    bot.edit_message_text(text,
-                          chat_id=update.callback_query.message.chat_id,
-                          message_id=update.callback_query.message.message_id,
-                          parse_mode='HTML',
-                          reply_markup=markup)
+    bot_edit_message(bot, text, update, markup)
 
     return ConversationHandler.END
 

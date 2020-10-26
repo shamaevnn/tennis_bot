@@ -1,7 +1,7 @@
 from base.models import User
 from functools import wraps
 
-from base.utils import  TM_TIME_SCHEDULE_FORMAT
+from base.utils import TM_TIME_SCHEDULE_FORMAT, get_time_info_from_tr_day
 from tele_interface.manage_data import CLNDR_ADMIN_VIEW_SCHEDULE, CLNDR_ACTION_BACK, BACK_BUTTON
 from tele_interface.utils import create_callback_data
 from tennis_bot.settings import DEBUG
@@ -60,16 +60,13 @@ def day_buttons_coach_info(tr_days, button_text):
     buttons = []
     row = []
     for day in tr_days:
-
-        end_time = datetime.datetime.combine(day.date,
-                                             day.start_time) + day.duration
-
+        time_tlg, _, _, _, _, _, _ = get_time_info_from_tr_day(day)
         row.append(
             inlinebutt(f'{day.group.name}', callback_data=f"{button_text}{day.id}")
         )
         row.append(
             inlinebutt(
-                f'{day.start_time.strftime(TM_TIME_SCHEDULE_FORMAT)} — {end_time.strftime(TM_TIME_SCHEDULE_FORMAT)}',
+                f'{time_tlg}',
                 callback_data=f"{button_text}{day.id}")
         )
         if len(row) >= 2:

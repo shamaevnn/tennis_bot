@@ -1,12 +1,16 @@
+import calendar
+
 from pytz import timezone
 from telegram import (ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton)
 from tele_interface.manage_data import (
     ADMIN_TIME_SCHEDULE_BUTTON,
     MY_DATA_BUTTON,
     SKIP_LESSON_BUTTON,
-    TAKE_LESSON_BUTTON, HELP_BUTTON, ADMIN_SITE, ADMIN_PAYMENT, PAYMENT_YEAR_MONTH_GROUP, PAYMENT_YEAR, BACK_BUTTON, )
+    TAKE_LESSON_BUTTON, HELP_BUTTON, ADMIN_SITE, ADMIN_PAYMENT, PAYMENT_YEAR_MONTH_GROUP, PAYMENT_YEAR, BACK_BUTTON,
+    from_eng_to_rus_day_week, )
 
 import telegram
+import datetime
 
 DTTM_BOT_FORMAT = '%Y.%m.%d.%H.%M'
 DT_BOT_FORMAT = '%Y.%m.%d'
@@ -118,3 +122,21 @@ def bot_edit_message(bot, text, update, markup=None):
                           message_id=update.callback_query.message.message_id,
                           parse_mode='HTML',
                           reply_markup=markup)
+
+
+def get_time_info_from_tr_day(tr_day):
+    """
+    :param tr_day: instance of GroupTrainingDay
+    :return: end_time, start_time: datetime,
+             *time_tlg: str, is used in buttons,
+             day_of_week: str, russian name of day of week
+    """
+    start_time = tr_day.start_time
+    start_time_tlg = start_time.strftime(TM_TIME_SCHEDULE_FORMAT)
+    end_time = datetime.datetime.combine(tr_day.date, start_time) + tr_day.duration
+    end_time_tlg = end_time.strftime(TM_TIME_SCHEDULE_FORMAT)
+    time_tlg = f'{start_time_tlg} — {end_time_tlg}'
+    day_of_week = from_eng_to_rus_day_week[calendar.day_name[tr_day.date.weekday()]]
+    date_tlg = tr_day.date.strftime(DT_BOT_FORMAT)
+
+    return time_tlg, start_time_tlg, end_time_tlg, date_tlg, day_of_week, start_time, end_time

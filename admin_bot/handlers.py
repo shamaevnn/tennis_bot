@@ -4,7 +4,7 @@ from telegram.ext import ConversationHandler
 from django.core.exceptions import ObjectDoesNotExist
 from base.models import User, GroupTrainingDay, Payment, TrainingGroup, StaticData
 from base.utils import construct_admin_main_menu, DT_BOT_FORMAT, TM_TIME_SCHEDULE_FORMAT, construct_menu_months, \
-    construct_menu_groups, moscow_datetime, bot_edit_message
+    construct_menu_groups, moscow_datetime, bot_edit_message, get_time_info_from_tr_day
 from tele_interface.manage_data import PERMISSION_FOR_IND_TRAIN, SHOW_GROUPDAY_INFO, \
     from_eng_to_rus_day_week, CLNDR_ADMIN_VIEW_SCHEDULE, CLNDR_ACTION_BACK, CLNDR_NEXT_MONTH, CLNDR_DAY, CLNDR_IGNORE, \
     CLNDR_PREV_MONTH, ADMIN_SITE, PAYMENT_YEAR, PAYMENT_YEAR_MONTH, PAYMENT_YEAR_MONTH_GROUP, PAYMENT_START_CHANGE, \
@@ -41,27 +41,23 @@ def permission_for_ind_train(bot, update, user):
 
     if tr_day.count():
         tr_day = tr_day.first()
-        start_time = tr_day.start_time.strftime(TM_TIME_SCHEDULE_FORMAT)
-        end_time = (datetime.datetime.combine(tr_day.date, tr_day.start_time) + tr_day.duration).time().strftime(
-            TM_TIME_SCHEDULE_FORMAT)
+        time_tlg, _, _, date_tlg, _, _, _ = get_time_info_from_tr_day(tr_day)
 
         if permission == 'yes':
             admin_text = 'Отлично, приятной тренировки!'
 
-            user_text = f'Отлично, тренер подтвердил тренировку <b>{tr_day.date.strftime(DT_BOT_FORMAT)}</b>\n' \
-                        f'Время: <b>{start_time} — {end_time}</b>\n' \
+            user_text = f'Отлично, тренер подтвердил тренировку <b>{date_tlg}</b>\n' \
+                        f'Время: <b>{time_tlg}</b>\n' \
                         f'Не забудь!'
 
         else:
-            admin_text = 'Хорошо, сообщу {} {}, что тренировка  {} \n<b>{} — {}</b> отменена.'.format(player.last_name,
-                                                                                                      player.first_name,
-                                                                                                      tr_day.date.strftime(
-                                                                                                          DT_BOT_FORMAT),
-                                                                                                      start_time,
-                                                                                                      end_time)
+            admin_text = 'Хорошо, сообщу {} {}, что тренировка  {} \n<b>{}</b> отменена.'.format(player.last_name,
+                                                                                                 player.first_name,
+                                                                                                 date_tlg,
+                                                                                                 time_tlg, )
 
-            user_text = f'Внимание!!!\nИндивидуальная тренировка <b> {tr_day.date.strftime(DT_BOT_FORMAT)}</b>\n' \
-                        f'в <b>{start_time} — {end_time}</b>\n' \
+            user_text = f'Внимание!!!\nИндивидуальная тренировка <b> {date_tlg}</b>\n' \
+                        f'в <b>{time_tlg}</b>\n' \
                         f'<b>ОТМЕНЕНА</b>'
 
             tr_day.delete()
@@ -117,9 +113,8 @@ def inline_calendar_handler(bot, update, user):
             tr_days = GroupTrainingDay.objects.filter(date=date_my).select_related('group').order_by('start_time')
             if tr_days.count():
                 markup = day_buttons_coach_info(tr_days, SHOW_GROUPDAY_INFO)
-
-                day_of_week = from_eng_to_rus_day_week[calendar.day_name[date_my.weekday()]]
-                text = '📅{} ({})'.format(date_my, day_of_week)
+                _, _, _, date_tlg, day_of_week, _, _ = get_time_info_from_tr_day(tr_days.first())
+                text = '📅{} ({})'.format(date_tlg, day_of_week)
             else:
                 text = 'Нет тренировок в этот день'
                 markup = create_calendar(purpose, date_my.year, date_my.month)
@@ -186,11 +181,9 @@ def show_traingroupday_info(bot, update, user):
         visitors = ''
         absents = ''
 
-    end_time = datetime.datetime.combine(tr_day.date, tr_day.start_time) + tr_day.duration
-    time = f'{tr_day.start_time.strftime(TM_TIME_SCHEDULE_FORMAT)} — {end_time.strftime(TM_TIME_SCHEDULE_FORMAT)}'
-    day_of_week = from_eng_to_rus_day_week[calendar.day_name[tr_day.date.weekday()]]
+    time_tlg, _, _, date_tlg, day_of_week, _, _ = get_time_info_from_tr_day(tr_day)
 
-    general_info = f'<b>{tr_day.date.strftime(DT_BOT_FORMAT)} ({day_of_week})\n{time}</b>' + '\n' + availability + is_individual + affiliation
+    general_info = f'<b>{date_tlg} ({day_of_week})\n{time_tlg}</b>' + '\n' + availability + is_individual + affiliation
     users_info = group_name + group_players + visitors + absents
     text = general_info + users_info
 

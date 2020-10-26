@@ -7,6 +7,7 @@ from .utils import (handler_decor,
                     )
 from base.utils import (construct_main_menu,
                         send_message, DT_BOT_FORMAT, TM_TIME_SCHEDULE_FORMAT, moscow_datetime, bot_edit_message,
+                        get_time_info_from_tr_day,
                         )
 from base.models import (User,
                          GroupTrainingDay,
@@ -289,6 +290,7 @@ def skip_lesson_main_menu_button(bot, update, user):
 def skip_lesson_whem_geq_2(bot, update, user):
     tr_day_id = update.callback_query.data[len(SELECT_SKIP_TIME_BUTTON):]
     training_day = GroupTrainingDay.objects.get(id=tr_day_id)
+
     group_name, group_players = make_group_name_group_players_info_for_skipping(training_day)
     markup, text = construct_detail_menu_for_skipping(training_day, CLNDR_ACTION_SKIP, group_name, group_players)
     bot_edit_message(bot, text, update, markup)
@@ -298,6 +300,7 @@ def skip_lesson_whem_geq_2(bot, update, user):
 def skip_lesson(bot, update, user):
     tr_day_id = update.callback_query.data[len(SHOW_INFO_ABOUT_SKIPPING_DAY):]
     training_day = GroupTrainingDay.objects.get(id=tr_day_id)
+
     text = 'Окей, занятие <b>{}</b> отменено'.format(training_day.date.strftime(DT_BOT_FORMAT))
     bot_edit_message(bot, text, update)
 
@@ -306,16 +309,12 @@ def skip_lesson(bot, update, user):
         admin_bot = telegram.Bot(ADMIN_TELEGRAM_TOKEN)
         admins = User.objects.filter(is_superuser=True, is_blocked=False)
 
-        start_time = training_day.start_time.strftime(TM_TIME_SCHEDULE_FORMAT)
-        end_time = (datetime.combine(training_day.date, training_day.start_time) + training_day.duration).strftime(
-            TM_TIME_SCHEDULE_FORMAT)
-
-        day_of_week = calendar.day_name[training_day.date.weekday()]
+        time_tlg, _, _, date_tlg, day_of_week, _, _ = get_time_info_from_tr_day(training_day)
 
         text = f'⚠️ATTENTION⚠️\n' \
                f'{user.first_name} {user.last_name} отменил индивидуальную тренировку\n' \
-               f'📅Дата: <b>{training_day.date.strftime(DT_BOT_FORMAT)} ({from_eng_to_rus_day_week[day_of_week]})</b>\n' \
-               f'⏰Время: <b>{start_time} — {end_time}</b>\n\n'
+               f'📅Дата: <b>{date_tlg} ({day_of_week})</b>\n' \
+               f'⏰Время: <b>{time_tlg}</b>\n\n'
 
         send_message(admins, text, admin_bot)
 
@@ -439,12 +438,8 @@ def select_precise_group_lesson_time(bot, update, user):
 
     tr_day_id = update.callback_query.data[len(SELECT_PRECISE_GROUP_TIME):]
     tr_day = GroupTrainingDay.objects.select_related('group').get(id=tr_day_id)
-    start_time = tr_day.start_time.strftime(TM_TIME_SCHEDULE_FORMAT)
-    end_time = (datetime.combine(tr_day.date, tr_day.start_time) + tr_day.duration).strftime(
-        TM_TIME_SCHEDULE_FORMAT)
 
-    day_of_week = calendar.day_name[tr_day.date.weekday()]
-
+    time_tlg, _, _, date_tlg, day_of_week, _, _ = get_time_info_from_tr_day(tr_day)
     # сколько сейчас свободных мест
     n_free_places = tr_day.group.max_players - tr_day.visitors.count() + tr_day.absent.count() - tr_day.group.users.count()
     all_players = tr_day.group.users.union(tr_day.visitors.all()).difference(tr_day.absent.all()).values('first_name',
@@ -454,8 +449,8 @@ def select_precise_group_lesson_time(bot, update, user):
 
     all_players = '\n'.join((f"{x['first_name']} {x['last_name']}" for x in all_players))
     text = f'{tr_day.group.name} -- {group_level[tr_day.group.level]}\n' \
-           f'📅Дата: <b>{tr_day.date.strftime(DT_BOT_FORMAT)} ({from_eng_to_rus_day_week[day_of_week]})</b>\n' \
-           f'⏰Время: <b>{start_time} — {end_time}</b>\n\n' \
+           f'📅Дата: <b>{date_tlg} ({day_of_week})</b>\n' \
+           f'⏰Время: <b>{time_tlg}</b>\n\n' \
            f'👥Присутствующие:\n{all_players}\n\n' \
            f'Свободных мест: {n_free_places}'
 
@@ -474,20 +469,17 @@ def select_precise_group_lesson_time(bot, update, user):
 def confirm_group_lesson(bot, update, user):
     tr_day_id = update.callback_query.data[len(CONFIRM_GROUP_LESSON):]
     tr_day = GroupTrainingDay.objects.select_related('group').get(id=tr_day_id)
-    start_time = tr_day.start_time.strftime(TM_TIME_SCHEDULE_FORMAT)
-    end_time = (datetime.combine(tr_day.date, tr_day.start_time) + tr_day.duration).strftime(
-        TM_TIME_SCHEDULE_FORMAT)
 
-    day_of_week = calendar.day_name[tr_day.date.weekday()]
-
+    time_tlg, start_time_tlg, end_time_tlg, date_tlg, day_of_week, start_time, end_time = get_time_info_from_tr_day(
+        tr_day)
     n_free_places = tr_day.group.max_players - tr_day.visitors.count() + tr_day.absent.count() - tr_day.group.users.count()
     admit_message_text = ''
     if user in tr_day.absent.all():
         tr_day.absent.remove(user)
         text = f'Сначала отменять, а потом записываться, мда 🤦🏻‍♂️🥴. Вот почему я скоро буду управлять кожаными ' \
                f'мешками.\n' \
-               f'Ладно, записал тебя на <b>{tr_day.date.strftime(DT_BOT_FORMAT)} ({from_eng_to_rus_day_week[day_of_week]})</b>\n' \
-               f'Время: <b>{start_time} — {end_time}</b>'
+               f'Ладно, записал тебя на <b>{date_tlg} ({day_of_week})</b>\n' \
+               f'Время: <b>{time_tlg}</b>'
         markup = None
 
         if user.bonus_lesson > 0:
@@ -495,16 +487,16 @@ def confirm_group_lesson(bot, update, user):
             user.save()
         else:
             admit_message_text = f'⚠️ATTENTION⚠️\n' \
-                                 f'{user.first_name} {user.last_name} записался на <b>{tr_day.date.strftime(DT_BOT_FORMAT)} ({from_eng_to_rus_day_week[day_of_week]})</b>\n' \
-                                 f'Время: <b>{start_time} — {end_time}</b>\n' \
+                                 f'{user.first_name} {user.last_name} записался на <b>{date_tlg} ({day_of_week})</b>\n' \
+                                 f'Время: <b>{time_tlg}</b>\n' \
                                  f'<b>Не за счет отыгрышей, не забудь взять с него денюжку.</b>'
     else:
         if user not in tr_day.group.users.all():
             if n_free_places:
                 tr_day.visitors.add(user)
 
-                text = f'Записал тебя на <b>{tr_day.date.strftime(DT_BOT_FORMAT)} ({from_eng_to_rus_day_week[day_of_week]})</b>\n' \
-                       f'Время: <b>{start_time} — {end_time}</b>'
+                text = f'Записал тебя на <b>{date_tlg} ({day_of_week})</b>\n' \
+                       f'Время: <b>{time_tlg}</b>'
 
                 markup = None
 
@@ -513,8 +505,8 @@ def confirm_group_lesson(bot, update, user):
                     user.save()
                 else:
                     admit_message_text = f'⚠️ATTENTION⚠️\n' \
-                                         f'{user.first_name} {user.last_name} записался на <b>{tr_day.date.strftime(DT_BOT_FORMAT)} ({from_eng_to_rus_day_week[day_of_week]})</b>\n' \
-                                         f'Время: <b>{start_time} — {end_time}</b>\n' \
+                                         f'{user.first_name} {user.last_name} записался на <b>{date_tlg} ({day_of_week})</b>\n' \
+                                         f'Время: <b>{time_tlg}</b>\n' \
                                          f'<b>Не за счет отыгрышей, не забудь взять с него денюжку.</b>'
 
             else:

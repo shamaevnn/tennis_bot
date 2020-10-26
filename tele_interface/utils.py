@@ -15,14 +15,13 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup, InlineKeyboardB
 from base.models import (User,
                          GroupTrainingDay,
                          TrainingGroup, )
-from base.utils import TM_TIME_SCHEDULE_FORMAT, DT_BOT_FORMAT, moscow_datetime
+from base.utils import TM_TIME_SCHEDULE_FORMAT, DT_BOT_FORMAT, moscow_datetime, get_time_info_from_tr_day
 from tele_interface.manage_data import SHOW_INFO_ABOUT_SKIPPING_DAY, from_eng_to_rus_day_week, CLNDR_IGNORE, CLNDR_DAY, \
     CLNDR_PREV_MONTH, CLNDR_NEXT_MONTH, CLNDR_ACTION_BACK, CLNDR_ACTION_TAKE_IND, CLNDR_ACTION_SKIP, \
     SELECT_SKIP_TIME_BUTTON, BACK_BUTTON, from_digit_to_month
 
 from tennis_bot.settings import DEBUG
 
-import telegram
 import sys
 import logging
 
@@ -253,10 +252,9 @@ def construct_time_menu_for_group_lesson(button_text, tr_days, date, purpose):
     buttons = []
     row = []
     for day in tr_days:
-
-        end_time = (datetime.combine(day.date, day.start_time) + day.duration).strftime(TM_TIME_SCHEDULE_FORMAT)
+        time_tlg, _, _, _, _, _, _ = get_time_info_from_tr_day(day)
         row.append(
-            InlineKeyboardButton(f'{day.start_time.strftime(TM_TIME_SCHEDULE_FORMAT)} — {end_time}',
+            InlineKeyboardButton(f'{time_tlg}',
                                  callback_data=button_text + str(day.id))
         )
         if len(row) >= 2:
@@ -274,10 +272,8 @@ def construct_time_menu_for_group_lesson(button_text, tr_days, date, purpose):
 
 
 def construct_detail_menu_for_skipping(training_day, purpose, group_name, group_players):
-    end_time = datetime.combine(training_day.date, training_day.start_time) + training_day.duration
-    time = f'{training_day.start_time.strftime(TM_TIME_SCHEDULE_FORMAT)} — {end_time.strftime(TM_TIME_SCHEDULE_FORMAT)}'
-    day_of_week = from_eng_to_rus_day_week[calendar.day_name[training_day.date.weekday()]]
-    text = f'<b>{training_day.date.strftime(DT_BOT_FORMAT)} ({day_of_week})\n{time}\n</b>' + group_name + '\n' + group_players
+    time_tlg, _, _, date_tlg, day_of_week, _, _ = get_time_info_from_tr_day(training_day)
+    text = f'<b>{date_tlg} ({day_of_week})\n{time_tlg}\n</b>' + group_name + '\n' + group_players
 
     buttons = [[
         InlineKeyboardButton('Пропустить', callback_data=SHOW_INFO_ABOUT_SKIPPING_DAY + f'{training_day.id}')
@@ -297,11 +293,10 @@ def construct_menu_skipping_much_lesson(tr_days):
     row = []
     date_info = tr_days.first().date
     for tr_day in tr_days:
-        end_time = datetime.combine(tr_day.date, tr_day.start_time) + tr_day.duration
+        time_tlg, _, _, _, _, _, _ = get_time_info_from_tr_day(tr_day)
         row.append(
             inlinebutt(
-                f'{tr_day.start_time.strftime(TM_TIME_SCHEDULE_FORMAT)} — {end_time.strftime(TM_TIME_SCHEDULE_FORMAT)}',
-                callback_data="{}{}".format(SELECT_SKIP_TIME_BUTTON, tr_day.id))
+                f'{time_tlg}', callback_data="{}{}".format(SELECT_SKIP_TIME_BUTTON, tr_day.id))
         )
         if len(row) >= 2:
             buttons.append(row)

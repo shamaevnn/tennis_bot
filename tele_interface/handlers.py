@@ -254,10 +254,9 @@ def inline_calendar_handler(bot, update, user):
                 poss_time_for_train = []
                 if date_time_dict.get(date_comparison):
                     for i in range(len(date_time_dict[date_comparison]) - int(float(duration) * 2)):
-                        if datetime.combine(date_comparison,
-                                            date_time_dict[date_comparison][
+                        if datetime.combine(date_comparison, date_time_dict[date_comparison][
                                                 i + int(float(duration) * 2)]) - datetime.combine(
-                            date_comparison, date_time_dict[date_comparison][i]) == timedelta(hours=float(duration)):
+                             date_comparison, date_time_dict[date_comparison][i]) == timedelta(hours=float(duration)):
                             poss_time_for_train.append(date_time_dict[date_comparison][i])
 
                     markup = construct_time_menu_4ind_lesson(SELECT_PRECISE_IND_TIME, poss_time_for_train,

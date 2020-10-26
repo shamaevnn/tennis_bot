@@ -2,11 +2,12 @@ from base.models import User
 from functools import wraps
 
 from base.utils import TM_TIME_SCHEDULE_FORMAT, get_time_info_from_tr_day
-from tele_interface.manage_data import CLNDR_ADMIN_VIEW_SCHEDULE, CLNDR_ACTION_BACK, BACK_BUTTON
+from tele_interface.manage_data import CLNDR_ADMIN_VIEW_SCHEDULE, CLNDR_ACTION_BACK, BACK_BUTTON, ADMIN_PAYMENT, \
+    PAYMENT_YEAR_MONTH_GROUP, PAYMENT_YEAR
 from tele_interface.utils import create_callback_data
 from tennis_bot.settings import DEBUG
 from telegram import (InlineKeyboardButton as inlinebutt,
-                      InlineKeyboardMarkup as inlinemark,)
+                      InlineKeyboardMarkup as inlinemark, InlineKeyboardButton, InlineKeyboardMarkup, )
 
 import datetime
 import sys
@@ -81,3 +82,47 @@ def day_buttons_coach_info(tr_days, button_text):
     ])
 
     return inlinemark(buttons)
+
+
+def construct_menu_months(months, button_text):
+    buttons = []
+    row = []
+    for month_num, month in months:
+        row.append(
+            InlineKeyboardButton(f'{month}', callback_data=f'{button_text}{month_num}')
+        )
+        if len(row) >= 3:
+            buttons.append(row)
+            row = []
+    if len(row):
+        buttons.append(row)
+
+    buttons.append([
+        InlineKeyboardButton(f'{BACK_BUTTON}',
+                             callback_data=f'{ADMIN_PAYMENT}'),
+    ])
+
+    return InlineKeyboardMarkup(buttons)
+
+
+def construct_menu_groups(groups, button_text):
+    buttons = []
+    row = []
+    for group in groups:
+        row.append(
+            InlineKeyboardButton(f'{group.name}', callback_data=f'{button_text}{group.id}')
+        )
+        if len(row) >= 3:
+            buttons.append(row)
+            row = []
+    if len(row):
+        buttons.append(row)
+
+    buttons.append([InlineKeyboardButton('Оставшиеся', callback_data=f'{button_text}{0}')])
+
+    year, month, _ = button_text[len(PAYMENT_YEAR_MONTH_GROUP):].split('|')
+    buttons.append([
+        InlineKeyboardButton(f'{BACK_BUTTON}',
+                             callback_data=f'{PAYMENT_YEAR}{year}'),
+    ])
+    return InlineKeyboardMarkup(buttons)

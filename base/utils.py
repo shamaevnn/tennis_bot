@@ -67,6 +67,14 @@ def send_alert_about_changing_tr_day_status(tr_day, new_is_available: bool, bot)
     send_message(group_members.union(visitors), text, bot, construct_main_menu())
 
 
+def send_alert_about_changing_tr_day_time(tr_day, text, bot):
+    group_members = tr_day.group.users.all()
+    visitors = tr_day.visitors.all()
+    absents = tr_day.absent.all()
+
+    send_message(group_members.union(visitors, absents), text, bot, construct_main_menu())
+
+
 def moscow_datetime(date_time):
     return date_time.astimezone(timezone('Europe/Moscow')).replace(tzinfo=None)
 

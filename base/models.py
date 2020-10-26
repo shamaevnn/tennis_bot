@@ -1,3 +1,5 @@
+import calendar
+
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
@@ -5,11 +7,13 @@ from django import forms
 from django.db.models import Q, F, Case, When, Sum, IntegerField
 from django.utils import timezone
 from datetime import timedelta, datetime, date
-from base.utils import construct_main_menu, send_message, moscow_datetime
+from base.utils import construct_main_menu, send_message, moscow_datetime, TM_TIME_SCHEDULE_FORMAT, DT_BOT_FORMAT, \
+    send_alert_about_changing_tr_day_time
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 
 from base.utils import send_alert_about_changing_tr_day_status
+from tele_interface.manage_data import from_eng_to_rus_day_week
 from tennis_bot.config import TELEGRAM_TOKEN
 
 import telegram
@@ -34,8 +38,10 @@ class StaticData(models.Model):
     tarif_ind = models.PositiveIntegerField(null=True, default=1400, verbose_name='Индивидуальный тариф')
     tarif_group = models.PositiveIntegerField(null=True, default=400, verbose_name='Групповой взрослый тариф')
     tarif_arbitrary = models.PositiveIntegerField(null=True, default=600, verbose_name='Тариф для свободного графика')
-    tarif_few = models.PositiveIntegerField(null=True, default=400, verbose_name='Тариф для детской группы малой численности')
-    tarif_section = models.PositiveIntegerField(null=True, default=4000, verbose_name='Тариф для детской секции в месяц')
+    tarif_few = models.PositiveIntegerField(null=True, default=400,
+                                            verbose_name='Тариф для детской группы малой численности')
+    tarif_section = models.PositiveIntegerField(null=True, default=4000,
+                                                verbose_name='Тариф для детской секции в месяц')
 
     class Meta:
         verbose_name = 'Изменяемые данные'
@@ -95,9 +101,11 @@ class UserForm(forms.ModelForm):
     def clean(self):
         if 'status' in self.changed_data:
             new_status = self.cleaned_data.get('status')
-            if self.instance.status == User.STATUS_WAITING and (new_status == User.STATUS_ARBITRARY or new_status == User.STATUS_TRAINING):
+            if self.instance.status == User.STATUS_WAITING and (
+                    new_status == User.STATUS_ARBITRARY or new_status == User.STATUS_TRAINING):
                 bot = telegram.Bot(TELEGRAM_TOKEN)
-                send_message([self.instance], 'Теперь тебе доступен мой функционал, поздравляю!', bot, markup=construct_main_menu())
+                send_message([self.instance], 'Теперь тебе доступен мой функционал, поздравляю!',
+                             bot, markup=construct_main_menu())
 
 
 class TrainingGroup(ModelwithTime):
@@ -142,8 +150,9 @@ class TrainingGroupForm(forms.ModelForm):
         users = self.cleaned_data.get('users')
         max_players = self.cleaned_data.get('max_players')
         if users.count() > max_players:
-            raise ValidationError({'max_players': 'Количество игроков в группе должно быть не больше {}, вы указали {}.'. \
-                                  format(max_players, users.count())})
+            raise ValidationError(
+                {'max_players': 'Количество игроков в группе должно быть не больше {}, вы указали {}.'.
+                    format(max_players, users.count())})
 
 
 class GroupTrainingDay(ModelwithTime):
@@ -192,29 +201,53 @@ class GroupTrainingDayForm(forms.ModelForm):
             raise ValidationError(
                 'Превышен лимит игроков в группе — сейчас {}, максимум {}'.format(current_amount_of_players,
                                                                                   group.max_players))
-
-        if ('start_time' or 'duration') in self.changed_data:
+        bot = telegram.Bot(TELEGRAM_TOKEN)
+        if 'start_time' in self.changed_data or 'duration' in self.changed_data or 'date' in self.changed_data:
             """
                 Если добавляется новый grouptrainingday, то нужно
                 проверить, не накладывается ли время тренировки
                 на уже существущие.
             """
-            today_trainings = GroupTrainingDay.objects.filter(date=self.cleaned_data.get('date'))
+            exist_trainings = GroupTrainingDay.objects.filter(date=self.cleaned_data.get('date'))
             start_time = datetime.combine(self.cleaned_data.get('date'), self.cleaned_data.get('start_time'))
 
-            for train in today_trainings:
+            for train in exist_trainings:
                 exist_train_start_time = datetime.combine(train.date, train.start_time)
                 if exist_train_start_time <= start_time < exist_train_start_time + train.duration:
-                    raise ValidationError('Нельзя добавить тренировку на это время в этот день, т.к. уже есть запись на {}'\
-                                          ' с продолжительностью {}.'.format(train.start_time, train.duration))
+                    raise ValidationError(
+                        'Нельзя добавить тренировку на это время в этот день, т.к. уже есть запись на {}' 
+                        ' с продолжительностью {}.'.format(train.start_time, train.duration))
 
-        bot = telegram.Bot(TELEGRAM_TOKEN)
-        if 'is_available' in self.changed_data: #если статут дня меняется, то отсылаем алерт об изменении
+            # send alert to players about changing lesson parameters
+            changed_data_custom = []
+            before_after_text = ''
+            if 'start_time' in self.changed_data:
+                changed_data_custom.append('время начала тренировки')
+                before_after_text += self.instance.start_time.strftime(TM_TIME_SCHEDULE_FORMAT)
+                before_after_text += f" 🔜 {self.cleaned_data.get('start_time').strftime(TM_TIME_SCHEDULE_FORMAT)}\n"
+            if 'duration' in self.changed_data:
+                changed_data_custom.append('продолжительность занятия')
+                before_after_text += str(self.instance.duration)
+                before_after_text += f" 🔜 {self.cleaned_data.get('duration')}\n"
+            if 'date' in self.changed_data:
+                changed_data_custom.append('дата проведения занятия')
+                before_after_text += self.instance.date.strftime(DT_BOT_FORMAT)
+                before_after_text += f" 🔜 {self.cleaned_data.get('date').strftime(DT_BOT_FORMAT)}"
+
+            day_of_week = from_eng_to_rus_day_week[calendar.day_name[self.instance.date.weekday()]]
+            text = f'⚠️ATTENTION⚠️\n' \
+                   f'Изменились следующие параметры тренировки {self.instance.date.strftime(DT_BOT_FORMAT)}' \
+                   f' ({day_of_week}): {", ".join(changed_data_custom)}\n' \
+                   f'{before_after_text}'
+            send_alert_about_changing_tr_day_time(self.instance, text, bot)
+
+        if 'is_available' in self.changed_data:  # если статут дня меняется, то отсылаем алерт об изменении
             send_alert_about_changing_tr_day_status(self.instance, self.cleaned_data.get('is_available'), bot)
 
         if 'visitors' in self.changed_data:
             if self.cleaned_data.get('visitors').count() < self.instance.visitors.count():
-                canceled_users = self.instance.visitors.all().exclude(id__in=self.cleaned_data.get('visitors').values('id'))
+                canceled_users = self.instance.visitors.all().exclude(
+                    id__in=self.cleaned_data.get('visitors').values('id'))
                 text = f'😱ATTENTION😱\n' \
                        f'У тебя есть запись на тренировку на <b> {self.cleaned_data.get("date")}.</b>\n' \
                        f'<b>Тренер ее отменил.</b> Но не отчаивайся, я добавлю тебе отыгрыш 🎾'
@@ -336,6 +369,3 @@ def create_group_for_arbitrary(sender, instance, created, **kwargs):
         group, _ = TrainingGroup.objects.update_or_create(name=instance.first_name + instance.last_name, max_players=1)
         if not group.users.count():
             group.users.add(instance)
-
-
-

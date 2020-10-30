@@ -18,7 +18,7 @@ class UserTabularForm(forms.ModelForm):
         if tr_group and tr_group.status == TrainingGroup.STATUS_GROUP:
             users = tr_group.users.all()
             max_players = tr_group.max_players
-            if users.count() >= max_players:
+            if users.count() > max_players:
                 raise ValidationError(
                     {'traininggroup': 'Количество игроков в группе должно быть не больше {}, вы указали {}.'. \
                     format(max_players, users.count() + 1)})

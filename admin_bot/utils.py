@@ -1,7 +1,7 @@
-from base.models import User
+from base.models import User, Payment
 from functools import wraps
 
-from base.utils import TM_TIME_SCHEDULE_FORMAT, get_time_info_from_tr_day
+from base.utils import get_time_info_from_tr_day
 from tele_interface.manage_data import CLNDR_ADMIN_VIEW_SCHEDULE, CLNDR_ACTION_BACK, BACK_BUTTON, ADMIN_PAYMENT, \
     PAYMENT_YEAR_MONTH_GROUP, PAYMENT_YEAR
 from tele_interface.utils import create_callback_data
@@ -9,7 +9,6 @@ from tennis_bot.settings import DEBUG
 from telegram import (InlineKeyboardButton as inlinebutt,
                       InlineKeyboardMarkup as inlinemark, InlineKeyboardButton, InlineKeyboardMarkup, )
 
-import datetime
 import sys
 import logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
@@ -126,3 +125,11 @@ def construct_menu_groups(groups, button_text):
                              callback_data=f'{PAYMENT_YEAR}{year}'),
     ])
     return InlineKeyboardMarkup(buttons)
+
+
+def check_if_players_not_in_payments(group_id, payments, year, month):
+    payment_user_ids = list(payments.values_list('player_id', flat=True))
+    users_not_in_payments = User.objects.filter(traininggroup__id=group_id).exclude(id__in=payment_user_ids)
+    if users_not_in_payments.count():
+        for player in users_not_in_payments:
+            Payment.objects.create(player=player, month=month, year=year)

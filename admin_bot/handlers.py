@@ -10,7 +10,8 @@ from tele_interface.manage_data import PERMISSION_FOR_IND_TRAIN, SHOW_GROUPDAY_I
     CLNDR_PREV_MONTH, ADMIN_SITE, PAYMENT_YEAR, PAYMENT_YEAR_MONTH, PAYMENT_YEAR_MONTH_GROUP, PAYMENT_START_CHANGE, \
     PAYMENT_CONFIRM_OR_CANCEL, BACK_BUTTON, from_digit_to_month
 from tele_interface.utils import create_calendar, separate_callback_data, create_callback_data
-from .utils import admin_handler_decor, day_buttons_coach_info, construct_menu_months, construct_menu_groups
+from .utils import admin_handler_decor, day_buttons_coach_info, construct_menu_months, construct_menu_groups, \
+    check_if_players_not_in_payments
 from tennis_bot.config import TELEGRAM_TOKEN
 from datetime import date, datetime, timedelta
 from telegram import (InlineKeyboardButton as inlinebutt,
@@ -154,11 +155,12 @@ def info_about_users(users, for_admin=False, payment=False):
                                        'n_fact_visiting', 'id').order_by('player__last_name', 'player__first_name')))
         else:
             return '\n'.join(
-                (f"{i + 1}. {x['first_name']} {x['last_name']}" for i, x in enumerate(users.values('first_name',
-                                                                                                   'last_name'))))
+                (f"{i + 1}. {x['last_name']} {x['first_name']}" for i, x in enumerate(users.values('first_name',
+                                                                                                   'last_name').order_by('last_name'))))
     else:
         return '\n'.join(
-            (f"👤{x['first_name']} {x['last_name']}" for x in users.values('first_name', 'last_name')))
+            (f"👤{x['last_name']} {x['first_name']}" for x in
+             users.values('first_name', 'last_name').order_by('last_name')))
 
 
 @admin_handler_decor()
@@ -254,6 +256,7 @@ def group_payment(bot, update, user):
         should_pay_balls = 'хз'
     else:
         payments = Payment.objects.filter(player__traininggroup__id=group_id, month=month, year=year)
+        check_if_players_not_in_payments(group_id, payments, year, month)
         paid_this_month = payments.aggregate(sigma=Sum('fact_amount'))
         group = TrainingGroup.objects.get(id=group_id)
         n_lessons = GroupTrainingDay.objects.filter(date__month=month, date__year=int(year)+2020, group=group).count()

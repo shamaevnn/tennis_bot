@@ -21,7 +21,7 @@ class UserTabularForm(forms.ModelForm):
             if users.count() > max_players:
                 raise ValidationError(
                     {'traininggroup': 'Количество игроков в группе должно быть не больше {}, вы указали {}.'. \
-                    format(max_players, users.count() + 1)})
+                        format(max_players, users.count() + 1)})
 
 
 class UserTabularInline(admin.StackedInline):

@@ -491,7 +491,7 @@ def confirm_group_lesson(bot, update, user):
                                  f'<b>Не за счет отыгрышей, не забудь взять с него денюжку.</b>'
     else:
         if user not in tr_day.group.users.all():
-            if n_free_places:
+            if n_free_places > 0:
                 tr_day.visitors.add(user)
 
                 text = f'Записал тебя на <b>{date_tlg} ({day_of_week})</b>\n' \

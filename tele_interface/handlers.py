@@ -303,19 +303,26 @@ def skip_lesson(bot, update, user):
     text = 'Окей, занятие <b>{}</b> отменено'.format(training_day.date.strftime(DT_BOT_FORMAT))
     bot_edit_message(bot, text, update)
 
+    admin_bot = telegram.Bot(ADMIN_TELEGRAM_TOKEN)
+    nikita = User.objects.get(id=350490234)
+    info_text = f'Now time: {moscow_datetime(datetime.now())}\n' \
+                f'Training dttm: {training_day.date.strftime(DT_BOT_FORMAT)} - {training_day.start_time}\n' \
+                f'Time before cancel (hours): {round(user.time_before_cancel.seconds/3600)}\n' \
+                f'tr_day_id: {training_day.id}'
+    
+    send_message([nikita], info_text, admin_bot)
     if training_day.is_individual:
         training_day.delete()
-        admin_bot = telegram.Bot(ADMIN_TELEGRAM_TOKEN)
         admins = User.objects.filter(is_superuser=True, is_blocked=False)
 
         time_tlg, _, _, date_tlg, day_of_week, _, _ = get_time_info_from_tr_day(training_day)
 
-        text = f'⚠️ATTENTION⚠️\n' \
+        admin_text = f'⚠️ATTENTION⚠️\n' \
                f'{user.first_name} {user.last_name} отменил индивидуальную тренировку\n' \
                f'📅Дата: <b>{date_tlg} ({day_of_week})</b>\n' \
                f'⏰Время: <b>{time_tlg}</b>\n\n'
 
-        send_message(admins, text, admin_bot)
+        send_message(admins, admin_text, admin_bot)
 
     else:
         # проверяем его ли эта группа или он удаляется из занятия другой группы
@@ -471,7 +478,8 @@ def confirm_group_lesson(bot, update, user):
 
     time_tlg, start_time_tlg, end_time_tlg, date_tlg, day_of_week, start_time, end_time = get_time_info_from_tr_day(
         tr_day)
-    n_free_places = tr_day.group.max_players - tr_day.visitors.count() + tr_day.absent.count() - tr_day.group.users.count()
+    n_free_places = tr_day.group.max_players - tr_day.visitors.distinct().count() + \
+                    tr_day.absent.distinct().count() - tr_day.group.users.distinct().count()
     admit_message_text = ''
     if user in tr_day.absent.all():
         tr_day.absent.remove(user)

@@ -325,6 +325,23 @@ class Payment(models.Model):
         return f"{self.player}, месяц: {self.month}"
 
 
+class AlertsLog(models.Model):
+    COMING_TRAIN = 'CT'
+
+    ALERT_TYPES = (
+        (COMING_TRAIN, 'предстоящая тренировка'),
+    )
+
+    player = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    is_sent = models.BooleanField(default=False)
+    dttm_sent = models.DateTimeField(default=moscow_datetime(datetime.now()))
+    tr_day = models.ForeignKey(GroupTrainingDay, on_delete=models.SET_NULL, null=True)
+    alert_type = models.CharField(max_length=2, choices=ALERT_TYPES, default=COMING_TRAIN)
+
+    def __str__(self):
+        return f"{self.player, self.tr_day}"
+
+
 class Channel(models.Model):
     name = models.CharField(max_length=64, default='')
     username = models.CharField(max_length=64, default='')

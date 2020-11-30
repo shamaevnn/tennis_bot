@@ -262,14 +262,7 @@ def group_payment(bot, update, user):
         n_lessons = GroupTrainingDay.objects.filter(date__month=month, date__year=int(year)+2020, group=group).count()
         n_lessons_info = f'Кол-во занятий: {n_lessons}\n'
         if group.status == TrainingGroup.STATUS_GROUP:
-            if group.max_players == 6:
-                should_pay = n_lessons * 400
-            elif group.max_players == 4:
-                should_pay = n_lessons * 550
-            elif group.max_players == 2:
-                should_pay = n_lessons * 800
-            else:
-                should_pay = 400
+            should_pay = n_lessons * group.tarif_for_one_lesson
         elif group.status == TrainingGroup.STATUS_SECTION:
             should_pay = StaticData.objects.first().tarif_section
         elif group.status == TrainingGroup.STATUS_FEW:

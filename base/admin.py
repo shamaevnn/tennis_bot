@@ -81,7 +81,7 @@ make_group_green.short_description = 'Сделать группу 🍏'
 class TrainingGroupAdmin(admin.ModelAdmin):
 
     form = TrainingGroupForm
-    list_display = ('name', 'max_players', 'level')
+    list_display = ('name', 'max_players', 'level', 'tarif_for_one_lesson')
     filter_horizontal = ('users',)
     list_filter = [DefaultGroupStatus]
     actions = [make_group_green, make_group_orange]

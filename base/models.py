@@ -132,6 +132,7 @@ class TrainingGroup(ModelwithTime):
     max_players = models.SmallIntegerField(default=6, verbose_name='Максимальное количество игроков в группе')
     status = models.CharField(max_length=1, choices=GROUP_STATUSES, verbose_name='Статус группы', default=STATUS_GROUP)
     level = models.CharField(max_length=1, choices=GROUP_LEVELS, verbose_name='Уровень группы', default=LEVEL_ORANGE)
+    tarif_for_one_lesson = models.PositiveIntegerField(default=400, verbose_name='Тариф за одно занятие')
 
     class Meta:
         verbose_name = 'банда'
@@ -144,7 +145,7 @@ class TrainingGroup(ModelwithTime):
 class TrainingGroupForm(forms.ModelForm):
     class Meta:
         model = TrainingGroup
-        fields = ['name', 'users', 'max_players', 'status', 'level']
+        fields = ['name', 'users', 'max_players', 'status', 'level', 'tarif_for_one_lesson']
 
     def clean(self):
         users = self.cleaned_data.get('users')

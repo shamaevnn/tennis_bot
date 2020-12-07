@@ -21,13 +21,13 @@ from admin_bot.handlers import (
     show_traingroupday_info,
     inline_calendar_handler, redirect_to_site, start_payment, cancel, year_payment,
     month_payment, group_payment, change_payment_data, get_id_amount, START_CHANGE_PAYMENT, CONFIRM_OR_CANCEL,
-    confirm_or_cancel_changing_payment
+    confirm_or_cancel_changing_payment, save_many_ind_trains
 )
 from tele_interface.manage_data import (
     PERMISSION_FOR_IND_TRAIN,
     ADMIN_TIME_SCHEDULE_BUTTON,
     SHOW_GROUPDAY_INFO, ADMIN_SITE, ADMIN_PAYMENT, PAYMENT_YEAR, PAYMENT_YEAR_MONTH, PAYMENT_YEAR_MONTH_GROUP,
-    CLNDR_ADMIN_VIEW_SCHEDULE, PAYMENT_START_CHANGE, PAYMENT_CONFIRM_OR_CANCEL
+    CLNDR_ADMIN_VIEW_SCHEDULE, PAYMENT_START_CHANGE, PAYMENT_CONFIRM_OR_CANCEL, AMOUNT_OF_IND_TRAIN
 )
 
 payment_handler = ConversationHandler(
@@ -51,6 +51,7 @@ def add_handlers(updater):
 
     dp.add_handler(payment_handler)
     dp.add_handler(CallbackQueryHandler(permission_for_ind_train, pattern='^{}'.format(PERMISSION_FOR_IND_TRAIN)))
+    dp.add_handler(CallbackQueryHandler(save_many_ind_trains, pattern='^{}'.format(AMOUNT_OF_IND_TRAIN)))
     dp.add_handler(RegexHandler(fr'^{ADMIN_TIME_SCHEDULE_BUTTON}$', show_coach_schedule))
     dp.add_handler(RegexHandler(f'{ADMIN_SITE}', redirect_to_site))
     dp.add_handler(RegexHandler(f'{ADMIN_PAYMENT}', start_payment))

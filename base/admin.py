@@ -2,6 +2,7 @@ from django.contrib import admin
 # Register your models here.
 from django.utils.http import urlencode
 
+from tele_interface.utils import create_tr_days_for_future
 from .models import *
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.admin import SimpleListFilter
@@ -141,18 +142,10 @@ class GroupTrainingDayAdmin(admin.ModelAdmin):
         return redirect(url)
 
     def response_add(self, request, obj, post_url_continue=None):
-        if "_customsave" in request.POST:
+        if "_saveonce" in request.POST:
             pass
         else:
-            period = 8 if obj.group.status == TrainingGroup.STATUS_4IND else 24
-            date = obj.date + timedelta(days=7)
-            dates = [date]
-            for _ in range(period):
-                date += timedelta(days=7)
-                dates.append(date)
-            objs = [GroupTrainingDay(group=obj.group, date=dat, start_time=obj.start_time,
-                                     duration=obj.duration) for dat in dates]
-            GroupTrainingDay.objects.bulk_create(objs)
+            create_tr_days_for_future(obj)
 
         return super().response_add(request, obj)
 

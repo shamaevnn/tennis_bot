@@ -4,12 +4,13 @@ from django.db.models import Sum
 from telegram.ext import ConversationHandler
 from django.core.exceptions import ObjectDoesNotExist
 from base.models import User, GroupTrainingDay, Payment, TrainingGroup, StaticData
-from base.utils import construct_admin_main_menu, DT_BOT_FORMAT, TM_TIME_SCHEDULE_FORMAT, moscow_datetime, bot_edit_message, get_time_info_from_tr_day
+from base.utils import construct_admin_main_menu, moscow_datetime, bot_edit_message, get_time_info_from_tr_day
 from tele_interface.manage_data import PERMISSION_FOR_IND_TRAIN, SHOW_GROUPDAY_INFO, \
-    from_eng_to_rus_day_week, CLNDR_ADMIN_VIEW_SCHEDULE, CLNDR_ACTION_BACK, CLNDR_NEXT_MONTH, CLNDR_DAY, CLNDR_IGNORE, \
+    CLNDR_ADMIN_VIEW_SCHEDULE, CLNDR_ACTION_BACK, CLNDR_NEXT_MONTH, CLNDR_DAY, CLNDR_IGNORE, \
     CLNDR_PREV_MONTH, ADMIN_SITE, PAYMENT_YEAR, PAYMENT_YEAR_MONTH, PAYMENT_YEAR_MONTH_GROUP, PAYMENT_START_CHANGE, \
-    PAYMENT_CONFIRM_OR_CANCEL, BACK_BUTTON, from_digit_to_month
-from tele_interface.utils import create_calendar, separate_callback_data, create_callback_data
+    PAYMENT_CONFIRM_OR_CANCEL, BACK_BUTTON, from_digit_to_month, AMOUNT_OF_IND_TRAIN
+from tele_interface.utils import create_calendar, separate_callback_data, create_callback_data, \
+    create_tr_days_for_future
 from .utils import admin_handler_decor, day_buttons_coach_info, construct_menu_months, construct_menu_groups, \
     check_if_players_not_in_payments
 from tennis_bot.config import TELEGRAM_TOKEN
@@ -43,9 +44,15 @@ def permission_for_ind_train(bot, update, user):
     if tr_day.count():
         tr_day = tr_day.first()
         time_tlg, _, _, date_tlg, _, _, _ = get_time_info_from_tr_day(tr_day)
+        markup = None
 
         if permission == 'yes':
-            admin_text = 'Отлично, приятной тренировки!'
+            markup = inlinemark([[
+                inlinebutt('Одну', callback_data=f'{AMOUNT_OF_IND_TRAIN}{tr_day_id}|one')]
+                ,
+                [inlinebutt('На 2 месяца', callback_data=f'{AMOUNT_OF_IND_TRAIN}{tr_day_id}|many')]
+            ])
+            admin_text = 'Сколько тренировок сохранить?'
 
             user_text = f'Отлично, тренер подтвердил тренировку <b>{date_tlg}</b>\n' \
                         f'Время: <b>{time_tlg}</b>\n' \
@@ -71,8 +78,29 @@ def permission_for_ind_train(bot, update, user):
 
     else:
         admin_text = 'Тренировка уже отменена.'
+        markup = None
 
-    bot_edit_message(bot, admin_text, update)
+    bot_edit_message(bot, admin_text, update, markup=markup)
+
+
+@admin_handler_decor()
+def save_many_ind_trains(bot, update, user):
+    tr_day_id, num_lessons = update.callback_query.data[len(AMOUNT_OF_IND_TRAIN):].split("|")
+    tr_day = GroupTrainingDay.objects.get(id=tr_day_id)
+
+    time_tlg, _, _, date_tlg, day_of_week, _, _ = get_time_info_from_tr_day(tr_day)
+    text = f'Хорошо, приятной тренировки!\n' \
+           f'📅Дата: <b>{date_tlg} ({day_of_week})</b>\n' \
+           f'⏰Время: <b>{time_tlg}</b>\n\n'
+    if num_lessons == 'one':
+        text += "Сохранил единожды."
+    else:
+        create_tr_days_for_future(tr_day)
+        text += "Сохранил на 2 месяца вперед."
+
+    bot_edit_message(bot, text, update)
+
+
 
 
 def admin_calendar_selection(bot, update):

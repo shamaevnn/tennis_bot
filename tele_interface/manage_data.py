@@ -2,6 +2,12 @@ from_eng_to_rus_day_week = {
     'Sunday': 'воскресенье', 'Monday': 'понедельник', 'Tuesday': 'вторник', 'Wednesday': 'среда',
     'Thursday': 'четверг', 'Friday': 'пятница', 'Saturday': 'суббота'
 }
+from_digit_to_month = {
+        1: 'Январь', 2: 'Февраль', 3: 'Март', 4: 'Апрель', 5: 'Май', 6: 'Июнь',
+        7: 'Июль', 8: 'Август', 9: 'Сентябрь', 10: 'Октябрь', 11: 'Ноябрь', 12: 'Декабрь',
+    }
+
+
 ADMIN_TIME_SCHEDULE_BUTTON = 'Расписание'
 ADMIN_SITE = 'Перейти на сайт'
 ADMIN_PAYMENT = 'Оплата'
@@ -36,6 +42,7 @@ SELECT_DURATION_FOR_IND_TRAIN = 'SELECT_DURATION_FOR_IND_TRAIN'
 SELECT_IND_LESSON_TIME = 'SELECT_IND_LESSON_TIME'
 SELECT_PRECISE_IND_TIME = 'IND_TIME'
 PERMISSION_FOR_IND_TRAIN = 'PERMISSION_IND_TRAIN'
+AMOUNT_OF_IND_TRAIN = 'AMOUNT_IND_TRAIN'
 
 CLNDR_IGNORE = 'IGNORE'
 CLNDR_DAY = "DAY"
@@ -49,10 +56,6 @@ CLNDR_ACTION_TAKE_IND = 'TAKE_IND'
 CLNDR_ADMIN_VIEW_SCHEDULE = 'VIEW_SCHEDULE'
 
 BACK_BUTTON = '⬅️ назад'
-from_digit_to_month = {
-        1: 'Январь', 2: 'Февраль', 3: 'Март', 4: 'Апрель', 5: 'Май', 6: 'Июнь',
-        7: 'Июль', 8: 'Август', 9: 'Сентябрь', 10: 'Октябрь', 11: 'Ноябрь', 12: 'Декабрь',
-    }
 
 ALERT_TEXTS = [{"Знаю, что лень идти, а надо. Сегодня тренировка:\n": "https://perfum-online.by/image/data/1news/that-to-do-%D1%87%D1%82%D0%BE%D0%B1-not-to-miss-drills.jpg"},
                {"А кто это у нас уже забыл о тренировке, а? Напоминаю:\n": "https://i.pinimg.com/originals/9f/ce/af/9fceaf6c5518ec0526d0d2d86d8cfb01.jpg"},

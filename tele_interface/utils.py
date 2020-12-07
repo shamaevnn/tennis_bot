@@ -119,6 +119,18 @@ def generate_times_to_remove(start_time: time, end_time: time):
     return times_to_remove
 
 
+def create_tr_days_for_future(instance):
+    period = 8 if instance.group.status == TrainingGroup.STATUS_4IND else 24
+    date = instance.date + timedelta(days=7)
+    dates = [date]
+    for _ in range(period):
+        date += timedelta(days=7)
+        dates.append(date)
+    instances = [GroupTrainingDay(group=instance.group, date=dat, start_time=instance.start_time,
+                                  duration=instance.duration) for dat in dates]
+    GroupTrainingDay.objects.bulk_create(instances)
+    
+
 def get_available_dt_time4ind_train(duration: float, tr_day_date=moscow_datetime(datetime.now()).date()):
     # todo: какой-то пиздец, без пол литра не разберешься, хз шо с этим делать
     poss_date = moscow_datetime(datetime.now()).date()

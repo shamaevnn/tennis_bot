@@ -49,11 +49,9 @@ def send_alert_about_coming_train():
                                caption=text_alert,
                                parse_mode='HTML')
                 AlertsLog.objects.create(is_sent=True, player=player, tr_day=tr_day, alert_type=AlertsLog.COMING_TRAIN)
-            except (telegram.error.Unauthorized, telegram.error.BadRequest):
-                player.is_blocked = True
-                player.status = 'F'
-                player.save()
-                AlertsLog.objects.create(is_sent=False, player=player, tr_day=tr_day, alert_type=AlertsLog.COMING_TRAIN)
+            except (telegram.error.Unauthorized, telegram.error.BadRequest) as e:
+                AlertsLog.objects.create(is_sent=False, player=player, tr_day=tr_day, alert_type=AlertsLog.COMING_TRAIN,
+                                         info=e + '\n\n' + photo_url)
 
 
 schedule.every(59).minutes.do(send_alert_about_coming_train)

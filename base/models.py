@@ -338,6 +338,7 @@ class AlertsLog(models.Model):
     dttm_sent = models.DateTimeField(default=moscow_datetime(datetime.now()))
     tr_day = models.ForeignKey(GroupTrainingDay, on_delete=models.SET_NULL, null=True)
     alert_type = models.CharField(max_length=2, choices=ALERT_TYPES, default=COMING_TRAIN)
+    info = models.TextField(null=True)
 
     def __str__(self):
         return f"{self.player, self.tr_day}"

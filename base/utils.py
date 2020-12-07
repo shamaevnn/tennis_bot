@@ -35,7 +35,6 @@ def send_message(users, message: str, bot, markup=None):
                              parse_mode='HTML')
         except (telegram.error.Unauthorized, telegram.error.BadRequest):
             user.is_blocked = True
-            user.status = 'F'
             user.save()
 
 

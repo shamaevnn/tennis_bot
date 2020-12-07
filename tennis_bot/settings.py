@@ -133,5 +133,16 @@ AUTH_USER_MODEL = 'base.User'
 if os.path.isfile(os.path.join(BASE_DIR, "tennis_bot", "config.py")):
     from .config import *
 
+    sentry_sdk.init(
+        dsn="https://ef7345bbeca54acba97b7119b6e3d19c@o487996.ingest.sentry.io/5547550",
+        integrations=[DjangoIntegration()],
+        traces_sample_rate=1.0,
+
+        # If you wish to associate users to errors (assuming you are using
+        # django.contrib.auth) you may enable sending PII data.
+        send_default_pii=True
+    )
+
 if DEBUG is True:
    MIDDLEWARE += ['debug_toolbar.middleware.DebugToolbarMiddleware']
+

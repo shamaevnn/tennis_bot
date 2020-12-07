@@ -113,6 +113,7 @@ class GroupTrainingDayAdmin(admin.ModelAdmin):
     date_hierarchy = 'date'
     actions = [make_trday_unavailable, make_trday_available]
     ordering = ['date', 'start_time']
+    change_form_template = "admin/tennis_bot/GroupTrainingDay/submit_line.html"
 
     def get_object(self, request, object_id, from_field=None):
         obj = super().get_object(request, object_id, from_field=from_field)
@@ -138,6 +139,22 @@ class GroupTrainingDayAdmin(admin.ModelAdmin):
         query_params = dict(zip(field_keys, field_values))
         url = '{}?{}'.format(request.path, urlencode(query_params))
         return redirect(url)
+
+    def response_add(self, request, obj, post_url_continue=None):
+        if "_customsave" in request.POST:
+            pass
+        else:
+            period = 8 if obj.group.status == TrainingGroup.STATUS_4IND else 24
+            date = obj.date + timedelta(days=7)
+            dates = [date]
+            for _ in range(period):
+                date += timedelta(days=7)
+                dates.append(date)
+            objs = [GroupTrainingDay(group=obj.group, date=dat, start_time=obj.start_time,
+                                     duration=obj.duration) for dat in dates]
+            GroupTrainingDay.objects.bulk_create(objs)
+
+        return super().response_add(request, obj)
 
 
 @admin.register(Payment)

@@ -11,8 +11,6 @@ https://docs.djangoproject.com/en/1.11/ref/settings/
 """
 from tennis_bot.config import SECRET_KEY_DJANGO
 import os
-import sentry_sdk
-from sentry_sdk.integrations.django import DjangoIntegration
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -62,7 +60,7 @@ ROOT_URLCONF = 'tennis_bot.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'base/templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -132,16 +130,6 @@ AUTH_USER_MODEL = 'base.User'
 
 if os.path.isfile(os.path.join(BASE_DIR, "tennis_bot", "config.py")):
     from .config import *
-
-    sentry_sdk.init(
-        dsn="https://ef7345bbeca54acba97b7119b6e3d19c@o487996.ingest.sentry.io/5547550",
-        integrations=[DjangoIntegration()],
-        traces_sample_rate=1.0,
-
-        # If you wish to associate users to errors (assuming you are using
-        # django.contrib.auth) you may enable sending PII data.
-        send_default_pii=True
-    )
 
 if DEBUG is True:
    MIDDLEWARE += ['debug_toolbar.middleware.DebugToolbarMiddleware']

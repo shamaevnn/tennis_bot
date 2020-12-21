@@ -95,4 +95,9 @@ ALERT_TEXTS = [{"Знаю, что лень идти, а надо. Сегодня
                {"Поработаем сегодня над растяжкой, приходи!\n": "https://tunnel.ru/media/images/2016-09/post_comment/739962/at736833740.jpg"},
                {"Скоро зима, нужно утепляться. Как же хорошо, что на корте тепло, приходи сегодня!\n": "http://img0.safereactor.cc/pics/post/full/%D0%B4%D0%B5%D0%B2%D1%83%D1%88%D0%BA%D0%B0-%D0%B2%D0%BE%D0%BB%D0%BE%D1%81%D0%B0%D1%82%D0%B0%D1%8F-%D1%82%D0%B5%D0%BD%D0%BD%D0%B8%D1%81-%D0%BF%D0%B5%D1%81%D0%BE%D1%87%D0%BD%D0%B8%D1%86%D0%B0-750982.jpeg"},
                {"Ноготочки все покрасили? Сегодня проверяем. Кто не покрасил, у того -1 отыгрыш.\n": "http://i1.tiesraides.lv/0x0/galleries/valdis_berzins/4c8b0faa90af5/2010-09-11_11.jpg"},
-               {"Сегодня будет больше мужского или женского тенниса?\n": "https://mtdata.ru/u28/photo80D4/20019914451-0/original.jpg"}]
+               {"Сегодня будет больше мужского или женского тенниса?\n": "https://mtdata.ru/u28/photo80D4/20019914451-0/original.jpg"},
+               {"Согласен. Напоминаю:\n": "https://301-1.ru/uploads/image/rostov-smog-smozhesh-i-ty_Ti0bxWmuMD.jpg"},
+               {"Но а пока мы все ещё котики. Напоминаю:\n": "https://klike.net/uploads/posts/2019-09/1567333956_2.jpg"},
+               {"Сегодня Владлен принесет свой ковёр, нужно помочь.\n": "https://www.anekdotovmir.ru/wp-content/uploads/2017/05/%D0%B0%D0%BD%D0%B5%D0%BA%D0%B4%D0%BE%D1%82-%D0%BF%D1%80%D0%BE-%D1%82%D0%B5%D0%BD%D0%BD%D0%B8%D1%81.jpg"},
+               {"Сегодня тренируем телепатию.\n": "https://qph.fs.quoracdn.net/main-qimg-d58bd9d0e09aadddf367cd84b1b8c01b.webp"},
+               {"Сегодня фотографируем твоё лицо во время удара.\n": "https://i.pinimg.com/236x/e8/c6/96/e8c6967e78de73e2ede88d6552f32baf--tennis-funny-tennis-memes.jpg"},]

@@ -130,7 +130,7 @@ class GroupTrainingDayAdmin(admin.ModelAdmin):
         return super(GroupTrainingDayAdmin, self).formfield_for_manytomany(db_field, request, **kwargs)
 
     def changelist_view(self, request, extra_context=None):
-        if request.GET:
+        if request.GET or '/admin/base/grouptrainingday/?date__year' in request.META.get("HTTP_REFERER"):
             return super().changelist_view(request, extra_context=extra_context)
 
         today_date = moscow_datetime(datetime.now()).date()

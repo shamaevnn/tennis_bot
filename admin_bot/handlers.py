@@ -264,7 +264,7 @@ def month_payment(bot, update, user):
            f'<b>Итого заплатили: {amount_for_this_month["sigma"]}</b>\n' \
            f'Выбери группу'
 
-    banda_groups = TrainingGroup.objects.filter(name__iregex=r'БАНДА')
+    banda_groups = TrainingGroup.objects.filter(name__iregex=r'БАНДА').order_by('name')
     markup = construct_menu_groups(banda_groups, f'{PAYMENT_YEAR_MONTH_GROUP}{year}|{month}|')
     bot_edit_message(bot, text, update, markup)
 

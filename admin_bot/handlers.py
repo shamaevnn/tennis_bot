@@ -1,6 +1,4 @@
-import calendar
-
-from django.db.models import Sum
+from django.db.models import Sum, Q, Count, ExpressionWrapper, IntegerField, F
 from telegram.ext import ConversationHandler
 from django.core.exceptions import ObjectDoesNotExist
 from base.models import User, GroupTrainingDay, Payment, TrainingGroup, StaticData
@@ -260,8 +258,20 @@ def month_payment(bot, update, user):
 
     amount_for_this_month = Payment.objects.filter(year=year, month=month).aggregate(sigma=Sum('fact_amount'))
 
+    should_pay_this_month = TrainingGroup.objects.annotate(count_tr_days=Count('grouptrainingday',
+                                                                               filter=Q(
+                                                                                   grouptrainingday__date__month=month,
+                                                                                   grouptrainingday__date__year=int(
+                                                                                       year) + 2020),
+                                                                               distinct=True),
+                                                           count_users=Count('users', distinct=True)).filter(
+        max_players__gt=1).annotate(should_pay=ExpressionWrapper(F('count_users') *
+                                                                 F('tarif_for_one_lesson') * F('count_tr_days'),
+                                                                 output_field=IntegerField())).aggregate(sigma=Sum('should_pay'))
+
     text = f'{int(year) + 2020}--{from_digit_to_month[int(month)]}\n' \
            f'<b>Итого заплатили: {amount_for_this_month["sigma"]}</b>\n' \
+           f'<b>Должны заплатить: {should_pay_this_month["sigma"]}</b>\n' \
            f'Выбери группу'
 
     banda_groups = TrainingGroup.objects.filter(name__iregex=r'БАНДА').order_by('name')
@@ -277,11 +287,11 @@ def group_payment(bot, update, user):
 
     if int(group_id) == 0:
         title = 'Оставшиеся\n'
-        payments = Payment.objects.filter(month=month, year=year).exclude(player__traininggroup__name__iregex='БАНДА')
+        payments = Payment.objects.filter(month=month,
+                                          year=year).exclude(
+            user__status__in=[User.STATUS_WAITING, User.STATUS_FINISHED], player__traininggroup__name__iregex='БАНДА')
         paid_this_month = payments.aggregate(sigma=Sum('fact_amount'))
-        n_lessons_info = 'Кол-во занятий: хз\n'
-        should_pay = 'хз'
-        should_pay_balls = 'хз'
+        n_lessons_info, should_pay, should_pay_balls, tarif_info = '', '', '', ''
     else:
         payments = Payment.objects.filter(player__traininggroup__id=group_id, month=month, year=year)
         check_if_players_not_in_payments(group_id, payments, year, month)
@@ -289,6 +299,7 @@ def group_payment(bot, update, user):
         group = TrainingGroup.objects.get(id=group_id)
         n_lessons = GroupTrainingDay.objects.filter(date__month=month, date__year=int(year)+2020, group=group).count()
         n_lessons_info = f'Кол-во занятий: {n_lessons}\n'
+        tarif_info = f'Тариф: {group.tarif_for_one_lesson}\n'
         if group.status == TrainingGroup.STATUS_GROUP:
             should_pay = n_lessons * group.tarif_for_one_lesson
         elif group.status == TrainingGroup.STATUS_SECTION:
@@ -305,7 +316,7 @@ def group_payment(bot, update, user):
     date_info = f'{from_digit_to_month[int(month)]} {int(year) + 2020}\n'
     payment_info = f'Должны <b>{should_pay}</b>₽ + {should_pay_balls}₽ за мячи\n'
     this_month_payment_info = f'Итого заплатили: {paid_this_month["sigma"]}\n\n'
-    text = f"{title}{date_info}{n_lessons_info}{payment_info}{this_month_payment_info}" \
+    text = f"{title}{date_info}{n_lessons_info}{tarif_info}{payment_info}{this_month_payment_info}" \
            f"<b>id</b>. Имя Фамилия -- факт₽, кол-во посещений\n\n" \
            f"{info_about_users(payments, for_admin=True, payment=True)}"
 

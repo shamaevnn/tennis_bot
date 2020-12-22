@@ -287,9 +287,9 @@ def group_payment(bot, update, user):
 
     if int(group_id) == 0:
         title = 'Оставшиеся\n'
-        payments = Payment.objects.filter(month=month,
-                                          year=year).exclude(
-            player__status__in=[User.STATUS_WAITING, User.STATUS_FINISHED], player__traininggroup__name__iregex='БАНДА')
+        payments = Payment.objects.filter(player__status__in=[User.STATUS_WAITING, User.STATUS_FINISHED],
+                                          month=month,
+                                          year=year).exclude(player__traininggroup__name__iregex='БАНДА')
         paid_this_month = payments.aggregate(sigma=Sum('fact_amount'))
         n_lessons_info, should_pay, should_pay_balls, tarif_info = '', '', '', ''
     else:

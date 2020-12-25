@@ -1,12 +1,12 @@
 import calendar
-
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
 from django import forms
-from django.db.models import Q, F, Case, When, Sum, IntegerField
+from django.utils.safestring import mark_safe
+from django.db.models import Q, F, Case, When, Sum, IntegerField, ExpressionWrapper, DateTimeField, Count
 from django.utils import timezone
-from datetime import timedelta, datetime, date
+from datetime import datetime, date
 from base.utils import construct_main_menu, send_message, moscow_datetime, TM_TIME_SCHEDULE_FORMAT, DT_BOT_FORMAT, \
     send_alert_about_changing_tr_day_time
 from django.db.models.signals import post_save, post_delete
@@ -154,6 +154,24 @@ class TrainingGroupForm(forms.ModelForm):
             raise ValidationError(
                 {'max_players': 'Количество игроков в группе должно быть не больше {}, вы указали {}.'.
                     format(max_players, users.count())})
+
+        if 'users' in self.changed_data:
+            tr_day = GroupTrainingDay.objects.filter(group__max_players__gt=1, group=self.instance, ).annotate(
+                                        start=ExpressionWrapper(F('start_time') + F('date'), output_field=DateTimeField()),
+                                        group_users_cnt=Count('group__users', distinct=True),
+                                        absent_cnt=Count('absent', distinct=True),
+                                        visitors_cnt=Count('visitors', distinct=True),
+                                        max_players=F('group__max_players')).filter(
+                                                group_users_cnt__lt=users.count(),
+                                                start__gte=moscow_datetime(datetime.now()),
+                                                is_available=True,
+                                                max_players=F('visitors_cnt') + F('group_users_cnt') - F('absent_cnt')).distinct().values('id', 'date', 'start_time')
+            if len(tr_day):
+                error_ids = "\n".join(['<a href="http://vladlen82.fvds.ru/admin/base/grouptrainingday/{}/change/">{} {}</a>'.format(x['id'], x['date'], x['start_time']) for x in tr_day])
+                error_text = f"Со следующими днями может возникнуть проблема, что будет больше людей, чем нужно на тренирвоке:\n{error_ids}"
+                raise ValidationError(
+                    {'users': mark_safe(error_text)})
+
 
 
 class GroupTrainingDay(ModelwithTime):

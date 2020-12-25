@@ -57,8 +57,14 @@ def send_alert_about_changing_tr_day_status(tr_day, new_is_available: bool, bot)
     visitors = tr_day.visitors.all()
 
     if not new_is_available:
-        text = 'Тренировка <b>{} в {}</b> отменена.'.format(tr_day.date,
-                                                            tr_day.start_time)
+        text = 'Тренировка <b>{} в {}</b> отменена. Но не переживай, я добавлю тебе отыгрыш.'.format(tr_day.date,
+                                                                                                     tr_day.start_time)
+        users = group_members.union(visitors).difference(tr_day.absent.all())
+
+        for user in users:
+            user.bonus_lesson += 1
+            user.save()
+
     else:
         text = 'Тренировка <b>{} в {}</b> доступна, ура!'.format(tr_day.date,
                                                                  tr_day.start_time)

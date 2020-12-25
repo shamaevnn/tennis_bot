@@ -300,37 +300,43 @@ def skip_lesson(bot, update, user):
     tr_day_id = update.callback_query.data[len(SHOW_INFO_ABOUT_SKIPPING_DAY):]
     training_day = GroupTrainingDay.objects.get(id=tr_day_id)
 
-    if datetime.combine(training_day.date, training_day.start_time) - moscow_datetime(datetime.now()) < user.time_before_cancel:
-        text = f'Неа, уже нельзя отменить занятие.' \
-               f' Количество часов, за которое тебе нужно отменять: {round(user.time_before_cancel.seconds/3600)}'
+    time_tlg, _, _, date_tlg, day_of_week, _, _ = get_time_info_from_tr_day(training_day)
+    if not training_day.is_available:
+        text = "{} в {} ❌нет тренировки❌, т.к. она отменена тренером, поэтому ее нельзя пропустить.".format(date_tlg, time_tlg)
+        bot_edit_message(bot, text, update)
+
+        skip_lesson_main_menu_button(bot, update)
+
     else:
-        text = 'Окей, занятие <b>{}</b> отменено'.format(training_day.date.strftime(DT_BOT_FORMAT))
-
-        if training_day.is_individual:
-            admin_bot = telegram.Bot(ADMIN_TELEGRAM_TOKEN)
-            training_day.delete()
-            admins = User.objects.filter(is_superuser=True, is_blocked=False)
-
-            time_tlg, _, _, date_tlg, day_of_week, _, _ = get_time_info_from_tr_day(training_day)
-
-            admin_text = f'⚠️ATTENTION⚠️\n' \
-                   f'{user.first_name} {user.last_name} отменил индивидуальную тренировку\n' \
-                   f'📅Дата: <b>{date_tlg} ({day_of_week})</b>\n' \
-                   f'⏰Время: <b>{time_tlg}</b>\n\n'
-
-            send_message(admins, admin_text, admin_bot)
-
+        if datetime.combine(training_day.date, training_day.start_time) - moscow_datetime(datetime.now()) < user.time_before_cancel:
+            text = f'Неа, уже нельзя отменить занятие.' \
+                   f' Количество часов, за которое тебе нужно отменять: {round(user.time_before_cancel.seconds/3600)}'
         else:
-            # проверяем его ли эта группа или он удаляется из занятия другой группы
-            if user in training_day.visitors.all():
-                training_day.visitors.remove(user)
+            text = 'Окей, занятие <b>{}</b> в <b>{}</b> отменено'.format(date_tlg, time_tlg)
+
+            if training_day.is_individual:
+                admin_bot = telegram.Bot(ADMIN_TELEGRAM_TOKEN)
+                training_day.delete()
+                admins = User.objects.filter(is_superuser=True, is_blocked=False)
+
+                admin_text = f'⚠️ATTENTION⚠️\n' \
+                       f'{user.first_name} {user.last_name} отменил индивидуальную тренировку\n' \
+                       f'📅Дата: <b>{date_tlg} ({day_of_week})</b>\n' \
+                       f'⏰Время: <b>{time_tlg}</b>\n\n'
+
+                send_message(admins, admin_text, admin_bot)
+
             else:
-                training_day.absent.add(user)
+                # проверяем его ли эта группа или он удаляется из занятия другой группы
+                if user in training_day.visitors.all():
+                    training_day.visitors.remove(user)
+                else:
+                    training_day.absent.add(user)
 
-        user.bonus_lesson += 1
-        user.save()
+            user.bonus_lesson += 1
+            user.save()
 
-    bot_edit_message(bot, text, update)
+        bot_edit_message(bot, text, update)
 
 
 @handler_decor(check_status=True)

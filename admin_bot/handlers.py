@@ -260,6 +260,7 @@ def month_payment(bot, update, user):
 
     should_pay_this_month = TrainingGroup.objects.annotate(count_tr_days=Count('grouptrainingday',
                                                                                filter=Q(
+                                                                                   grouptrainingday__is_available=True,
                                                                                    grouptrainingday__date__month=month,
                                                                                    grouptrainingday__date__year=int(
                                                                                        year) + 2020),

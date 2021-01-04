@@ -350,14 +350,16 @@ class Payment(models.Model):
 
 class AlertsLog(models.Model):
     COMING_TRAIN = 'CT'
+    CUSTOM_COACH_MESSAGE = 'CM'
 
     ALERT_TYPES = (
         (COMING_TRAIN, 'предстоящая тренировка'),
+        (CUSTOM_COACH_MESSAGE, 'сообщение от тренера')
     )
 
     player = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     is_sent = models.BooleanField(default=False)
-    dttm_sent = models.DateTimeField(default=moscow_datetime(datetime.now()))
+    dttm_sent = models.DateTimeField(auto_now_add=True)
     tr_day = models.ForeignKey(GroupTrainingDay, on_delete=models.SET_NULL, null=True)
     alert_type = models.CharField(max_length=2, choices=ALERT_TYPES, default=COMING_TRAIN)
     info = models.TextField(null=True)

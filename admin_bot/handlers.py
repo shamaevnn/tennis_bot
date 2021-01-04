@@ -1,20 +1,22 @@
 from django.db.models import Sum, Q, Count, ExpressionWrapper, IntegerField, F
 from telegram.ext import ConversationHandler
 from django.core.exceptions import ObjectDoesNotExist
-from base.models import User, GroupTrainingDay, Payment, TrainingGroup, StaticData
+from base.models import User, GroupTrainingDay, Payment, TrainingGroup, StaticData, AlertsLog
 from base.utils import construct_admin_main_menu, moscow_datetime, bot_edit_message, get_time_info_from_tr_day
 from tele_interface.manage_data import PERMISSION_FOR_IND_TRAIN, SHOW_GROUPDAY_INFO, \
     CLNDR_ADMIN_VIEW_SCHEDULE, CLNDR_ACTION_BACK, CLNDR_NEXT_MONTH, CLNDR_DAY, CLNDR_IGNORE, \
     CLNDR_PREV_MONTH, ADMIN_SITE, PAYMENT_YEAR, PAYMENT_YEAR_MONTH, PAYMENT_YEAR_MONTH_GROUP, PAYMENT_START_CHANGE, \
-    PAYMENT_CONFIRM_OR_CANCEL, BACK_BUTTON, from_digit_to_month, AMOUNT_OF_IND_TRAIN
+    PAYMENT_CONFIRM_OR_CANCEL, BACK_BUTTON, from_digit_to_month, AMOUNT_OF_IND_TRAIN, SEND_MESSAGE
 from tele_interface.utils import create_calendar, separate_callback_data, create_callback_data, \
     create_tr_days_for_future
 from .utils import admin_handler_decor, day_buttons_coach_info, construct_menu_months, construct_menu_groups, \
-    check_if_players_not_in_payments
+    check_if_players_not_in_payments, construct_menu_groups_for_send_message
 from tennis_bot.config import TELEGRAM_TOKEN
 from datetime import date, datetime, timedelta
 from telegram import (InlineKeyboardButton as inlinebutt,
                       InlineKeyboardMarkup as inlinemark, InlineKeyboardButton)
+
+from collections import Counter
 
 import datetime
 import telegram
@@ -99,8 +101,6 @@ def save_many_ind_trains(bot, update, user):
     bot_edit_message(bot, text, update)
 
 
-
-
 def admin_calendar_selection(bot, update):
     """
     Process the callback_query. This method generates a new calendar if forward or
@@ -163,6 +163,94 @@ def redirect_to_site(bot, update, user):
     bot.send_message(user.id,
                      ADMIN_SITE,
                      reply_markup=inlinemark(buttons))
+
+
+GROUP_IDS, TEXT_TO_SEND = 2, 3
+
+
+@admin_handler_decor()
+def select_groups_where_should_send(bot, update, user):
+    text = 'Кому отправить?'
+
+    banda_groups = TrainingGroup.objects.filter(name__iregex=r'БАНДА').order_by('name')
+
+    if update.callback_query:
+        group_ids = update.callback_query.data[len(SEND_MESSAGE):].split("|")
+        ids_counter = Counter(group_ids)
+        markup = construct_menu_groups_for_send_message(banda_groups, f'{update.callback_query.data}')
+
+        if len(group_ids) == 2 and group_ids[-1] == '-1':
+            # ['', '-1'] -- just pressed confirm
+            text = 'Сначала выбери группу, а потом подтверждай.'
+        bot_edit_message(bot, text, update, markup)
+        return GROUP_IDS
+
+    else:
+        markup = construct_menu_groups_for_send_message(banda_groups, f'{SEND_MESSAGE}')
+        bot.send_message(user.id,
+                         text,
+                         reply_markup=markup)
+
+
+@admin_handler_decor()
+def text_to_send(bot, update, user):
+    group_ids = update.callback_query.data[len(SEND_MESSAGE):].split("|")
+    group_ids.remove('')
+    if group_ids[-1] == '-1': # if pressed "confirm"
+        list_of_group_ids = list(set([int(x) for x in group_ids if x]))
+        if 0 in list_of_group_ids:
+            # pressed 'sent to all groups'
+            text = 'Отправлю сообщение всем группам.\n' \
+                   'Введи текст сообщения.'
+
+            banda_groups = TrainingGroup.objects.filter(name__iregex=r'БАНДА').distinct()
+
+            players = User.objects.filter(traininggroup__in=banda_groups).distinct()
+            objs = [AlertsLog(player=player, alert_type=AlertsLog.CUSTOM_COACH_MESSAGE) for player in players]
+            AlertsLog.objects.bulk_create(objs)
+
+        else:
+            text = 'Отправлю сообщение следующим группам:\n'
+
+            group_names = "\n".join(list(TrainingGroup.objects.filter(id__in=list_of_group_ids).values_list('name', flat=True)))
+            text += group_names
+            text += '\nВведи текст сообщения.'
+
+            players = User.objects.filter(traininggroup__in=list_of_group_ids).distinct()
+            objs = [AlertsLog(player=player, alert_type=AlertsLog.CUSTOM_COACH_MESSAGE) for player in players]
+            AlertsLog.objects.bulk_create(objs)
+
+        text += ' Или нажми /cancel для отмены.'
+        bot_edit_message(bot, text, update)
+
+        return TEXT_TO_SEND
+
+    else:
+        select_groups_where_should_send(bot, update)
+
+
+@admin_handler_decor()
+def receive_text_and_send(bot, update, user):
+    text = update.message.text
+
+    alert_instances = AlertsLog.objects.filter(is_sent=False, tr_day__isnull=True,
+                                               alert_type=AlertsLog.CUSTOM_COACH_MESSAGE,
+                                               info__isnull=True).distinct()
+    player_ids = list(alert_instances.values_list('player', flat=True))
+
+    tennis_bot = telegram.Bot(TELEGRAM_TOKEN)
+    for player_id in player_ids:
+        try:
+            tennis_bot.send_message(player_id, text)
+        except (telegram.error.Unauthorized, telegram.error.BadRequest):
+            pass
+
+    alert_instances.update(is_sent=True, info=text)
+
+    bot.send_message(user.id,
+                     'Отправлено.')
+
+    return ConversationHandler.END
 
 
 def info_about_users(users, for_admin=False, payment=False):

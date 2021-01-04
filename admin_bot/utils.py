@@ -1,9 +1,10 @@
 from base.models import User, Payment
 from functools import wraps
+from collections import Counter
 
 from base.utils import get_time_info_from_tr_day
 from tele_interface.manage_data import CLNDR_ADMIN_VIEW_SCHEDULE, CLNDR_ACTION_BACK, BACK_BUTTON, ADMIN_PAYMENT, \
-    PAYMENT_YEAR_MONTH_GROUP, PAYMENT_YEAR
+    PAYMENT_YEAR_MONTH_GROUP, PAYMENT_YEAR, SEND_MESSAGE
 from tele_interface.utils import create_callback_data
 from tennis_bot.settings import DEBUG
 from telegram import (InlineKeyboardButton as inlinebutt,
@@ -124,6 +125,49 @@ def construct_menu_groups(groups, button_text):
         InlineKeyboardButton(f'{BACK_BUTTON}',
                              callback_data=f'{PAYMENT_YEAR}{year}'),
     ])
+
+    return InlineKeyboardMarkup(buttons)
+
+
+def construct_menu_groups_for_send_message(groups, button_text):
+    group_ids = button_text[len(SEND_MESSAGE):].split("|")
+    ids_counter = Counter(group_ids)
+
+    buttons = []
+    row = []
+    for group in groups:
+        if str(group.id) not in group_ids:
+            text_button = group.name
+        elif ids_counter[str(group.id)] > 1 and ids_counter[str(group.id)] % 2 == 0:
+            text_button = group.name
+            group_ids.remove(str(group.id))
+            group_ids.remove(str(group.id))
+            button_text = button_text[:len(SEND_MESSAGE)] + "|".join(group_ids)
+        else:
+            text_button = group.name + " ✅"
+
+        row.append(
+            InlineKeyboardButton(f'{text_button}', callback_data=f'{button_text}|{group.id}')
+        )
+        if len(row) >= 3:
+            buttons.append(row)
+            row = []
+    if len(row):
+        buttons.append(row)
+
+    if '0' not in group_ids:
+        all_groups_text = 'Всем группам'
+    elif ids_counter['0'] > 1 and ids_counter['0'] % 2 == 0:
+        all_groups_text = 'Всем группам'
+        group_ids.remove('0')
+        group_ids.remove('0')
+        button_text = button_text[:len(SEND_MESSAGE)] + "|".join(group_ids)
+    else:
+        all_groups_text = 'Всем группам ✅'
+
+    buttons.append([InlineKeyboardButton(all_groups_text, callback_data=f'{button_text}|{0}')])
+    buttons.append([InlineKeyboardButton('Подтвердить', callback_data=f'{button_text}|{-1}')])
+
     return InlineKeyboardMarkup(buttons)
 
 

@@ -6,7 +6,7 @@ from tele_interface.manage_data import (
     ADMIN_TIME_SCHEDULE_BUTTON,
     MY_DATA_BUTTON,
     SKIP_LESSON_BUTTON,
-    TAKE_LESSON_BUTTON, HELP_BUTTON, ADMIN_SITE, ADMIN_PAYMENT, from_eng_to_rus_day_week, )
+    TAKE_LESSON_BUTTON, HELP_BUTTON, ADMIN_SITE, ADMIN_PAYMENT, from_eng_to_rus_day_week, ADMIN_SEND_MESSAGE, )
 
 import telegram
 import datetime
@@ -48,7 +48,7 @@ def construct_main_menu():
 def construct_admin_main_menu():
     return ReplyKeyboardMarkup([
         [ADMIN_PAYMENT, ADMIN_TIME_SCHEDULE_BUTTON],
-        [ADMIN_SITE]],
+        [ADMIN_SITE, ADMIN_SEND_MESSAGE]],
         resize_keyboard=True)
 
 

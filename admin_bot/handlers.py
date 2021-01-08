@@ -386,7 +386,8 @@ def group_payment(bot, update, user):
         check_if_players_not_in_payments(group_id, payments, year, month)
         paid_this_month = payments.aggregate(sigma=Sum('fact_amount'))
         group = TrainingGroup.objects.get(id=group_id)
-        n_lessons = GroupTrainingDay.objects.filter(date__month=month, date__year=int(year)+2020, group=group).count()
+        n_lessons = GroupTrainingDay.objects.filter(date__month=month, date__year=int(year)+2020, group=group,
+                                                    is_available=True).count()
         n_lessons_info = f'Кол-во занятий: {n_lessons}\n'
         tarif_info = f'Тариф: {group.tarif_for_one_lesson}\n'
         if group.status == TrainingGroup.STATUS_GROUP:

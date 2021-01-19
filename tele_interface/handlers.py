@@ -11,7 +11,8 @@ from base.utils import (construct_main_menu,
                         )
 from base.models import (User,
                          GroupTrainingDay,
-                         TrainingGroup, )
+                         TrainingGroup,
+                         StaticData)
 from .manage_data import (
     SELECT_PRECISE_GROUP_TIME,
     from_eng_to_rus_day_week,
@@ -454,15 +455,18 @@ def select_precise_group_lesson_time(bot, update, user):
     n_free_places = tr_day.group.max_players - tr_day.visitors.count() + tr_day.absent.count() - tr_day.group.users.count()
     all_players = tr_day.group.users.union(tr_day.visitors.all()).difference(tr_day.absent.all()).values('first_name',
                                                                                                          'last_name')
-
+    text = ''
+    if n_free_places <= 0 and tr_day.group.max_players < 6 and tr_day.group.available_for_additional_lessons:
+        text = f'⚠️ATTENTION⚠️\n' \
+               f'<b>Это занятие платное, будет стоить {StaticData.objects.first().tarif_arbitrary}₽ </b>\n\n'
     group_level = {TrainingGroup.LEVEL_ORANGE: '🟠оранжевый мяч🟠', TrainingGroup.LEVEL_GREEN: '🟢зелёный мяч🟢'}
 
     all_players = '\n'.join((f"{x['first_name']} {x['last_name']}" for x in all_players))
-    text = f'{tr_day.group.name} -- {group_level[tr_day.group.level]}\n' \
+    text += f'{tr_day.group.name} -- {group_level[tr_day.group.level]}\n' \
            f'📅Дата: <b>{date_tlg} ({day_of_week})</b>\n' \
            f'⏰Время: <b>{time_tlg}</b>\n\n' \
            f'👥Присутствующие:\n{all_players}\n\n' \
-           f'Свободных мест: {n_free_places}'
+           f'Свободные места: {n_free_places if n_free_places > 0 else "есть за деньги"}'
 
     markup = inline_markup([[
         inline_button('Записаться', callback_data=f"{CONFIRM_GROUP_LESSON}{tr_day_id}")
@@ -521,14 +525,28 @@ def confirm_group_lesson(bot, update, user):
                                          f'<b>Не за счет отыгрышей, не забудь взять с него денюжку.</b>'
 
             else:
-                text = 'Упс, похоже уже не осталось свободных мест на это время, выбери другое.'
-                buttons = [[
-                    inline_button(f'{BACK_BUTTON}',
-                                  callback_data=create_callback_data(CLNDR_ACTION_TAKE_GROUP, CLNDR_DAY,
-                                                                     tr_day.date.year, tr_day.date.month,
-                                                                     tr_day.date.day))
-                ]]
-                markup = inline_markup(buttons)
+                if tr_day.group.available_for_additional_lessons and tr_day.group.max_players < 6:
+                    tr_day.visitors.add(user)
+                    text = f'Записал тебя на <b>{date_tlg} ({day_of_week})</b>\n' \
+                           f'Время: <b>{time_tlg}</b>\n' \
+                           f'⚠️ATTENTION⚠️\n' \
+                           f'Не забудь заплатить <b>{StaticData.objects.first().tarif_arbitrary}₽</b>'
+
+                    admit_message_text = f'⚠️ATTENTION⚠️\n' \
+                                         f'{user.first_name} {user.last_name} записался на <b>{date_tlg} ({day_of_week})</b>\n' \
+                                         f'Время: <b>{time_tlg}</b>\n' \
+                                         f'<b>Не за счет отыгрышей, не забудь взять с него денюжку.</b>'
+
+                    markup = None
+                else:
+                    text = 'Упс, похоже уже не осталось свободных мест на это время, выбери другое.'
+                    buttons = [[
+                        inline_button(f'{BACK_BUTTON}',
+                                      callback_data=create_callback_data(CLNDR_ACTION_TAKE_GROUP, CLNDR_DAY,
+                                                                         tr_day.date.year, tr_day.date.month,
+                                                                         tr_day.date.day))
+                    ]]
+                    markup = inline_markup(buttons)
         else:  # если пытается записаться в свою группу
             text = 'Ну ты чего?🤕 \nЭто же твоя группа, выбери другое время.'
             buttons = [[

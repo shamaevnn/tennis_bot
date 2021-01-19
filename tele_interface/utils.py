@@ -200,11 +200,13 @@ def get_potential_days_for_group_training(user):
         max_players=F('group__max_players'),
         diff=ExpressionWrapper(F('start_time') + F('date') - moscow_datetime(datetime.now()),
                                output_field=DurationField())).filter(
-            max_players__gt=F('visitors__count') + F('group__users__count') - F('absent__count'),
-            diff__gte=timedelta(hours=1),
-            group__status=TrainingGroup.STATUS_GROUP,
-    ).exclude(
-        Q(visitors__in=[user]) | Q(group__users__in=[user])).order_by('start_time')
+        Q(max_players__gt=F('visitors__count') + F('group__users__count') - F('absent__count')) |
+        (Q(max_players__lte=F('visitors__count') + F('group__users__count') - F('absent__count')) &
+            Q(group__available_for_additional_lessons=True) & Q(max_players__lt=6)),
+                diff__gte=timedelta(hours=1),
+                group__status=TrainingGroup.STATUS_GROUP,
+        ).exclude(
+            Q(visitors__in=[user]) | Q(group__users__in=[user])).order_by('start_time')
 
     return potential_free_places
 

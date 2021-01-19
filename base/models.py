@@ -133,6 +133,9 @@ class TrainingGroup(ModelwithTime):
     status = models.CharField(max_length=1, choices=GROUP_STATUSES, verbose_name='Статус группы', default=STATUS_GROUP)
     level = models.CharField(max_length=1, choices=GROUP_LEVELS, verbose_name='Уровень группы', default=LEVEL_ORANGE)
     tarif_for_one_lesson = models.PositiveIntegerField(default=400, verbose_name='Тариф за одно занятие')
+    available_for_additional_lessons = models.BooleanField(default=False, verbose_name='Занятия за деньги',
+                                                           help_text='Можно ли прийти в эту группу на занятия за деньги,'
+                                                                     'если меньше, чем max_players')
 
     class Meta:
         verbose_name = 'банда'
@@ -145,7 +148,8 @@ class TrainingGroup(ModelwithTime):
 class TrainingGroupForm(forms.ModelForm):
     class Meta:
         model = TrainingGroup
-        fields = ['name', 'users', 'max_players', 'status', 'level', 'tarif_for_one_lesson']
+        fields = ['name', 'users', 'max_players', 'status', 'level',
+                  'tarif_for_one_lesson', 'available_for_additional_lessons']
 
     def clean(self):
         users = self.cleaned_data.get('users')
@@ -171,7 +175,6 @@ class TrainingGroupForm(forms.ModelForm):
                 error_text = f"Со следующими днями может возникнуть проблема, что будет больше людей, чем нужно на тренирвоке:\n{error_ids}"
                 raise ValidationError(
                     {'users': mark_safe(error_text)})
-
 
 
 class GroupTrainingDay(ModelwithTime):

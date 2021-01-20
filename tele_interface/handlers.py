@@ -23,12 +23,12 @@ from .manage_data import (
     CONFIRM_GROUP_LESSON,
     SHOW_INFO_ABOUT_SKIPPING_DAY, TAKE_LESSON_BUTTON, CLNDR_IGNORE, CLNDR_DAY, CLNDR_PREV_MONTH, CLNDR_NEXT_MONTH,
     CLNDR_ACTION_BACK, CLNDR_ACTION_SKIP, CLNDR_ACTION_TAKE_GROUP, CLNDR_ACTION_TAKE_IND, SELECT_SKIP_TIME_BUTTON,
-    BACK_BUTTON, from_digit_to_month,
+    BACK_BUTTON, from_digit_to_month, PAYMENT_VISITING, PAYMENT_BONUS, PAYMENT_MONEY,
 )
 from calendar import monthrange
 from tennis_bot.config import ADMIN_TELEGRAM_TOKEN
 from datetime import date, datetime, timedelta
-from django.db.models import Q
+from django.db.models import Q, F
 
 from telegram import (
     InlineKeyboardButton as inline_button,
@@ -202,7 +202,9 @@ def inline_calendar_handler(bot, update, user):
                 markup = create_calendar(CLNDR_ACTION_SKIP, date_my.year, date_my.month,
                                          select_tr_days_for_skipping(user))
             else:
-                training_days = GroupTrainingDay.objects.filter(Q(group__users__in=[user]) | Q(visitors__in=[user]),
+                training_days = GroupTrainingDay.objects.filter(Q(group__users__in=[user]) |
+                                                                Q(visitors__in=[user]) |
+                                                                Q(pay_visitors__in=[user]),
                                                                 date=date_my).exclude(absent__in=[user]).select_related(
                     'group').order_by(
                     'id').distinct('id')
@@ -331,6 +333,14 @@ def skip_lesson(bot, update, user):
                 # проверяем его ли эта группа или он удаляется из занятия другой группы
                 if user in training_day.visitors.all():
                     training_day.visitors.remove(user)
+                    if user.status == User.STATUS_ARBITRARY:
+                        user.bonus_lesson -= 1
+                        user.save()
+                elif user in training_day.pay_visitors.all():
+                    training_day.pay_visitors.remove(user)
+                    user.bonus_lesson -= 1
+                    user.save()
+                    # сначала убавляем, потом прибавляем
                 else:
                     training_day.absent.add(user)
 
@@ -500,6 +510,7 @@ def confirm_group_lesson(bot, update, user):
         if user.bonus_lesson > 0:
             user.bonus_lesson -= 1
             user.save()
+
         else:
             admit_message_text = f'⚠️ATTENTION⚠️\n' \
                                  f'{user.first_name} {user.last_name} записался на <b>{date_tlg} ({day_of_week})</b>\n' \
@@ -518,6 +529,7 @@ def confirm_group_lesson(bot, update, user):
                 if user.bonus_lesson > 0:
                     user.bonus_lesson -= 1
                     user.save()
+
                 else:
                     admit_message_text = f'⚠️ATTENTION⚠️\n' \
                                          f'{user.first_name} {user.last_name} записался на <b>{date_tlg} ({day_of_week})</b>\n' \
@@ -526,18 +538,31 @@ def confirm_group_lesson(bot, update, user):
 
             else:
                 if tr_day.group.available_for_additional_lessons and tr_day.group.max_players < 6:
-                    tr_day.visitors.add(user)
-                    text = f'Записал тебя на <b>{date_tlg} ({day_of_week})</b>\n' \
-                           f'Время: <b>{time_tlg}</b>\n' \
-                           f'⚠️ATTENTION⚠️\n' \
-                           f'Не забудь заплатить <b>{StaticData.objects.first().tarif_arbitrary}₽</b>'
+                    if user.bonus_lesson == 0:
+                        tr_day.pay_visitors.add(user)
+                        text = f'Записал тебя на <b>{date_tlg} ({day_of_week})</b>\n' \
+                               f'Время: <b>{time_tlg}</b>\n' \
+                               f'⚠️ATTENTION⚠️\n' \
+                               f'Не забудь заплатить <b>{StaticData.objects.first().tarif_arbitrary}₽</b>'
 
-                    admit_message_text = f'⚠️ATTENTION⚠️\n' \
-                                         f'{user.first_name} {user.last_name} записался на <b>{date_tlg} ({day_of_week})</b>\n' \
-                                         f'Время: <b>{time_tlg}</b>\n' \
-                                         f'<b>Не за счет отыгрышей, не забудь взять с него денюжку.</b>'
+                        admit_message_text = f'⚠️ATTENTION⚠️\n' \
+                                             f'{user.first_name} {user.last_name} записался на <b>{date_tlg} ({day_of_week})</b>\n' \
+                                             f'Время: <b>{time_tlg}</b>\n' \
+                                             f'<b>Не за счет отыгрышей, не забудь взять с него денюжку.</b>'
 
-                    markup = None
+                        markup = None
+                    else:
+                        text = "Выбери тип оплаты"
+                        markup = inline_markup([[
+                            inline_button(f'За отыгрыш + {StaticData.objects.first().tarif_payment_add_lesson}₽',
+                                          callback_data=f"{PAYMENT_VISITING}{PAYMENT_BONUS}|{tr_day_id}")
+                        ], [
+                            inline_button(f'За {StaticData.objects.first().tarif_arbitrary}₽',
+                                          callback_data=f"{PAYMENT_VISITING}{PAYMENT_MONEY}|{tr_day_id}")
+                        ], [
+                            inline_button(f'{BACK_BUTTON}',
+                                          callback_data=f"{SELECT_PRECISE_GROUP_TIME}{tr_day_id}")
+                        ]])
                 else:
                     text = 'Упс, похоже уже не осталось свободных мест на это время, выбери другое.'
                     buttons = [[
@@ -563,9 +588,52 @@ def confirm_group_lesson(bot, update, user):
         send_message(admins, admit_message_text, admin_bot)
 
 
+@handler_decor()
+def choose_type_of_payment_for_pay_visiting(bot, update, user):
+    payment_choice, tr_day_id = update.callback_query.data[len(PAYMENT_VISITING):].split('|')
+    tr_day = GroupTrainingDay.objects.get(id=tr_day_id)
+
+    time_tlg, _, _, date_tlg, day_of_week, _, _ = get_time_info_from_tr_day(tr_day)
+    text, admin_text = '', ''
+    if payment_choice == PAYMENT_BONUS:
+        user.bonus_lesson -= 1
+        user.save()
+
+        tr_day.pay_visitors.add(user)
+        text = f'Записал тебя на <b>{date_tlg} ({day_of_week})</b>\n' \
+               f'Время: <b>{time_tlg}</b>\n' \
+               f'⚠️ATTENTION⚠️\n' \
+               f'Не забудь заплатить <b>{StaticData.objects.first().tarif_payment_add_lesson}₽</b>'
+
+        admin_text = f'⚠️ATTENTION⚠️\n' \
+                     f'{user.first_name} {user.last_name} записался на <b>{date_tlg} ({day_of_week})</b>\n' \
+                     f'Время: <b>{time_tlg}</b>\n' \
+                     f'<b>За счет платных отыгрешей, не забудь взять с него {StaticData.objects.first().tarif_payment_add_lesson}₽.</b>'
+
+    elif payment_choice == PAYMENT_MONEY:
+        tr_day.pay_visitors.add(user)
+        text = f'Записал тебя на <b>{date_tlg} ({day_of_week})</b>\n' \
+               f'Время: <b>{time_tlg}</b>\n' \
+               f'⚠️ATTENTION⚠️\n' \
+               f'Не забудь заплатить <b>{StaticData.objects.first().tarif_arbitrary}₽</b>'
+
+        admin_text = f'⚠️ATTENTION⚠️\n' \
+                     f'{user.first_name} {user.last_name} записался на <b>{date_tlg} ({day_of_week})</b>\n' \
+                     f'Время: <b>{time_tlg}</b>\n' \
+                     f'<b>В дополнительное время, не забудь взять с него {StaticData.objects.first().tarif_arbitrary}₽.</b>'
+
+    bot_edit_message(bot, text, update)
+
+    admin_bot = telegram.Bot(ADMIN_TELEGRAM_TOKEN)
+    admins = User.objects.filter(is_staff=True, is_blocked=False)
+    send_message(admins, admin_text, admin_bot)
+
+
 def make_group_name_group_players_info_for_skipping(tr_day):
-    all_players = tr_day.group.users.union(tr_day.visitors.all()).difference(tr_day.absent.all()).values('first_name',
-                                                                                                         'last_name')
+    all_players = tr_day.group.users.union(tr_day.visitors.all(), tr_day.pay_visitors.all()).\
+        difference(tr_day.absent.all()).\
+            values('first_name', 'last_name')
+
     all_players = '\n'.join((f"{x['first_name']} {x['last_name']}" for x in all_players))
 
     if not tr_day.is_individual:

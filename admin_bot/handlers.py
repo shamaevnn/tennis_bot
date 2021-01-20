@@ -291,16 +291,18 @@ def show_traingroupday_info(bot, update, user):
     if not tr_day.is_individual:
         group_players = f'Игроки группы:\n{info_about_users(tr_day.group.users.all().difference(tr_day.absent.all()), for_admin=True)}\n'
         visitors = f'\n➕Пришли из других:\n{info_about_users(tr_day.visitors, for_admin=True)}\n' if tr_day.visitors.count() else ''
+        pay_visitors = f'\n➕Пришли за ₽:\n{info_about_users(tr_day.pay_visitors, for_admin=True)}\n' if tr_day.pay_visitors.count() else ''
         absents = f'\n➖Отсутствуют:\n{info_about_users(tr_day.absent, for_admin=True)}\n' if tr_day.absent.count() else ''
     else:
         group_players = ''
         visitors = ''
+        pay_visitors = ''
         absents = ''
 
     time_tlg, _, _, date_tlg, day_of_week, _, _ = get_time_info_from_tr_day(tr_day)
 
     general_info = f'<b>{date_tlg} ({day_of_week})\n{time_tlg}</b>' + '\n' + availability + is_individual + affiliation
-    users_info = group_name + group_players + visitors + absents
+    users_info = group_name + group_players + visitors + pay_visitors + absents
     text = general_info + users_info
 
     markup = inlinemark([[

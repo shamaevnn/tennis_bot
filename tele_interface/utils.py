@@ -181,7 +181,9 @@ def get_available_dt_time4ind_train(duration: float, tr_day_date=moscow_datetime
 
 
 def select_tr_days_for_skipping(user):
-    tmp = GroupTrainingDay.objects.filter(Q(group__users__in=[user]) | Q(visitors__in=[user]),
+    tmp = GroupTrainingDay.objects.filter(Q(group__users__in=[user]) |
+                                          Q(visitors__in=[user]) |
+                                          Q(pay_visitors__in=[user]),
                                           date__gte=moscow_datetime(datetime.now()).date()).exclude(
         absent__in=[user]).order_by('id').distinct(
         'id').values('date', 'start_time')
@@ -197,11 +199,12 @@ def get_potential_days_for_group_training(user):
         Count('absent', distinct=True),
         Count('group__users', distinct=True),
         Count('visitors', distinct=True),
+        Count('pay_visitors', distinct=True),
         max_players=F('group__max_players'),
         diff=ExpressionWrapper(F('start_time') + F('date') - moscow_datetime(datetime.now()),
                                output_field=DurationField())).filter(
         Q(max_players__gt=F('visitors__count') + F('group__users__count') - F('absent__count')) |
-        (Q(max_players__lte=F('visitors__count') + F('group__users__count') - F('absent__count')) &
+        (Q(max_players__lte=F('pay_visitors__count')+F('visitors__count')+F('group__users__count')-F('absent__count')) &
             Q(group__available_for_additional_lessons=True) & Q(max_players__lt=6)),
                 diff__gte=timedelta(hours=1),
                 group__status=TrainingGroup.STATUS_GROUP,

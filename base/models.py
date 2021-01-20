@@ -42,6 +42,8 @@ class StaticData(models.Model):
                                             verbose_name='Тариф для детской группы малой численности')
     tarif_section = models.PositiveIntegerField(null=True, default=4000,
                                                 verbose_name='Тариф для детской секции в месяц')
+    tarif_payment_add_lesson = models.PositiveIntegerField(null=True, default=100,
+                                                           verbose_name='Стоимость, если отыгрывает платно')
 
     class Meta:
         verbose_name = 'Изменяемые данные'
@@ -165,11 +167,15 @@ class TrainingGroupForm(forms.ModelForm):
                                         group_users_cnt=Count('group__users', distinct=True),
                                         absent_cnt=Count('absent', distinct=True),
                                         visitors_cnt=Count('visitors', distinct=True),
+                                        pay_visitors_cnt=Count('visitors', distinct=True),
                                         max_players=F('group__max_players')).filter(
                                                 group_users_cnt__lt=users.count(),
                                                 start__gte=moscow_datetime(datetime.now()),
                                                 is_available=True,
-                                                max_players=F('visitors_cnt') + F('group_users_cnt') - F('absent_cnt')).distinct().values('id', 'date', 'start_time')
+                                                max_players=F('visitors_cnt') +
+                                                            F('pay_visitors_cnt') +
+                                                            F('group_users_cnt') -
+                                                            F('absent_cnt')).distinct().values('id', 'date', 'start_time')
             if len(tr_day):
                 error_ids = "\n".join(['<a href="http://vladlen82.fvds.ru/admin/base/grouptrainingday/{}/change/">{} {}</a>'.format(x['id'], x['date'], x['start_time']) for x in tr_day])
                 error_text = f"Со следующими днями может возникнуть проблема, что будет больше людей, чем нужно на тренирвоке:\n{error_ids}"
@@ -195,6 +201,9 @@ class GroupTrainingDay(ModelwithTime):
                                     verbose_name='Продолжительность занятия')
     visitors = models.ManyToManyField(User, blank=True, help_text='Пришли из других групп\n', related_name='visitors',
                                       verbose_name='Игроки из других групп')
+
+    pay_visitors = models.ManyToManyField(User, blank=True, help_text='Заплатили за занятие',
+                                          related_name='pay_visitors', verbose_name='Заплатившие игроки')
     tr_day_status = models.CharField(max_length=1, default=MY_TRAIN_STATUS, help_text='Моя тренировка или аренда',
                                      choices=TR_DAY_STATUSES, verbose_name='Статус')
 
@@ -212,17 +221,41 @@ class GroupTrainingDay(ModelwithTime):
 class GroupTrainingDayForm(forms.ModelForm):
     class Meta:
         model = GroupTrainingDay
-        fields = ['group', 'absent', 'visitors', 'date', 'is_available', 'is_individual', 'tr_day_status', 'start_time',
+        fields = ['group', 'absent', 'visitors', 'pay_visitors', 'date', 'is_available', 'is_individual', 'tr_day_status', 'start_time',
                   'duration']
 
     def clean(self):
+
+        def send_alert_about_cancel_in_visitors(self, type_of_visitors='visitors'):
+            bot = telegram.Bot(TELEGRAM_TOKEN)
+
+            canceled_users = []
+            if type_of_visitors == 'visitors':
+                if self.cleaned_data.get(type_of_visitors).count() < self.instance.visitors.count():
+                    canceled_users = self.instance.visitors.all().exclude(
+                        id__in=self.cleaned_data.get(type_of_visitors).values('id'))
+            elif type_of_visitors == 'pay_visitors':
+                if self.cleaned_data.get(type_of_visitors).count() < self.instance.pay_visitors.count():
+                    canceled_users = self.instance.pay_visitors.all().exclude(
+                        id__in=self.cleaned_data.get(type_of_visitors).values('id'))
+
+            if canceled_users:
+                text = f'😱ATTENTION😱\n' \
+                       f'У тебя есть запись на тренировку на <b> {self.cleaned_data.get("date")}.</b>\n' \
+                       f'<b>Тренер ее отменил.</b> Но не отчаивайся, я добавлю тебе отыгрыш 🎾'
+                send_message(canceled_users, text, bot, markup=construct_main_menu())
+                for player in canceled_users:
+                    player.bonus_lesson += 1
+                    player.save()
+
         group = self.cleaned_data.get('group')
 
         if not group:
             raise ValidationError('Не выбрана группа')
 
-        current_amount_of_players = self.cleaned_data.get(
-            'visitors').count() + group.users.count() - self.cleaned_data.get('absent').count()
+        current_amount_of_players = self.cleaned_data.get('visitors').count() + \
+                                        self.cleaned_data.get('pay_visitors').count() + \
+                                            group.users.count() - self.cleaned_data.get('absent').count()
         if current_amount_of_players > group.max_players:
             raise ValidationError(
                 'Превышен лимит игроков в группе — сейчас {}, максимум {}'.format(current_amount_of_players,
@@ -276,16 +309,10 @@ class GroupTrainingDayForm(forms.ModelForm):
             send_alert_about_changing_tr_day_status(self.instance, self.cleaned_data.get('is_available'), bot)
 
         if 'visitors' in self.changed_data:
-            if self.cleaned_data.get('visitors').count() < self.instance.visitors.count():
-                canceled_users = self.instance.visitors.all().exclude(
-                    id__in=self.cleaned_data.get('visitors').values('id'))
-                text = f'😱ATTENTION😱\n' \
-                       f'У тебя есть запись на тренировку на <b> {self.cleaned_data.get("date")}.</b>\n' \
-                       f'<b>Тренер ее отменил.</b> Но не отчаивайся, я добавлю тебе отыгрыш 🎾'
-                send_message(canceled_users, text, bot, markup=construct_main_menu())
-                for player in canceled_users:
-                    player.bonus_lesson += 1
-                    player.save()
+            send_alert_about_cancel_in_visitors(self, 'visitors')
+
+        if 'pay_visitors' in self.changed_data:
+            send_alert_about_cancel_in_visitors(self, 'pay_visitors')
 
 
 class Payment(models.Model):
@@ -331,7 +358,7 @@ class Payment(models.Model):
         self.n_fact_visiting = base_query.distinct().count()
 
         payment = 0
-        for x in self.player.traininggroup_set.all():
+        for x in self.player.traininggroup_set.all().iterator():
             if x.status == TrainingGroup.STATUS_SECTION:
                 payment = StaticData.objects.first().tarif_section
         if not payment:

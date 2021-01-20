@@ -58,6 +58,10 @@ CLNDR_ACTION_TAKE_GROUP = 'TAKE_GROUP'
 CLNDR_ACTION_TAKE_IND = 'TAKE_IND'
 CLNDR_ADMIN_VIEW_SCHEDULE = 'VIEW_SCHEDULE'
 
+PAYMENT_VISITING = 'PMNT_VST'
+PAYMENT_BONUS = 'bonus'
+PAYMENT_MONEY = 'money'
+
 BACK_BUTTON = '⬅️ назад'
 
 ALERT_TEXTS = [{"Знаю, что лень идти, а надо. Сегодня тренировка:\n": "https://perfum-online.by/image/data/1news/that-to-do-%D1%87%D1%82%D0%BE%D0%B1-not-to-miss-drills.jpg"},

@@ -1,6 +1,7 @@
 import calendar
 
 from pytz import timezone
+from django.db.models import F
 from telegram import (ReplyKeyboardMarkup)
 from tele_interface.manage_data import (
     ADMIN_TIME_SCHEDULE_BUTTON,
@@ -55,12 +56,12 @@ def construct_admin_main_menu():
 def send_alert_about_changing_tr_day_status(tr_day, new_is_available: bool, bot):
     group_members = tr_day.group.users.all()
     visitors = tr_day.visitors.all()
+    pay_visitors = tr_day.visitors.all()
 
     if not new_is_available:
         text = 'Тренировка <b>{} в {}</b> отменена. Но не переживай, я добавлю тебе отыгрыш.'.format(tr_day.date,
                                                                                                      tr_day.start_time)
-        users = group_members.union(visitors).difference(tr_day.absent.all())
-
+        users = group_members.union(visitors, pay_visitors).difference(tr_day.absent.all())
         for user in users:
             user.bonus_lesson += 1
             user.save()
@@ -69,15 +70,16 @@ def send_alert_about_changing_tr_day_status(tr_day, new_is_available: bool, bot)
         text = 'Тренировка <b>{} в {}</b> доступна, ура!'.format(tr_day.date,
                                                                  tr_day.start_time)
 
-    send_message(group_members.union(visitors), text, bot, construct_main_menu())
+    send_message(group_members.union(visitors, pay_visitors), text, bot, construct_main_menu())
 
 
 def send_alert_about_changing_tr_day_time(tr_day, text, bot):
     group_members = tr_day.group.users.all()
     visitors = tr_day.visitors.all()
     absents = tr_day.absent.all()
+    pay_visitors = tr_day.visitors.all()
 
-    send_message(group_members.union(visitors, absents), text, bot, construct_main_menu())
+    send_message(group_members.union(visitors, absents, pay_visitors), text, bot, construct_main_menu())
 
 
 def moscow_datetime(date_time):

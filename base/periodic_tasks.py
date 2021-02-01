@@ -86,7 +86,8 @@ def send_alert_about_payment():
 
 
 schedule.every(59).minutes.do(send_alert_about_coming_train)
-schedule.every(17).minutes.do(send_alert_about_payment)
+schedule.every().day().at("19:00").do(send_alert_about_payment)
+schedule.every().day().at("10:00").do(send_alert_about_payment)
 
 while 1:
     schedule.run_pending()

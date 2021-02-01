@@ -365,7 +365,7 @@ def balls_lessons_payment(year, month, user):
         balls_this_month = tr_days_num_this_month.count()
 
         group = TrainingGroup.objects.filter(users__in=[user], max_players__gte=3).first()
-        tarif = group.tarif_for_one_lesson
+        tarif = group.tarif_for_one_lesson if group else 0
 
     elif user.status == User.STATUS_ARBITRARY:
         tr_days_num_this_month = tr_days_this_month.filter(visitors__in=[user]).distinct()

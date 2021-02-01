@@ -468,7 +468,7 @@ def select_precise_group_lesson_time(bot, update, user):
     text = ''
     if n_free_places <= 0 and tr_day.group.max_players < 6 and tr_day.group.available_for_additional_lessons:
         text = f'⚠️ATTENTION⚠️\n' \
-               f'<b>Это занятие платное, будет стоить {StaticData.objects.first().tarif_arbitrary}₽ </b>\n\n'
+               f'<b>Это занятие платное!</b>\n\n'
     group_level = {TrainingGroup.LEVEL_ORANGE: '🟠оранжевый мяч🟠', TrainingGroup.LEVEL_GREEN: '🟢зелёный мяч🟢'}
 
     all_players = '\n'.join((f"{x['first_name']} {x['last_name']}" for x in all_players))

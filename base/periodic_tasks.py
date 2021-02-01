@@ -67,7 +67,6 @@ def send_alert_about_payment():
                              player__status=User.STATUS_TRAINING,
                              year=str(now_day.year - 2020),
                              month=str(now_day.month)).exclude(
-                                        player_id__in=[350490234, 638303006, 1390503411], # Никита, Юрковы
                                         alertslog__is_sent=True,
                                         alertslog__alert_type=AlertsLog.SHOULD_PAY,
                                         alertslog__dttm_sent__gt=(datetime.now() + timedelta(hours=-7)).replace(tzinfo=utc)).distinct(

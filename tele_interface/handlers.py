@@ -462,9 +462,10 @@ def select_precise_group_lesson_time(bot, update, user):
 
     time_tlg, _, _, date_tlg, day_of_week, _, _ = get_time_info_from_tr_day(tr_day)
     # сколько сейчас свободных мест
-    n_free_places = tr_day.group.max_players - tr_day.visitors.count() + tr_day.absent.count() - tr_day.group.users.count()
-    all_players = tr_day.group.users.union(tr_day.visitors.all()).difference(tr_day.absent.all()).values('first_name',
-                                                                                                         'last_name')
+    n_free_places = tr_day.group.max_players - tr_day.pay_visitors.count() - tr_day.visitors.count() + \
+                    tr_day.absent.count() - tr_day.group.users.count()
+    all_players = tr_day.group.users.union(tr_day.visitors.all(), tr_day.pay_visitors.all()) \
+        .difference(tr_day.absent.all()).values('first_name', 'last_name')
     text = ''
     if n_free_places <= 0 and tr_day.group.max_players < 6 and tr_day.group.available_for_additional_lessons:
         text = f'⚠️ATTENTION⚠️\n' \
@@ -526,7 +527,7 @@ def confirm_group_lesson(bot, update, user):
 
                 markup = None
 
-                if user.bonus_lesson > 0:
+                if user.bonus_lesson > 0 and user.status == User.STATUS_TRAINING:
                     user.bonus_lesson -= 1
                     user.save()
 

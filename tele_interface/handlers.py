@@ -550,17 +550,19 @@ def confirm_group_lesson(bot, update, user):
 
             else:
                 if tr_day.group.available_for_additional_lessons and tr_day.group.max_players < 6:
+                    tarif = StaticData.objects.first().tarif_arbitrary if user.status == User.STATUS_ARBITRARY \
+                        else StaticData.objects.first().tarif_group
                     if user.bonus_lesson == 0:
                         tr_day.pay_visitors.add(user)
                         text = f'Записал тебя на <b>{date_tlg} ({day_of_week})</b>\n' \
                                f'Время: <b>{time_tlg}</b>\n' \
                                f'⚠️ATTENTION⚠️\n' \
-                               f'Не забудь заплатить <b>{StaticData.objects.first().tarif_arbitrary}₽</b>'
+                               f'Не забудь заплатить <b>{tarif}₽</b>'
 
                         admit_message_text = f'⚠️ATTENTION⚠️\n' \
                                              f'{user.first_name} {user.last_name} записался на <b>{date_tlg} ({day_of_week})</b>\n' \
                                              f'Время: <b>{time_tlg}</b>\n' \
-                                             f'<b>Не за счет отыгрышей, не забудь взять с него денюжку.</b>'
+                                             f'<b>Не за счет отыгрышей, не забудь взять с него {tarif}₽.</b>'
 
                         markup = None
                     else:
@@ -569,7 +571,7 @@ def confirm_group_lesson(bot, update, user):
                             inline_button(f'За отыгрыш + {StaticData.objects.first().tarif_payment_add_lesson}₽',
                                           callback_data=f"{PAYMENT_VISITING}{PAYMENT_BONUS}|{tr_day_id}")
                         ], [
-                            inline_button(f'За {StaticData.objects.first().tarif_arbitrary}₽',
+                            inline_button(f'За {tarif}₽',
                                           callback_data=f"{PAYMENT_VISITING}{PAYMENT_MONEY}|{tr_day_id}")
                         ], [
                             inline_button(f'{BACK_BUTTON}',
@@ -624,15 +626,18 @@ def choose_type_of_payment_for_pay_visiting(bot, update, user):
 
     elif payment_choice == PAYMENT_MONEY:
         tr_day.pay_visitors.add(user)
+        tarif = StaticData.objects.first().tarif_arbitrary if user.status == User.STATUS_ARBITRARY \
+            else StaticData.objects.first().tarif_group
+
         text = f'Записал тебя на <b>{date_tlg} ({day_of_week})</b>\n' \
                f'Время: <b>{time_tlg}</b>\n' \
                f'⚠️ATTENTION⚠️\n' \
-               f'Не забудь заплатить <b>{StaticData.objects.first().tarif_arbitrary}₽</b>'
+               f'Не забудь заплатить <b>{tarif}₽</b>'
 
         admin_text = f'⚠️ATTENTION⚠️\n' \
                      f'{user.first_name} {user.last_name} записался на <b>{date_tlg} ({day_of_week})</b>\n' \
                      f'Время: <b>{time_tlg}</b>\n' \
-                     f'<b>В дополнительное время, не забудь взять с него {StaticData.objects.first().tarif_arbitrary}₽.</b>'
+                     f'<b>В дополнительное время, не забудь взять с него {tarif}₽.</b>'
 
     bot_edit_message(bot, text, update)
 

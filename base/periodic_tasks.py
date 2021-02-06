@@ -60,8 +60,8 @@ def send_alert_about_coming_train():
 
 def send_alert_about_payment():
     now_day = moscow_datetime(datetime.now())
-    # отправляем в первые 10 дней месяца
-    if now_day.day <= 10:
+    # отправляем в первые 2 дня месяца
+    if now_day.day <= 2:
         not_paid = Payment.objects.filter(
                              fact_amount=0,
                              player__status=User.STATUS_TRAINING,

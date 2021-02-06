@@ -25,6 +25,8 @@ TAKE_LESSON_BUTTON = 'Записаться на занятие'
 MY_DATA_BUTTON = 'Мои данные'
 SKIP_LESSON_BUTTON = 'Пропустить занятие'
 HELP_BUTTON = '🤓Поддержка'
+NO_PAYMENT_BUTTON = '❌НЕ ОПЛАЧЕНО❌'
+SUCCESS_PAYMENT = '✅ОПЛАЧЕНО✅'
 
 SELECT_DAY_TO_SHOW_COACH_SCHEDULE = 'COACH_SCHEDULE'
 SHOW_GROUPDAY_INFO = 'GROUPDAY_INFO'

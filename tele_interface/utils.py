@@ -16,7 +16,7 @@ from base.models import (User,
                          GroupTrainingDay,
                          TrainingGroup, )
 from base.utils import TM_TIME_SCHEDULE_FORMAT, DT_BOT_FORMAT, moscow_datetime, get_time_info_from_tr_day
-from tele_interface.manage_data import SHOW_INFO_ABOUT_SKIPPING_DAY, from_eng_to_rus_day_week, CLNDR_IGNORE, CLNDR_DAY, \
+from tele_interface.manage_data import SHOW_INFO_ABOUT_SKIPPING_DAY, CLNDR_IGNORE, CLNDR_DAY, \
     CLNDR_PREV_MONTH, CLNDR_NEXT_MONTH, CLNDR_ACTION_BACK, CLNDR_ACTION_TAKE_IND, CLNDR_ACTION_SKIP, \
     SELECT_SKIP_TIME_BUTTON, BACK_BUTTON, from_digit_to_month
 

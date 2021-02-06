@@ -7,8 +7,8 @@ from django.utils.safestring import mark_safe
 from django.db.models import Q, F, Case, When, Sum, IntegerField, ExpressionWrapper, DateTimeField, Count
 from django.utils import timezone
 from datetime import datetime, date
-from base.utils import construct_main_menu, send_message, moscow_datetime, TM_TIME_SCHEDULE_FORMAT, DT_BOT_FORMAT, \
-    send_alert_about_changing_tr_day_time
+from base.utils import send_message, moscow_datetime, TM_TIME_SCHEDULE_FORMAT, DT_BOT_FORMAT, \
+    send_alert_about_changing_tr_day_time, construct_main_menu
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 
@@ -107,7 +107,7 @@ class UserForm(forms.ModelForm):
                     new_status == User.STATUS_ARBITRARY or new_status == User.STATUS_TRAINING):
                 bot = telegram.Bot(TELEGRAM_TOKEN)
                 send_message([self.instance], 'Теперь тебе доступен мой функционал, поздравляю!',
-                             bot, markup=construct_main_menu())
+                             bot, markup=construct_main_menu(self.instance, self.instance.status))
 
 
 class TrainingGroup(ModelwithTime):

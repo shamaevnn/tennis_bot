@@ -2,7 +2,7 @@ from django.db.models import Sum, Q, Count, ExpressionWrapper, IntegerField, F
 from telegram.ext import ConversationHandler
 from django.core.exceptions import ObjectDoesNotExist
 from base.models import User, GroupTrainingDay, Payment, TrainingGroup, StaticData, AlertsLog
-from base.utils import construct_admin_main_menu, moscow_datetime, bot_edit_message, get_time_info_from_tr_day
+from base.utils import moscow_datetime, bot_edit_message, get_time_info_from_tr_day
 from tele_interface.manage_data import PERMISSION_FOR_IND_TRAIN, SHOW_GROUPDAY_INFO, \
     CLNDR_ADMIN_VIEW_SCHEDULE, CLNDR_ACTION_BACK, CLNDR_NEXT_MONTH, CLNDR_DAY, CLNDR_IGNORE, \
     CLNDR_PREV_MONTH, ADMIN_SITE, PAYMENT_YEAR, PAYMENT_YEAR_MONTH, PAYMENT_YEAR_MONTH_GROUP, PAYMENT_START_CHANGE, \
@@ -10,7 +10,7 @@ from tele_interface.manage_data import PERMISSION_FOR_IND_TRAIN, SHOW_GROUPDAY_I
 from tele_interface.utils import create_calendar, separate_callback_data, create_callback_data, \
     create_tr_days_for_future
 from .utils import admin_handler_decor, day_buttons_coach_info, construct_menu_months, construct_menu_groups, \
-    check_if_players_not_in_payments, construct_menu_groups_for_send_message
+    check_if_players_not_in_payments, construct_menu_groups_for_send_message, construct_admin_main_menu
 from tennis_bot.config import TELEGRAM_TOKEN
 from datetime import date, datetime, timedelta
 from telegram import (InlineKeyboardButton as inlinebutt,

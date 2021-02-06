@@ -1,13 +1,11 @@
 import calendar
+from datetime import date
 
 from pytz import timezone
-from django.db.models import F
-from telegram import (ReplyKeyboardMarkup)
+from telegram import ReplyKeyboardMarkup
+
 from tele_interface.manage_data import (
-    ADMIN_TIME_SCHEDULE_BUTTON,
-    MY_DATA_BUTTON,
-    SKIP_LESSON_BUTTON,
-    TAKE_LESSON_BUTTON, HELP_BUTTON, ADMIN_SITE, ADMIN_PAYMENT, from_eng_to_rus_day_week, ADMIN_SEND_MESSAGE, )
+    from_eng_to_rus_day_week, NO_PAYMENT_BUTTON, MY_DATA_BUTTON, HELP_BUTTON, SKIP_LESSON_BUTTON, TAKE_LESSON_BUTTON, )
 
 import telegram
 import datetime
@@ -37,20 +35,6 @@ def send_message(users, message: str, bot, markup=None):
         except (telegram.error.Unauthorized, telegram.error.BadRequest):
             user.is_blocked = True
             user.save()
-
-
-def construct_main_menu():
-    return ReplyKeyboardMarkup([
-        [MY_DATA_BUTTON, HELP_BUTTON],
-        [SKIP_LESSON_BUTTON, TAKE_LESSON_BUTTON]],
-        resize_keyboard=True)
-
-
-def construct_admin_main_menu():
-    return ReplyKeyboardMarkup([
-        [ADMIN_PAYMENT, ADMIN_TIME_SCHEDULE_BUTTON],
-        [ADMIN_SITE, ADMIN_SEND_MESSAGE]],
-        resize_keyboard=True)
 
 
 def send_alert_about_changing_tr_day_status(tr_day, new_is_available: bool, bot):
@@ -110,3 +94,21 @@ def get_time_info_from_tr_day(tr_day):
     date_tlg = tr_day.date.strftime(DT_BOT_FORMAT)
 
     return time_tlg, start_time_tlg, end_time_tlg, date_tlg, day_of_week, start_time, end_time
+
+
+def construct_main_menu(user=None, user_status=None):
+    payment_button = []
+    from base.models import User
+    if user and user_status == User.STATUS_TRAINING:
+        from base.models import Payment
+        today_date = date.today()
+        user_payment = Payment.objects.filter(player=user, player__status=user_status, fact_amount=0,
+                                              year=today_date.year-2020, month=today_date.month)
+        if user_payment.exists():
+            payment_button = [NO_PAYMENT_BUTTON]
+
+    return ReplyKeyboardMarkup([
+        payment_button,
+        [MY_DATA_BUTTON, HELP_BUTTON],
+        [SKIP_LESSON_BUTTON, TAKE_LESSON_BUTTON]],
+        resize_keyboard=True)

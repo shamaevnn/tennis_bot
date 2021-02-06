@@ -4,11 +4,12 @@ from collections import Counter
 
 from base.utils import get_time_info_from_tr_day
 from tele_interface.manage_data import CLNDR_ADMIN_VIEW_SCHEDULE, CLNDR_ACTION_BACK, BACK_BUTTON, ADMIN_PAYMENT, \
-    PAYMENT_YEAR_MONTH_GROUP, PAYMENT_YEAR, SEND_MESSAGE
+    PAYMENT_YEAR_MONTH_GROUP, PAYMENT_YEAR, SEND_MESSAGE, ADMIN_TIME_SCHEDULE_BUTTON, ADMIN_SITE, ADMIN_SEND_MESSAGE
 from tele_interface.utils import create_callback_data
 from tennis_bot.settings import DEBUG
 from telegram import (InlineKeyboardButton as inlinebutt,
-                      InlineKeyboardMarkup as inlinemark, InlineKeyboardButton, InlineKeyboardMarkup, )
+                      InlineKeyboardMarkup as inlinemark, InlineKeyboardButton, InlineKeyboardMarkup,
+                      ReplyKeyboardMarkup, )
 
 import sys
 import logging
@@ -177,3 +178,10 @@ def check_if_players_not_in_payments(group_id, payments, year, month):
     if users_not_in_payments.count():
         for player in users_not_in_payments:
             Payment.objects.create(player=player, month=month, year=year)
+
+
+def construct_admin_main_menu():
+    return ReplyKeyboardMarkup([
+        [ADMIN_PAYMENT, ADMIN_TIME_SCHEDULE_BUTTON],
+        [ADMIN_SITE, ADMIN_SEND_MESSAGE]],
+        resize_keyboard=True)

@@ -5,14 +5,14 @@ from .utils import (handler_decor,
                     create_calendar, construct_time_menu_for_group_lesson, construct_detail_menu_for_skipping,
                     construct_time_menu_4ind_lesson, construct_menu_skipping_much_lesson, balls_lessons_payment,
                     )
-from base.utils import (construct_main_menu,
-                        send_message, DT_BOT_FORMAT, moscow_datetime, bot_edit_message,
-                        get_time_info_from_tr_day,
+from base.utils import (send_message, DT_BOT_FORMAT, moscow_datetime, bot_edit_message,
+                        get_time_info_from_tr_day, construct_main_menu,
                         )
 from base.models import (User,
                          GroupTrainingDay,
                          TrainingGroup,
-                         StaticData)
+                         StaticData,
+                         Payment)
 from .manage_data import (
     SELECT_PRECISE_GROUP_TIME,
     from_eng_to_rus_day_week,
@@ -23,7 +23,8 @@ from .manage_data import (
     CONFIRM_GROUP_LESSON,
     SHOW_INFO_ABOUT_SKIPPING_DAY, TAKE_LESSON_BUTTON, CLNDR_IGNORE, CLNDR_DAY, CLNDR_PREV_MONTH, CLNDR_NEXT_MONTH,
     CLNDR_ACTION_BACK, CLNDR_ACTION_SKIP, CLNDR_ACTION_TAKE_GROUP, CLNDR_ACTION_TAKE_IND, SELECT_SKIP_TIME_BUTTON,
-    BACK_BUTTON, from_digit_to_month, PAYMENT_VISITING, PAYMENT_BONUS, PAYMENT_MONEY,
+    BACK_BUTTON, from_digit_to_month, PAYMENT_VISITING, PAYMENT_BONUS, PAYMENT_MONEY, NO_PAYMENT_BUTTON,
+    SUCCESS_PAYMENT,
 )
 from calendar import monthrange
 from tennis_bot.config import ADMIN_TELEGRAM_TOKEN
@@ -52,13 +53,13 @@ def update_user_info(update, user):
 @handler_decor()
 def start(bot, update, user):
     update_user_info(update, user)
-    bot.send_message(user.id, 'Я здесь', reply_markup=construct_main_menu())
+    bot.send_message(user.id, 'Я здесь', reply_markup=construct_main_menu(user, user.status))
 
 
 @handler_decor()
 def get_help(bot, update, user):
     bot.send_message(user.id, 'По всем вопросам пиши @ta2asho.\n'
-                              'Желательно описывать свою проблему со скриншотами.', reply_markup=construct_main_menu())
+                              'Желательно описывать свою проблему со скриншотами.', reply_markup=construct_main_menu(user, user.status))
 
 
 @handler_decor()
@@ -111,6 +112,16 @@ def user_main_info(bot, update, user):
         User.STATUS_FINISHED: 'закончил тренировки.',
         User.STATUS_ARBITRARY: 'тренируешься по свободному графику.'
     }
+    today_date = date.today()
+    user_payment = Payment.objects.filter(player=user, player__status=User.STATUS_TRAINING, fact_amount=0,
+                                          year=today_date.year - 2020, month=today_date.month)
+
+    if user_payment.exists():
+        payment_status = f'{NO_PAYMENT_BUTTON}\n'
+    elif user.status != User.STATUS_TRAINING:
+        payment_status = ''
+    else:
+        payment_status = f'{SUCCESS_PAYMENT}\n'
 
     intro = f'В данный момент ты {from_user_to_intro[user.status]}\n\n'
 
@@ -135,12 +146,12 @@ def user_main_info(bot, update, user):
         from_digit_to_month[today.month], should_pay_this_month, balls_this_month,
         from_digit_to_month[next_month.month], should_pay_money_next, balls_next_month)
 
-    text = intro + group_info + number_of_add_games + should_pay_info
+    text = intro + group_info + number_of_add_games + payment_status + should_pay_info
 
     bot.send_message(user.id,
                      text,
                      parse_mode='HTML',
-                     reply_markup=construct_main_menu())
+                     reply_markup=construct_main_menu(user, user.status))
 
 
 def process_calendar_selection(bot, update, user):
@@ -285,7 +296,7 @@ def skip_lesson_main_menu_button(bot, update, user):
     else:
         bot.send_message(user.id,
                          'Пока что нечего пропускать.',
-                         reply_markup=construct_main_menu())
+                         reply_markup=construct_main_menu(user, user.status))
 
 
 @handler_decor(check_status=True)

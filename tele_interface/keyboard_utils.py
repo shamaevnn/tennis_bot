@@ -1,17 +1,17 @@
 import calendar
 import datetime
-from collections import Counter
 from datetime import date, datetime, timedelta
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton as inlinebutt, \
-    InlineKeyboardMarkup as inlinemark, ReplyKeyboardMarkup
+    InlineKeyboardMarkup as inlinemark
 
 from base.utils import moscow_datetime, get_time_info_from_tr_day, TM_TIME_SCHEDULE_FORMAT, DT_BOT_FORMAT
 from tele_interface.manage_data import CLNDR_IGNORE, CLNDR_DAY, CLNDR_PREV_MONTH, CLNDR_NEXT_MONTH, CLNDR_ACTION_BACK, \
     SHOW_INFO_ABOUT_SKIPPING_DAY, SELECT_SKIP_TIME_BUTTON, CLNDR_ACTION_SKIP, CLNDR_ACTION_TAKE_IND, \
-    CLNDR_ADMIN_VIEW_SCHEDULE, PAYMENT_YEAR_MONTH_GROUP, PAYMENT_YEAR, SEND_MESSAGE
-from tele_interface.static_text import from_digit_to_month, BACK_BUTTON, ADMIN_PAYMENT, ADMIN_TIME_SCHEDULE_BUTTON, \
-    ADMIN_SITE, ADMIN_SEND_MESSAGE
+    CLNDR_ACTION_TAKE_GROUP, \
+    PAYMENT_VISITING, PAYMENT_BONUS, PAYMENT_MONEY, SELECT_PRECISE_GROUP_TIME, CONFIRM_GROUP_LESSON, \
+    SELECT_DURATION_FOR_IND_TRAIN, SELECT_TRAINING_TYPE
+from tele_interface.static_text import from_digit_to_month, BACK_BUTTON, TAKE_LESSON_BUTTON
 from tele_interface.utils import create_callback_data
 
 
@@ -156,122 +156,81 @@ def construct_time_menu_4ind_lesson(button_text, poss_training_times: list, day:
     return inlinemark(buttons)
 
 
-def day_buttons_coach_info(tr_days, button_text):
-    buttons = []
-    row = []
-    for day in tr_days:
-        time_tlg, _, _, _, _, _, _ = get_time_info_from_tr_day(day)
-        row.append(
-            inlinebutt(f'{day.group.name}', callback_data=f"{button_text}{day.id}")
-        )
-        row.append(
-            inlinebutt(
-                f'{time_tlg}',
-                callback_data=f"{button_text}{day.id}")
-        )
-        if len(row) >= 2:
-            buttons.append(row)
-            row = []
-    if len(row):
-        buttons.append(row)
-
-    buttons.append([
-        inlinebutt(f'{BACK_BUTTON}',
-                   callback_data=create_callback_data(CLNDR_ADMIN_VIEW_SCHEDULE, CLNDR_ACTION_BACK, tr_days.first().date.year, tr_days.first().date.month, 0)),
-    ])
-
-    return inlinemark(buttons)
-
-
-def construct_menu_months(months, button_text):
-    buttons = []
-    row = []
-    for month_num, month in months:
-        row.append(
-            InlineKeyboardButton(f'{month}', callback_data=f'{button_text}{month_num}')
-        )
-        if len(row) >= 3:
-            buttons.append(row)
-            row = []
-    if len(row):
-        buttons.append(row)
-
-    buttons.append([
+def back_to_group_times_when_no_left_keyboard(year, month, day):
+    """
+        Создает клавиатура с кнопкой назад, когда в данном
+        тренировочном дне на выбранное время уже нет
+        свободных мест
+    """
+    buttons = [[
         InlineKeyboardButton(f'{BACK_BUTTON}',
-                             callback_data=f'{ADMIN_PAYMENT}'),
-    ])
-
+                      callback_data=create_callback_data(
+                          purpose=CLNDR_ACTION_TAKE_GROUP,
+                          action=CLNDR_DAY,
+                          year=year,
+                          month=month,
+                          day=day
+                      )
+        )
+    ]]
     return InlineKeyboardMarkup(buttons)
 
 
-def construct_menu_groups(groups, button_text):
-    buttons = []
-    row = []
-    for group in groups:
-        row.append(
-            InlineKeyboardButton(f'{group.name}', callback_data=f'{button_text}{group.id}')
-        )
-        if len(row) >= 3:
-            buttons.append(row)
-            row = []
-    if len(row):
-        buttons.append(row)
-
-    buttons.append([InlineKeyboardButton('Оставшиеся', callback_data=f'{button_text}{0}')])
-
-    year, month, _ = button_text[len(PAYMENT_YEAR_MONTH_GROUP):].split('|')
-    buttons.append([
+def back_to_group_when_trying_to_enter_his_own_group(tr_day_id):
+    buttons = [[
         InlineKeyboardButton(f'{BACK_BUTTON}',
-                             callback_data=f'{PAYMENT_YEAR}{year}'),
-    ])
+                      callback_data=SELECT_PRECISE_GROUP_TIME + f'{tr_day_id}')
+    ]]
+    return InlineKeyboardMarkup(buttons)
+
+
+
+def choose_type_of_payment_for_group_lesson_keyboard(payment_add_lesson, tr_day_id, tarif):
+    buttons = [[
+        InlineKeyboardButton(f'За отыгрыш + {payment_add_lesson}₽',
+                      callback_data=f"{PAYMENT_VISITING}{PAYMENT_BONUS}|{tr_day_id}")
+    ], [
+        InlineKeyboardButton(f'За {tarif}₽',
+                      callback_data=f"{PAYMENT_VISITING}{PAYMENT_MONEY}|{tr_day_id}")
+    ], [
+        InlineKeyboardButton(f'{BACK_BUTTON}',
+                      callback_data=f"{SELECT_PRECISE_GROUP_TIME}{tr_day_id}")
+    ]]
+    return InlineKeyboardMarkup(buttons)
+
+
+def take_lesson_back_keyboard(tr_day_id, year, month, day):
+    buttons = [[
+        InlineKeyboardButton('Записаться', callback_data=f"{CONFIRM_GROUP_LESSON}{tr_day_id}")
+    ], [
+        InlineKeyboardButton(f'{BACK_BUTTON}',
+                      callback_data=create_callback_data(CLNDR_ACTION_TAKE_GROUP, CLNDR_DAY, year, month, day))
+    ]]
 
     return InlineKeyboardMarkup(buttons)
 
 
-def construct_menu_groups_for_send_message(groups, button_text):
-    group_ids = button_text[len(SEND_MESSAGE):].split("|")
-    ids_counter = Counter(group_ids)
-
-    buttons = []
-    row = []
-    for group in groups:
-        if str(group.id) not in group_ids:
-            text_button = group.name
-        elif ids_counter[str(group.id)] > 1 and ids_counter[str(group.id)] % 2 == 0:
-            text_button = group.name
-            group_ids.remove(str(group.id))
-            group_ids.remove(str(group.id))
-            button_text = button_text[:len(SEND_MESSAGE)] + "|".join(group_ids)
-        else:
-            text_button = group.name + " ✅"
-
-        row.append(
-            InlineKeyboardButton(f'{text_button}', callback_data=f'{button_text}|{group.id}')
-        )
-        if len(row) >= 3:
-            buttons.append(row)
-            row = []
-    if len(row):
-        buttons.append(row)
-
-    if '0' not in group_ids:
-        all_groups_text = 'Всем группам'
-    elif ids_counter['0'] > 1 and ids_counter['0'] % 2 == 0:
-        all_groups_text = 'Всем группам'
-        group_ids.remove('0')
-        group_ids.remove('0')
-        button_text = button_text[:len(SEND_MESSAGE)] + "|".join(group_ids)
-    else:
-        all_groups_text = 'Всем группам ✅'
-
-    buttons.append([InlineKeyboardButton(all_groups_text, callback_data=f'{button_text}|{0}')])
-    buttons.append([InlineKeyboardButton('Подтвердить', callback_data=f'{button_text}|{-1}')])
+def ind_train_choose_duration_keyboard():
+    buttons = [[
+        InlineKeyboardButton('1 час', callback_data=SELECT_DURATION_FOR_IND_TRAIN + '1.0')
+    ], [
+        InlineKeyboardButton('1.5 часа', callback_data=SELECT_DURATION_FOR_IND_TRAIN + '1.5')
+    ], [
+        InlineKeyboardButton('2 часа', callback_data=SELECT_DURATION_FOR_IND_TRAIN + '2.0')
+    ], [
+        InlineKeyboardButton(f'{BACK_BUTTON}',
+                      callback_data=TAKE_LESSON_BUTTON),
+    ]]
 
     return InlineKeyboardMarkup(buttons)
 
 
-def construct_admin_main_menu():
-    return ReplyKeyboardMarkup([
-        [ADMIN_PAYMENT, ADMIN_TIME_SCHEDULE_BUTTON],
-        [ADMIN_SITE, ADMIN_SEND_MESSAGE]],
-        resize_keyboard=True)
+def ind_group_type_training_keyboard():
+    buttons = [[
+        InlineKeyboardButton('Индивидуальная', callback_data=SELECT_TRAINING_TYPE + 'ind')
+    ], [
+        InlineKeyboardButton('Групповая', callback_data=SELECT_TRAINING_TYPE + 'group')
+    ]]
+
+    return InlineKeyboardMarkup(buttons)
+

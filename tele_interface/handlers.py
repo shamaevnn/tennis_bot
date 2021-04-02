@@ -1,11 +1,18 @@
+import re
+import telegram
+import calendar
+
 from admin_bot.handlers import info_about_users
+from admin_bot.keyboard_utils import yes_no_permission4ind_train_keyboard
 from .utils import (handler_decor,
                     get_available_dt_time4ind_train, select_tr_days_for_skipping,
-                    get_potential_days_for_group_training, separate_callback_data, create_callback_data,
+                    get_potential_days_for_group_training, separate_callback_data,
                     balls_lessons_payment,
                     )
 from .keyboard_utils import create_calendar, construct_time_menu_for_group_lesson, construct_detail_menu_for_skipping, \
-    construct_menu_skipping_much_lesson, construct_time_menu_4ind_lesson
+    construct_menu_skipping_much_lesson, construct_time_menu_4ind_lesson, back_to_group_times_when_no_left_keyboard, \
+    choose_type_of_payment_for_group_lesson_keyboard, back_to_group_when_trying_to_enter_his_own_group, \
+    take_lesson_back_keyboard, ind_train_choose_duration_keyboard, ind_group_type_training_keyboard
 from base.utils import (send_message, DT_BOT_FORMAT, moscow_datetime, bot_edit_message,
                         get_time_info_from_tr_day, construct_main_menu,
                         )
@@ -19,26 +26,16 @@ from .manage_data import (
     SELECT_TRAINING_TYPE,
     SELECT_DURATION_FOR_IND_TRAIN,
     SELECT_PRECISE_IND_TIME,
-    PERMISSION_FOR_IND_TRAIN,
     CONFIRM_GROUP_LESSON,
     SHOW_INFO_ABOUT_SKIPPING_DAY, CLNDR_IGNORE, CLNDR_DAY, CLNDR_PREV_MONTH, CLNDR_NEXT_MONTH,
     CLNDR_ACTION_BACK, CLNDR_ACTION_SKIP, CLNDR_ACTION_TAKE_GROUP, CLNDR_ACTION_TAKE_IND, SELECT_SKIP_TIME_BUTTON,
     PAYMENT_VISITING, PAYMENT_BONUS, PAYMENT_MONEY, )
-from .static_text import BACK_BUTTON, TAKE_LESSON_BUTTON, NO_PAYMENT_BUTTON, SUCCESS_PAYMENT, from_eng_to_rus_day_week, \
+from .static_text import NO_PAYMENT_BUTTON, SUCCESS_PAYMENT, from_eng_to_rus_day_week, \
     from_digit_to_month
 from calendar import monthrange
 from tennis_bot.config import ADMIN_TELEGRAM_TOKEN
 from datetime import date, datetime, timedelta
-from django.db.models import Q, F
-
-from telegram import (
-    InlineKeyboardButton as inline_button,
-    InlineKeyboardMarkup as inline_markup,
-)
-
-import re
-import telegram
-import calendar
+from django.db.models import Q
 
 
 def update_user_info(update, user):
@@ -363,11 +360,7 @@ def skip_lesson(bot, update, user):
 
 @handler_decor(check_status=True)
 def choose_type_of_training(bot, update, user):
-    markup = inline_markup([[
-        inline_button('Индивидуальная', callback_data=SELECT_TRAINING_TYPE + 'ind')
-    ], [
-        inline_button('Групповая', callback_data=SELECT_TRAINING_TYPE + 'group')
-    ]])
+    markup = ind_group_type_training_keyboard()
     text = 'Выбери тип тренировки.'
     if update.callback_query:
         bot_edit_message(bot, text, update, markup)
@@ -397,17 +390,7 @@ def take_lesson(bot, update, user):
         markup = create_calendar(CLNDR_ACTION_TAKE_GROUP, dates_to_highlight=highlight_dates)
 
     else:
-        buttons = [[
-            inline_button('1 час', callback_data=SELECT_DURATION_FOR_IND_TRAIN + '1.0')
-        ], [
-            inline_button('1.5 часа', callback_data=SELECT_DURATION_FOR_IND_TRAIN + '1.5')
-        ], [
-            inline_button('2 часа', callback_data=SELECT_DURATION_FOR_IND_TRAIN + '2.0')
-        ], [
-            inline_button(f'{BACK_BUTTON}',
-                          callback_data=TAKE_LESSON_BUTTON),
-        ]]
-        markup = inline_markup(buttons)
+        markup = ind_train_choose_duration_keyboard()
         text = 'Выбери продолжительность занятия'
 
     bot_edit_message(bot, text, update, markup)
@@ -444,11 +427,11 @@ def select_precise_ind_lesson_time(bot, update, user):
 
     admin_bot = telegram.Bot(ADMIN_TELEGRAM_TOKEN)
     admins = User.objects.filter(is_staff=True, is_blocked=False)
-    markup = inline_markup([[
-        inline_button('Да', callback_data=f"{PERMISSION_FOR_IND_TRAIN}yes|{user.id}|{tr_day.id}")
-    ], [
-        inline_button('Нет', callback_data=f"{PERMISSION_FOR_IND_TRAIN}no|{user.id}|{tr_day.id}")
-    ]])
+    markup = yes_no_permission4ind_train_keyboard(
+        user_id=user.id,
+        tr_day_id=tr_day.id,
+    )
+
     text = f"<b>{user.first_name} {user.last_name} — {user.phone_number}</b>\n" \
            f"Хочет прийти на индивидуальное занятие <b>{day_dt} ({day_of_week}) </b>" \
            f" в <b>{start_time} — {end_time}</b>\n" \
@@ -490,13 +473,13 @@ def select_precise_group_lesson_time(bot, update, user):
            f'👥Присутствующие:\n{all_players}\n\n' \
            f'Свободные места: {n_free_places if n_free_places > 0 else "есть за деньги"}'
 
-    markup = inline_markup([[
-        inline_button('Записаться', callback_data=f"{CONFIRM_GROUP_LESSON}{tr_day_id}")
-    ], [
-        inline_button(f'{BACK_BUTTON}',
-                      callback_data=create_callback_data(CLNDR_ACTION_TAKE_GROUP, CLNDR_DAY, tr_day.date.year,
-                                                         tr_day.date.month, tr_day.date.day))
-    ]])
+
+    markup = take_lesson_back_keyboard(
+        tr_day_id=tr_day_id,
+        year=tr_day.date.year,
+        month=tr_day.date.month,
+        day=tr_day.date.day,
+    )
 
     bot_edit_message(bot, text, update, markup)
 
@@ -567,32 +550,21 @@ def confirm_group_lesson(bot, update, user):
                         markup = None
                     else:
                         text = "Выбери тип оплаты"
-                        markup = inline_markup([[
-                            inline_button(f'За отыгрыш + {StaticData.objects.first().tarif_payment_add_lesson}₽',
-                                          callback_data=f"{PAYMENT_VISITING}{PAYMENT_BONUS}|{tr_day_id}")
-                        ], [
-                            inline_button(f'За {tarif}₽',
-                                          callback_data=f"{PAYMENT_VISITING}{PAYMENT_MONEY}|{tr_day_id}")
-                        ], [
-                            inline_button(f'{BACK_BUTTON}',
-                                          callback_data=f"{SELECT_PRECISE_GROUP_TIME}{tr_day_id}")
-                        ]])
+                        markup = choose_type_of_payment_for_group_lesson_keyboard(
+                            payment_add_lesson=StaticData.objects.first().tarif_payment_add_lesson,
+                            tr_day_id=tr_day_id,
+                            tarif=tarif,
+                        )
                 else:
                     text = 'Упс, похоже уже не осталось свободных мест на это время, выбери другое.'
-                    buttons = [[
-                        inline_button(f'{BACK_BUTTON}',
-                                      callback_data=create_callback_data(CLNDR_ACTION_TAKE_GROUP, CLNDR_DAY,
-                                                                         tr_day.date.year, tr_day.date.month,
-                                                                         tr_day.date.day))
-                    ]]
-                    markup = inline_markup(buttons)
+                    markup = back_to_group_times_when_no_left_keyboard(
+                        year=tr_day.date.year,
+                        month=tr_day.date.month,
+                        day=tr_day.date.day
+                    )
         else:  # если пытается записаться в свою группу
             text = 'Ну ты чего?🤕 \nЭто же твоя группа, выбери другое время.'
-            buttons = [[
-                inline_button(f'{BACK_BUTTON}',
-                              callback_data=SELECT_PRECISE_GROUP_TIME + f'{tr_day_id}')
-            ]]
-            markup = inline_markup(buttons)
+            markup = back_to_group_when_trying_to_enter_his_own_group(tr_day_id=tr_day_id)
 
     bot_edit_message(bot, text, update, markup)
 

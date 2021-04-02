@@ -7,16 +7,16 @@ from tele_interface.manage_data import PERMISSION_FOR_IND_TRAIN, SHOW_GROUPDAY_I
     CLNDR_ADMIN_VIEW_SCHEDULE, CLNDR_ACTION_BACK, CLNDR_NEXT_MONTH, CLNDR_DAY, CLNDR_IGNORE, \
     CLNDR_PREV_MONTH, PAYMENT_YEAR, PAYMENT_YEAR_MONTH, PAYMENT_YEAR_MONTH_GROUP, PAYMENT_START_CHANGE, \
     PAYMENT_CONFIRM_OR_CANCEL, AMOUNT_OF_IND_TRAIN, SEND_MESSAGE
-from tele_interface.static_text import BACK_BUTTON, ADMIN_SITE, from_digit_to_month
-from tele_interface.utils import separate_callback_data, create_callback_data, \
-    create_tr_days_for_future
-from tele_interface.keyboard_utils import create_calendar, day_buttons_coach_info, construct_menu_months, \
-    construct_menu_groups, construct_menu_groups_for_send_message, construct_admin_main_menu
+from tele_interface.static_text import ADMIN_SITE, from_digit_to_month
+from tele_interface.utils import separate_callback_data, create_tr_days_for_future
+from tele_interface.keyboard_utils import create_calendar
+from .keyboard_utils import construct_admin_main_menu, construct_menu_groups_for_send_message, day_buttons_coach_info, \
+    construct_menu_months, construct_menu_groups, back_to_payment_groups_when_changing_payment_keyboard, \
+    cancel_confirm_changing_payment_info_keyboard, change_payment_info_keyboard, choose_year_to_group_payment_keyboard, \
+    back_from_show_grouptrainingday_info_keyboard, how_many_trains_to_save_keyboard, go_to_site_keyboard
 from .utils import admin_handler_decor, check_if_players_not_in_payments
 from tennis_bot.config import TELEGRAM_TOKEN
 from datetime import date, datetime, timedelta
-from telegram import (InlineKeyboardButton as inlinebutt,
-                      InlineKeyboardMarkup as inlinemark, InlineKeyboardButton)
 
 from collections import Counter
 
@@ -49,11 +49,7 @@ def permission_for_ind_train(bot, update, user):
         markup = None
 
         if permission == 'yes':
-            markup = inlinemark([[
-                inlinebutt('Одну', callback_data=f'{AMOUNT_OF_IND_TRAIN}{tr_day_id}|one')]
-                ,
-                [inlinebutt('На 2 месяца', callback_data=f'{AMOUNT_OF_IND_TRAIN}{tr_day_id}|many')]
-            ])
+            markup = how_many_trains_to_save_keyboard(tr_day_id=tr_day_id)
             admin_text = 'Сколько тренировок сохранить?'
 
             user_text = f'Отлично, тренер подтвердил тренировку <b>{date_tlg}</b>\n' \
@@ -147,7 +143,7 @@ def inline_calendar_handler(bot, update, user):
             else:
                 text = 'Нет тренировок в этот день'
                 markup = create_calendar(purpose, date_my.year, date_my.month)
-        bot_edit_message(bot, text, update, markup)
+            bot_edit_message(bot, text, update, markup)
 
 
 @admin_handler_decor()
@@ -159,12 +155,10 @@ def show_coach_schedule(bot, update, user):
 
 @admin_handler_decor()
 def redirect_to_site(bot, update, user):
-    buttons = [[
-        InlineKeyboardButton('Сайт', url='http://vladlen82.fvds.ru/admin/base/'),
-    ]]
+    markup = go_to_site_keyboard()
     bot.send_message(user.id,
                      ADMIN_SITE,
-                     reply_markup=inlinemark(buttons))
+                     reply_markup=markup)
 
 
 GROUP_IDS, TEXT_TO_SEND = 2, 3
@@ -189,9 +183,11 @@ def select_groups_where_should_send(bot, update, user):
 
     else:
         markup = construct_menu_groups_for_send_message(banda_groups, f'{SEND_MESSAGE}')
-        bot.send_message(user.id,
-                         text,
-                         reply_markup=markup)
+        bot.send_message(
+            user.id,
+            text,
+            reply_markup=markup
+        )
 
 
 @admin_handler_decor()
@@ -307,11 +303,11 @@ def show_traingroupday_info(bot, update, user):
     users_info = group_name + group_players + visitors + pay_visitors + absents
     text = general_info + users_info
 
-    markup = inlinemark([[
-        inlinebutt(f'{BACK_BUTTON}',
-                   callback_data=create_callback_data(CLNDR_ADMIN_VIEW_SCHEDULE, CLNDR_DAY, tr_day.date.year,
-                                                      tr_day.date.month, tr_day.date.day)),
-    ]])
+    markup = back_from_show_grouptrainingday_info_keyboard(
+        year=tr_day.date.year,
+        month=tr_day.date.month,
+        day=tr_day.date.day
+    )
 
     bot_edit_message(bot, text, update, markup)
 
@@ -320,13 +316,11 @@ def show_traingroupday_info(bot, update, user):
 def start_payment(bot, update, user):
     text = 'Выбери год'
     now_date = moscow_datetime(datetime.datetime.now()).date()
-    markup = inlinemark([[
-        inlinebutt('2020', callback_data=f'{PAYMENT_YEAR}0')
-        ,
-        inlinebutt('2021', callback_data=f'{PAYMENT_YEAR}1')
-    ], [
-        inlinebutt('К группам', callback_data=f'{PAYMENT_YEAR_MONTH}{now_date.year - 2020}|{now_date.month}')
-    ]])
+    markup = choose_year_to_group_payment_keyboard(
+        year=now_date.year,
+        month=now_date.month
+    )
+
     if update.callback_query:
         bot_edit_message(bot, text, update, markup)
 
@@ -414,11 +408,11 @@ def group_payment(bot, update, user):
            f"<b>id</b>. Имя Фамилия -- факт₽, кол-во посещений\n\n" \
            f"{info_about_users(payments, for_admin=True, payment=True)}"
 
-    markup = inlinemark([[
-        inlinebutt('Изменить данные', callback_data=f'{PAYMENT_START_CHANGE}{year}|{month}|{group_id}')
-    ], [
-        inlinebutt(f'{BACK_BUTTON}', callback_data=f'{PAYMENT_YEAR_MONTH}{year}|{month}')
-    ]])
+    markup = change_payment_info_keyboard(
+        year=year,
+        month=month,
+        group_id=group_id
+    )
 
     bot_edit_message(bot, text, update, markup)
 
@@ -432,14 +426,18 @@ def change_payment_data(bot, update, user):
     text = 'Для того, чтобы внести данные об оплате, введи данные в формате \n\n' \
            'id сумма_в_рублях через пробел, например, 18 3600\n\n'
 
-    markup = inlinemark([[
-        inlinebutt(f'{int(year) + 2020} -- {from_digit_to_month[int(month)]}',
-                   callback_data=f'{PAYMENT_YEAR_MONTH}{year}|{month}')
-    ]])
+    markup = back_to_payment_groups_when_changing_payment_keyboard(
+        year=year,
+        month=month,
+        from_digit_to_month_dict=from_digit_to_month
+    )
 
-    bot.send_message(user.id,
-                     text,
-                     reply_markup=markup)
+    bot.send_message(
+        user.id,
+        text,
+        reply_markup=markup
+    )
+
     return START_CHANGE_PAYMENT
 
 
@@ -455,25 +453,30 @@ def get_id_amount(bot, update, user):
                f'Год: {2020 + int(payment.year)}\n' \
                f'Месяц: {from_digit_to_month[int(payment.month)]}\n' \
                f'<b>{payment.fact_amount}₽ ➡ {amount}₽</b>'
-        buttons = inlinemark([[
-            inlinebutt('Подтвердить', callback_data=f'{PAYMENT_CONFIRM_OR_CANCEL}YES|{payment_id}|{amount}')
-            ,
-            inlinebutt('Отмена', callback_data=f'{PAYMENT_CONFIRM_OR_CANCEL}NO|{payment_id}|{payment_id}')
-        ]])
-        bot.send_message(user.id,
-                         text,
-                         reply_markup=buttons,
-                         parse_mode='HTML')
+        markup = cancel_confirm_changing_payment_info_keyboard(
+            payment_id=payment_id,
+            amount=amount
+        )
+        bot.send_message(
+            user.id,
+            text,
+            reply_markup=markup,
+            parse_mode='HTML'
+        )
 
     except ValueError:
         text = 'Ошибка, скорее всего неправильно ввел id или сумму -- не ввел через пробел или есть лишние символы\n/cancel'
-        bot.send_message(user.id,
-                         text)
+        bot.send_message(
+            user.id,
+            text
+        )
 
     except ObjectDoesNotExist:
         text = 'Нет такого объекта в базе данных -- неправильный id\n/cancel'
-        bot.send_message(user.id,
-                         text)
+        bot.send_message(
+            user.id,
+            text
+        )
 
     return CONFIRM_OR_CANCEL
 
@@ -490,10 +493,11 @@ def confirm_or_cancel_changing_payment(bot, update, user):
 
         text = 'Изменения внесены'
 
-    markup = inlinemark([[
-        inlinebutt(f'{int(payment.year) + 2020} -- {from_digit_to_month[int(payment.month)]}',
-                   callback_data=f'{PAYMENT_YEAR_MONTH}{payment.year}|{payment.month}')
-    ]])
+    markup = back_to_payment_groups_when_changing_payment_keyboard(
+        year=payment.year,
+        month=payment.month,
+        from_digit_to_month_dict=from_digit_to_month
+    )
 
     bot_edit_message(bot, text, update, markup)
 

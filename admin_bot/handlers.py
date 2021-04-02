@@ -5,12 +5,14 @@ from base.models import User, GroupTrainingDay, Payment, TrainingGroup, StaticDa
 from base.utils import moscow_datetime, bot_edit_message, get_time_info_from_tr_day
 from tele_interface.manage_data import PERMISSION_FOR_IND_TRAIN, SHOW_GROUPDAY_INFO, \
     CLNDR_ADMIN_VIEW_SCHEDULE, CLNDR_ACTION_BACK, CLNDR_NEXT_MONTH, CLNDR_DAY, CLNDR_IGNORE, \
-    CLNDR_PREV_MONTH, ADMIN_SITE, PAYMENT_YEAR, PAYMENT_YEAR_MONTH, PAYMENT_YEAR_MONTH_GROUP, PAYMENT_START_CHANGE, \
-    PAYMENT_CONFIRM_OR_CANCEL, BACK_BUTTON, from_digit_to_month, AMOUNT_OF_IND_TRAIN, SEND_MESSAGE
-from tele_interface.utils import create_calendar, separate_callback_data, create_callback_data, \
+    CLNDR_PREV_MONTH, PAYMENT_YEAR, PAYMENT_YEAR_MONTH, PAYMENT_YEAR_MONTH_GROUP, PAYMENT_START_CHANGE, \
+    PAYMENT_CONFIRM_OR_CANCEL, AMOUNT_OF_IND_TRAIN, SEND_MESSAGE
+from tele_interface.static_text import BACK_BUTTON, ADMIN_SITE, from_digit_to_month
+from tele_interface.utils import separate_callback_data, create_callback_data, \
     create_tr_days_for_future
-from .utils import admin_handler_decor, day_buttons_coach_info, construct_menu_months, construct_menu_groups, \
-    check_if_players_not_in_payments, construct_menu_groups_for_send_message, construct_admin_main_menu
+from tele_interface.keyboard_utils import create_calendar, day_buttons_coach_info, construct_menu_months, \
+    construct_menu_groups, construct_menu_groups_for_send_message, construct_admin_main_menu
+from .utils import admin_handler_decor, check_if_players_not_in_payments
 from tennis_bot.config import TELEGRAM_TOKEN
 from datetime import date, datetime, timedelta
 from telegram import (InlineKeyboardButton as inlinebutt,

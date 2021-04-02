@@ -2,9 +2,10 @@ from admin_bot.handlers import info_about_users
 from .utils import (handler_decor,
                     get_available_dt_time4ind_train, select_tr_days_for_skipping,
                     get_potential_days_for_group_training, separate_callback_data, create_callback_data,
-                    create_calendar, construct_time_menu_for_group_lesson, construct_detail_menu_for_skipping,
-                    construct_time_menu_4ind_lesson, construct_menu_skipping_much_lesson, balls_lessons_payment,
+                    balls_lessons_payment,
                     )
+from .keyboard_utils import create_calendar, construct_time_menu_for_group_lesson, construct_detail_menu_for_skipping, \
+    construct_menu_skipping_much_lesson, construct_time_menu_4ind_lesson
 from base.utils import (send_message, DT_BOT_FORMAT, moscow_datetime, bot_edit_message,
                         get_time_info_from_tr_day, construct_main_menu,
                         )
@@ -15,17 +16,16 @@ from base.models import (User,
                          Payment)
 from .manage_data import (
     SELECT_PRECISE_GROUP_TIME,
-    from_eng_to_rus_day_week,
     SELECT_TRAINING_TYPE,
     SELECT_DURATION_FOR_IND_TRAIN,
     SELECT_PRECISE_IND_TIME,
     PERMISSION_FOR_IND_TRAIN,
     CONFIRM_GROUP_LESSON,
-    SHOW_INFO_ABOUT_SKIPPING_DAY, TAKE_LESSON_BUTTON, CLNDR_IGNORE, CLNDR_DAY, CLNDR_PREV_MONTH, CLNDR_NEXT_MONTH,
+    SHOW_INFO_ABOUT_SKIPPING_DAY, CLNDR_IGNORE, CLNDR_DAY, CLNDR_PREV_MONTH, CLNDR_NEXT_MONTH,
     CLNDR_ACTION_BACK, CLNDR_ACTION_SKIP, CLNDR_ACTION_TAKE_GROUP, CLNDR_ACTION_TAKE_IND, SELECT_SKIP_TIME_BUTTON,
-    BACK_BUTTON, from_digit_to_month, PAYMENT_VISITING, PAYMENT_BONUS, PAYMENT_MONEY, NO_PAYMENT_BUTTON,
-    SUCCESS_PAYMENT,
-)
+    PAYMENT_VISITING, PAYMENT_BONUS, PAYMENT_MONEY, )
+from .static_text import BACK_BUTTON, TAKE_LESSON_BUTTON, NO_PAYMENT_BUTTON, SUCCESS_PAYMENT, from_eng_to_rus_day_week, \
+    from_digit_to_month
 from calendar import monthrange
 from tennis_bot.config import ADMIN_TELEGRAM_TOKEN
 from datetime import date, datetime, timedelta

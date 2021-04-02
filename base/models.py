@@ -13,7 +13,7 @@ from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 
 from base.utils import send_alert_about_changing_tr_day_status
-from tele_interface.manage_data import from_eng_to_rus_day_week
+from tele_interface.static_text import from_eng_to_rus_day_week
 from tennis_bot.config import TELEGRAM_TOKEN
 
 import telegram

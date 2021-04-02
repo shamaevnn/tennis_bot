@@ -1,6 +1,5 @@
-import calendar
 import datetime
-from datetime import date, time, timedelta, datetime
+from datetime import time, timedelta, datetime
 from functools import wraps
 
 from django.db.models import (ExpressionWrapper,
@@ -9,16 +8,11 @@ from django.db.models import (ExpressionWrapper,
                               Count,
                               DurationField)
 from django.db.models.functions import TruncDate
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton as inlinebutt, \
-    InlineKeyboardMarkup as inlinemark
 
 from base.models import (User,
                          GroupTrainingDay,
                          TrainingGroup, )
-from base.utils import TM_TIME_SCHEDULE_FORMAT, DT_BOT_FORMAT, moscow_datetime, get_time_info_from_tr_day
-from tele_interface.manage_data import SHOW_INFO_ABOUT_SKIPPING_DAY, CLNDR_IGNORE, CLNDR_DAY, \
-    CLNDR_PREV_MONTH, CLNDR_NEXT_MONTH, CLNDR_ACTION_BACK, CLNDR_ACTION_TAKE_IND, CLNDR_ACTION_SKIP, \
-    SELECT_SKIP_TIME_BUTTON, BACK_BUTTON, from_digit_to_month
+from base.utils import moscow_datetime
 
 from tennis_bot.settings import DEBUG
 
@@ -214,147 +208,6 @@ def get_potential_days_for_group_training(user):
                     Q(visitors__in=[user]) | Q(group__users__in=[user])).order_by('start_time')
 
     return potential_free_places
-
-
-def create_calendar(purpose_of_calendar, year=None, month=None, dates_to_highlight=None):
-    """
-    Create an inline keyboard with the provided year and month
-    :param list of dates dates_to_highlight : date we should highlight, e.g. days available for skipping
-    :param str purpose_of_calendar: e.g. skipping, taking lesson
-    :param int year: Year to use in the calendar, if None the current year is used.
-    :param int month: Month to use in the calendar, if None the current month is used.
-    :return: Returns the InlineKeyboardMarkup object with the calendar.
-    """
-    now = moscow_datetime(datetime.now())
-    if year is None:
-        year = now.year
-    if month is None:
-        month = now.month
-    data_ignore = create_callback_data(purpose_of_calendar, CLNDR_IGNORE, year, month, 0)
-    keyboard = []
-    # First row - Month and Year
-    row = [InlineKeyboardButton(from_digit_to_month[month] + " " + str(year), callback_data=data_ignore)]
-    keyboard.append(row)
-    # Second row - Week Days
-    row = []
-    for day in ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"]:
-        row.append(InlineKeyboardButton(day, callback_data=data_ignore))
-    keyboard.append(row)
-
-    my_calendar = calendar.monthcalendar(year, month)
-    for week in my_calendar:
-        row = []
-        for day in week:
-
-            if day == 0:
-                row.append(InlineKeyboardButton(" ", callback_data=data_ignore))
-            else:
-                day_info = str(day)
-                if dates_to_highlight and (date(year, month, day) in dates_to_highlight):
-                    day_info = f'{str(day)}✅'
-                row.append(InlineKeyboardButton(day_info, callback_data=create_callback_data(purpose_of_calendar,
-                                                                                             CLNDR_DAY, year, month,
-                                                                                             day)))
-        keyboard.append(row)
-    # Last row - Buttons
-    row = [InlineKeyboardButton("<", callback_data=create_callback_data(purpose_of_calendar, CLNDR_PREV_MONTH, year,
-                                                                        month, day)),
-           InlineKeyboardButton(" ", callback_data=data_ignore),
-           InlineKeyboardButton(">", callback_data=create_callback_data(purpose_of_calendar, CLNDR_NEXT_MONTH, year,
-                                                                        month, day))]
-    keyboard.append(row)
-
-    return InlineKeyboardMarkup(keyboard)
-
-
-def construct_time_menu_for_group_lesson(button_text, tr_days, date, purpose):
-    buttons = []
-    row = []
-    for day in tr_days:
-        time_tlg, _, _, _, _, _, _ = get_time_info_from_tr_day(day)
-        row.append(
-            InlineKeyboardButton(f'{time_tlg}',
-                                 callback_data=button_text + str(day.id))
-        )
-        if len(row) >= 2:
-            buttons.append(row)
-            row = []
-    if len(row):
-        buttons.append(row)
-
-    buttons.append([
-        InlineKeyboardButton(f'{BACK_BUTTON}',
-                             callback_data=create_callback_data(purpose, CLNDR_ACTION_BACK, date.year, date.month, 0)),
-    ])
-
-    return InlineKeyboardMarkup(buttons)
-
-
-def construct_detail_menu_for_skipping(training_day, purpose, group_name, group_players):
-    time_tlg, _, _, date_tlg, day_of_week, _, _ = get_time_info_from_tr_day(training_day)
-    text = f'<b>{date_tlg} ({day_of_week})\n{time_tlg}\n</b>' + group_name + '\n' + group_players
-
-    buttons = [[
-        InlineKeyboardButton('Пропустить', callback_data=SHOW_INFO_ABOUT_SKIPPING_DAY + f'{training_day.id}')
-    ], [
-        InlineKeyboardButton(f'{BACK_BUTTON}',
-                             callback_data=create_callback_data(purpose, CLNDR_ACTION_BACK, training_day.date.year,
-                                                                training_day.date.month, 0))
-    ]]
-    return InlineKeyboardMarkup(buttons), text
-
-
-def construct_menu_skipping_much_lesson(tr_days):
-    """
-    Make a menu when one day contains two or more lessons for skipping
-    """
-    buttons = []
-    row = []
-    date_info = tr_days.first().date
-    for tr_day in tr_days:
-        time_tlg, _, _, _, _, _, _ = get_time_info_from_tr_day(tr_day)
-        row.append(
-            inlinebutt(
-                f'{time_tlg}', callback_data="{}{}".format(SELECT_SKIP_TIME_BUTTON, tr_day.id))
-        )
-        if len(row) >= 2:
-            buttons.append(row)
-            row = []
-    if len(row):
-        buttons.append(row)
-
-    buttons.append([
-        inlinebutt(f'{BACK_BUTTON}',
-                   callback_data=create_callback_data(CLNDR_ACTION_SKIP, CLNDR_ACTION_BACK, date_info.year,
-                                                      date_info.month, 0))
-    ])
-
-    return inlinemark(buttons)
-
-
-def construct_time_menu_4ind_lesson(button_text, poss_training_times: list, day: datetime.date, duration: float, user):
-    buttons = []
-    row = []
-    for start_time in poss_training_times:
-
-        end_time = datetime.combine(day, start_time) + timedelta(hours=duration)
-        row.append(
-            inlinebutt(f'{start_time.strftime(TM_TIME_SCHEDULE_FORMAT)} — {end_time.strftime(TM_TIME_SCHEDULE_FORMAT)}',
-                       callback_data=f"{button_text}{day.strftime(DT_BOT_FORMAT)}|{start_time}|{end_time.time()}")
-        )
-        if len(row) >= 2:
-            buttons.append(row)
-            row = []
-    if len(row):
-        buttons.append(row)
-
-    buttons.append([
-        inlinebutt(f'{BACK_BUTTON}',
-                   callback_data=create_callback_data(f'{CLNDR_ACTION_TAKE_IND}{duration}', CLNDR_ACTION_BACK, day.year,
-                                                      day.month, 0))
-    ])
-
-    return inlinemark(buttons)
 
 
 def balls_lessons_payment(year, month, user):

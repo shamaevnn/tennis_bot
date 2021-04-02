@@ -8,7 +8,7 @@ from base.models import AlertsLog, GroupTrainingDay, Payment, User
 from base.utils import moscow_datetime, get_time_info_from_tr_day
 from datetime import datetime, timedelta
 from tennis_bot.config import TELEGRAM_TOKEN
-from tele_interface.manage_data import ALERT_TEXTS, from_digit_to_month
+from tele_interface.static_text import ALERT_TEXTS, from_digit_to_month
 import schedule
 import telegram
 import random

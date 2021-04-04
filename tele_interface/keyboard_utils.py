@@ -163,14 +163,15 @@ def back_to_group_times_when_no_left_keyboard(year, month, day):
         свободных мест
     """
     buttons = [[
-        InlineKeyboardButton(f'{BACK_BUTTON}',
-                      callback_data=create_callback_data(
-                          purpose=CLNDR_ACTION_TAKE_GROUP,
-                          action=CLNDR_DAY,
-                          year=year,
-                          month=month,
-                          day=day
-                      )
+        InlineKeyboardButton(
+            f'{BACK_BUTTON}',
+            callback_data=create_callback_data(
+                purpose=CLNDR_ACTION_TAKE_GROUP,
+                action=CLNDR_DAY,
+                year=year,
+                month=month,
+                day=day
+            )
         )
     ]]
     return InlineKeyboardMarkup(buttons)
@@ -182,7 +183,6 @@ def back_to_group_when_trying_to_enter_his_own_group(tr_day_id):
                       callback_data=SELECT_PRECISE_GROUP_TIME + f'{tr_day_id}')
     ]]
     return InlineKeyboardMarkup(buttons)
-
 
 
 def choose_type_of_payment_for_group_lesson_keyboard(payment_add_lesson, tr_day_id, tarif):

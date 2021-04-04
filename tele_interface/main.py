@@ -5,14 +5,13 @@ from telegram.ext import (
     CallbackQueryHandler,
 )
 import django
-
 import os
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'tennis_bot.settings')
 django.setup()
+import telegram
 
 from tele_interface.handlers import (
     get_personal_data,
-    start,
     skip_lesson_main_menu_button,
     take_lesson,
     user_main_info,
@@ -25,6 +24,7 @@ from tele_interface.handlers import (
     get_help,
     inline_calendar_handler, skip_lesson_whem_geq_2, choose_type_of_payment_for_pay_visiting,
 )
+from tele_interface.commands import start
 from tele_interface.manage_data import (
     SELECT_PRECISE_GROUP_TIME,
     SELECT_TRAINING_TYPE,
@@ -38,8 +38,7 @@ from tele_interface.static_text import TAKE_LESSON_BUTTON, MY_DATA_BUTTON, SKIP_
 from tennis_bot.settings import TELEGRAM_TOKEN
 
 
-def add_handlers(updater):
-    dp = updater.dispatcher
+def setup_dispatcher(dp):
 
     dp.add_handler(CommandHandler("start", start))
 
@@ -66,7 +65,15 @@ def add_handlers(updater):
 
 def main():
     updater = Updater(TELEGRAM_TOKEN, workers=8)
-    add_handlers(updater)
+
+    dp = updater.dispatcher
+    dp = setup_dispatcher(dp)
+
+    bot_info = telegram.Bot(TELEGRAM_TOKEN).get_me()
+    bot_link = f"https://t.me/" + bot_info["username"]
+
+    print(f"Pooling of '{bot_link}' started")
+
     updater.start_polling()
     updater.idle()
 

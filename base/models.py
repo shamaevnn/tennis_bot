@@ -34,22 +34,6 @@ class ModelwithTime(models.Model):
         abstract = True
 
 
-class StaticData(models.Model):
-    tarif_ind = models.PositiveIntegerField(null=True, default=1400, verbose_name='Индивидуальный тариф')
-    tarif_group = models.PositiveIntegerField(null=True, default=400, verbose_name='Групповой взрослый тариф')
-    tarif_arbitrary = models.PositiveIntegerField(null=True, default=600, verbose_name='Тариф для свободного графика')
-    tarif_few = models.PositiveIntegerField(null=True, default=400,
-                                            verbose_name='Тариф для детской группы малой численности')
-    tarif_section = models.PositiveIntegerField(null=True, default=4000,
-                                                verbose_name='Тариф для детской секции в месяц')
-    tarif_payment_add_lesson = models.PositiveIntegerField(null=True, default=100,
-                                                           verbose_name='Стоимость, если отыгрывает платно')
-
-    class Meta:
-        verbose_name = 'Изменяемые данные'
-        verbose_name_plural = 'Изменяемые данные'
-
-
 class User(AbstractUser):
     STATUS_WAITING = 'W'
     STATUS_TRAINING = 'G'

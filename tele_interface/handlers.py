@@ -20,7 +20,6 @@ from base.utils import (send_message, DT_BOT_FORMAT, moscow_datetime, bot_edit_m
 from base.models import (User,
                          GroupTrainingDay,
                          TrainingGroup,
-                         StaticData,
                          Payment)
 from .manage_data import (
     SELECT_PRECISE_GROUP_TIME,

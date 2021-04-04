@@ -48,24 +48,25 @@ def update_user_info(update, user):
         user.save()
 
 
+def get_help(update, context):
+    user, _ = User.get_user_and_created(update, context)
+    update.message.reply_text(text='По всем вопросам пиши @ta2asho.\n'
+                                   'Желательно описывать свою проблему со скриншотами.',
+                              reply_markup=construct_main_menu(user, user.status))
 
-def get_help(bot, update, user):
-    bot.send_message(user.id, 'По всем вопросам пиши @ta2asho.\n'
-                              'Желательно описывать свою проблему со скриншотами.', reply_markup=construct_main_menu(user, user.status))
 
-
-
-def get_personal_data(bot, update, user):
+def get_personal_data(update, context):
+    user, _ = User.get_user_and_created(update, context)
     text = update.message.text
     phone_number_candidate = re.findall(r'\d+', text)
     if phone_number_candidate:
         if len(phone_number_candidate[0]) != 11:
-            bot.send_message(user.id, 'Неправильный формат данных, было введено {} цифр.'.
+            context.bot.send_message(user.id, 'Неправильный формат данных, было введено {} цифр.'.
                              format(len(phone_number_candidate[0])))
         else:
             user.phone_number = int(phone_number_candidate[0])
             user.save()
-            bot.send_message(user.id,
+            context.bot.send_message(user.id,
                              'Как только тренер подтвердит твою кандидатуру, я напишу.',
                              reply_markup=construct_main_menu())
             admin_bot = telegram.Bot(ADMIN_TELEGRAM_TOKEN)
@@ -80,17 +81,17 @@ def get_personal_data(bot, update, user):
 
     else:
         if user.last_name and user.first_name and user.phone_number:
-            bot.send_message(user.id, 'Контактные данные уже есть.')
+            context.bot.send_message(user.id, 'Контактные данные уже есть.')
         else:
             last_name, first_name = text.split(' ')
             user.last_name = last_name
             user.first_name = first_name
             user.save()
-            bot.send_message(user.id, 'Введи номер телефона в формате "89991112233" (11 цифр подряд).')
+            context.bot.send_message(user.id, 'Введи номер телефона в формате "89991112233" (11 цифр подряд).')
 
 
-@handler_decor(check_status=True)
-def user_main_info(bot, update, user):
+# @handler_decor(check_status=True)
+def user_main_info(update, context):
     """посмотреть, основную инфу:
         статус
         группа, если есть
@@ -104,7 +105,9 @@ def user_main_info(bot, update, user):
         User.STATUS_FINISHED: 'закончил тренировки.',
         User.STATUS_ARBITRARY: 'тренируешься по свободному графику.'
     }
+
     today_date = date.today()
+    user, _ = User.get_user_and_created(update, context)
     user_payment = Payment.objects.filter(player=user, player__status=User.STATUS_TRAINING, fact_amount=0,
                                           year=today_date.year - 2020, month=today_date.month)
 
@@ -140,17 +143,20 @@ def user_main_info(bot, update, user):
 
     text = intro + group_info + number_of_add_games + payment_status + should_pay_info
 
-    bot.send_message(user.id,
-                     text,
-                     parse_mode='HTML',
-                     reply_markup=construct_main_menu(user, user.status))
+    update.message.reply_text(
+        text=text,
+        parse_mode='HTML',
+        reply_markup=construct_main_menu(user, user.status)
+    )
 
 
-def process_calendar_selection(bot, update, user):
+def process_calendar_selection(update, context):
     """
     Process the callback_query. This method generates a new calendar if forward or
     backward is pressed. This method should be called inside a CallbackQueryHandler.
     """
+    user, _ = User.get_user_and_created(update, context)
+
     query = update.callback_query
     (purpose, action, year, month, day) = separate_callback_data(query.data)
     curr = datetime(int(year), int(month), 1)
@@ -164,17 +170,17 @@ def process_calendar_selection(bot, update, user):
         highlight_dates = None
 
     if action == CLNDR_IGNORE:
-        bot.answer_callback_query(callback_query_id=query.id)
+        context.bot.answer_callback_query(callback_query_id=query.id)
     elif action == CLNDR_DAY:
-        bot_edit_message(bot, query.message.text, update)
+        bot_edit_message(context.bot, query.message.text, update)
         return True, purpose, datetime(int(year), int(month), int(day))
     elif action == CLNDR_PREV_MONTH:
         pre = curr - timedelta(days=1)
-        bot_edit_message(bot, query.message.text, update, create_calendar(purpose, int(pre.year), int(pre.month),
+        bot_edit_message(context.bot, query.message.text, update, create_calendar(purpose, int(pre.year), int(pre.month),
                                                                           highlight_dates))
     elif action == CLNDR_NEXT_MONTH:
         ne = curr + timedelta(days=31)
-        bot_edit_message(bot, query.message.text, update, create_calendar(purpose, int(ne.year), int(ne.month),
+        bot_edit_message(context.bot, query.message.text, update, create_calendar(purpose, int(ne.year), int(ne.month),
                                                                           highlight_dates))
     elif action == CLNDR_ACTION_BACK:
         if purpose == CLNDR_ACTION_SKIP:
@@ -185,16 +191,18 @@ def process_calendar_selection(bot, update, user):
                    '✅ -- дни, доступные для групповых тренировок'
         elif re.findall(rf'({CLNDR_ACTION_TAKE_IND})(\d.\d)', purpose):
             text = 'Выбери дату индивидуальной тренировки'
-        bot_edit_message(bot, text, update, create_calendar(purpose, int(year), int(month), highlight_dates))
+        bot_edit_message(context.bot, text, update, create_calendar(purpose, int(year), int(month), highlight_dates))
 
     else:
-        bot.answer_callback_query(callback_query_id=query.id, text="Something went wrong!")
+        context.bot.answer_callback_query(callback_query_id=query.id, text="Something went wrong!")
     return False, purpose, []
 
 
-@handler_decor(check_status=True)
-def inline_calendar_handler(bot, update, user):
-    selected, purpose, date_my = process_calendar_selection(bot, update, user)
+# @handler_decor(check_status=True)
+def inline_calendar_handler(update, context):
+    user, _ = User.get_user_and_created(update, context)
+
+    selected, purpose, date_my = process_calendar_selection(update, context)
     today_date = moscow_datetime(datetime.now()).date()
     if selected:
         date_comparison = date(date_my.year, date_my.month, date_my.day)
@@ -273,45 +281,48 @@ def inline_calendar_handler(bot, update, user):
                     text = 'Нельзя записаться на этот день, выбери другой.'
                     markup = create_calendar(purpose, date_my.year, date_my.month)
 
-        bot_edit_message(bot, text, update, markup)
+        bot_edit_message(context.bot, text, update, markup)
 
 
-@handler_decor(check_status=True)
-def skip_lesson_main_menu_button(bot, update, user):
+# @handler_decor(check_status=True)
+def skip_lesson_main_menu_button(update, context):
+    user, _ = User.get_user_and_created(update, context)
     available_grouptraining_dates = select_tr_days_for_skipping(user)
     if available_grouptraining_dates:
-        bot.send_message(user.id,
+        context.bot.send_message(user.id,
                          'Выбери дату тренировки для отмены.\n'
                          '✅ -- дни, доступные для отмены.',
                          reply_markup=create_calendar(CLNDR_ACTION_SKIP,
                                                       dates_to_highlight=available_grouptraining_dates))
     else:
-        bot.send_message(user.id,
+        context.bot.send_message(user.id,
                          'Пока что нечего пропускать.',
                          reply_markup=construct_main_menu(user, user.status))
 
 
-@handler_decor(check_status=True)
-def skip_lesson_whem_geq_2(bot, update, user):
+# @handler_decor(check_status=True)
+def skip_lesson_whem_geq_2(update, context):
     tr_day_id = update.callback_query.data[len(SELECT_SKIP_TIME_BUTTON):]
     training_day = GroupTrainingDay.objects.get(id=tr_day_id)
 
     group_name, group_players = make_group_name_group_players_info_for_skipping(training_day)
     markup, text = construct_detail_menu_for_skipping(training_day, CLNDR_ACTION_SKIP, group_name, group_players)
-    bot_edit_message(bot, text, update, markup)
+    bot_edit_message(context.bot, text, update, markup)
 
 
-@handler_decor(check_status=True)
-def skip_lesson(bot, update, user):
+# @handler_decor(check_status=True)
+def skip_lesson(update, context):
+    user, _ = User.get_user_and_created(update, context)
+
     tr_day_id = update.callback_query.data[len(SHOW_INFO_ABOUT_SKIPPING_DAY):]
     training_day = GroupTrainingDay.objects.get(id=tr_day_id)
 
     time_tlg, _, _, date_tlg, day_of_week, _, _ = get_time_info_from_tr_day(training_day)
     if not training_day.is_available:
         text = "{} в {} ❌нет тренировки❌, т.к. она отменена тренером, поэтому ее нельзя пропустить.".format(date_tlg, time_tlg)
-        bot_edit_message(bot, text, update)
+        bot_edit_message(context.bot, text, update)
 
-        skip_lesson_main_menu_button(bot, update)
+        skip_lesson_main_menu_button(context.bot, update)
 
     else:
         if datetime.combine(training_day.date, training_day.start_time) - moscow_datetime(datetime.now()) < user.time_before_cancel:
@@ -362,24 +373,26 @@ def skip_lesson(bot, update, user):
             user.bonus_lesson += 1
             user.save()
 
-        bot_edit_message(bot, text, update)
+        bot_edit_message(context.bot, text, update)
 
 
-@handler_decor(check_status=True)
-def choose_type_of_training(bot, update, user):
+# @handler_decor(check_status=True)
+def choose_type_of_training(update, context):
     markup = ind_group_type_training_keyboard()
     text = 'Выбери тип тренировки.'
     if update.callback_query:
-        bot_edit_message(bot, text, update, markup)
+        bot_edit_message(context.bot, text, update, markup)
     else:
-        bot.send_message(user.id,
-                         text,
-                         reply_markup=markup)
+        update.message.reply_text(
+            text=text,
+            reply_markup=markup
+        )
 
 
-@handler_decor(check_status=True)
-def take_lesson(bot, update, user):
+# @handler_decor(check_status=True)
+def take_lesson(update, context):
     """записаться на тренировку"""
+    user, _ = User.get_user_and_created(update, context)
     tr_type = update.callback_query.data[len(SELECT_TRAINING_TYPE):]
     if tr_type == 'group':
         if user.bonus_lesson > 0:
@@ -400,19 +413,17 @@ def take_lesson(bot, update, user):
         markup = ind_train_choose_duration_keyboard()
         text = 'Выбери продолжительность занятия'
 
-    bot_edit_message(bot, text, update, markup)
+    bot_edit_message(context.bot, text, update, markup)
 
 
-
-def select_dt_for_ind_lesson(bot, update, user):
+def select_dt_for_ind_lesson(update, context):
     duration = float(update.callback_query.data[len(SELECT_DURATION_FOR_IND_TRAIN):])
     markup = create_calendar(f'{CLNDR_ACTION_TAKE_IND}{duration}')
     text = 'Выбери дату тренировки.'
-    bot_edit_message(bot, text, update, markup)
+    bot_edit_message(context.bot, text, update, markup)
 
 
-
-def select_precise_ind_lesson_time(bot, update, user):
+def select_precise_ind_lesson_time(update, context):
     day_dt, start_time, end_time = update.callback_query.data[len(SELECT_PRECISE_IND_TIME):].split('|')
     date_dt = datetime.strptime(day_dt, DT_BOT_FORMAT)
     st_time_obj = datetime.strptime(start_time, '%H:%M:%S')
@@ -421,6 +432,7 @@ def select_precise_ind_lesson_time(bot, update, user):
 
     day_of_week = from_eng_to_rus_day_week[calendar.day_name[date_dt.date().weekday()]]
 
+    user, _ = User.get_user_and_created(update, context)
     group, _ = TrainingGroup.objects.get_or_create(name=user.first_name + user.last_name,
                                                    max_players=1)
 
@@ -430,7 +442,7 @@ def select_precise_ind_lesson_time(bot, update, user):
     text = f"Сообщу тренеру, что ты хочешь прийти на индивидуальное занятие"\
            f" <b>{day_dt} ({day_of_week}) </b>\n"\
            f"Время: <b>{start_time} — {end_time}</b>"
-    bot_edit_message(bot, text, update)
+    bot_edit_message(context.bot, text, update)
 
     admins = User.objects.filter(is_staff=True, is_blocked=False)
     markup = yes_no_permission4ind_train_keyboard(
@@ -459,8 +471,7 @@ def select_precise_ind_lesson_time(bot, update, user):
         )
 
 
-
-def select_precise_group_lesson_time(bot, update, user):
+def select_precise_group_lesson_time(update, context):
     """
     после того, как выбрал точное время для групповой тренировки,
     показываем инфу об этом дне с кнопкой записаться и назад
@@ -499,13 +510,13 @@ def select_precise_group_lesson_time(bot, update, user):
         day=tr_day.date.day,
     )
 
-    bot_edit_message(bot, text, update, markup)
+    bot_edit_message(context.bot, text, update, markup)
 
 
-
-def confirm_group_lesson(bot, update, user):
+def confirm_group_lesson(update, context):
     tr_day_id = update.callback_query.data[len(CONFIRM_GROUP_LESSON):]
     tr_day = GroupTrainingDay.objects.select_related('group').get(id=tr_day_id)
+    user, _ = User.get_user_and_created(update, context)
 
     time_tlg, start_time_tlg, end_time_tlg, date_tlg, day_of_week, start_time, end_time = get_time_info_from_tr_day(
         tr_day)
@@ -583,7 +594,7 @@ def confirm_group_lesson(bot, update, user):
             text = 'Ну ты чего?🤕 \nЭто же твоя группа, выбери другое время.'
             markup = back_to_group_when_trying_to_enter_his_own_group(tr_day_id=tr_day_id)
 
-    bot_edit_message(bot, text, update, markup)
+    bot_edit_message(context.bot, text, update, markup)
 
     if admit_message_text:
         admins = User.objects.filter(is_staff=True, is_blocked=False)
@@ -604,10 +615,10 @@ def confirm_group_lesson(bot, update, user):
             )
 
 
-
-def choose_type_of_payment_for_pay_visiting(bot, update, user):
+def choose_type_of_payment_for_pay_visiting(update, context):
     payment_choice, tr_day_id = update.callback_query.data[len(PAYMENT_VISITING):].split('|')
     tr_day = GroupTrainingDay.objects.get(id=tr_day_id)
+    user, _ = User.get_user_and_created(update, context)
 
     time_tlg, _, _, date_tlg, day_of_week, _, _ = get_time_info_from_tr_day(tr_day)
     text, admin_text = '', ''
@@ -640,7 +651,7 @@ def choose_type_of_payment_for_pay_visiting(bot, update, user):
                      f'Время: <b>{time_tlg}</b>\n' \
                      f'<b>В дополнительное время, не забудь взять с него {tarif}₽.</b>'
 
-    bot_edit_message(bot, text, update)
+    bot_edit_message(context.bot, text, update)
 
     admins = User.objects.filter(is_staff=True, is_blocked=False)
     if DEBUG:

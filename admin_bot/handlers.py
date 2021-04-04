@@ -25,8 +25,7 @@ import datetime
 import telegram
 
 
-@admin_handler_decor()
-def start(bot, update, user):
+def start(update, context):
     update.message.reply_text(
         "Привет! я переехал на @TennisTula_bot",
         parse_mode='HTML',
@@ -34,8 +33,7 @@ def start(bot, update, user):
     )
 
 
-@admin_handler_decor()
-def permission_for_ind_train(bot, update, user):
+def permission_for_ind_train(update, context):
     permission, user_id, tr_day_id = update.callback_query.data[len(PERMISSION_FOR_IND_TRAIN):].split('|')
 
     tennis_bot = telegram.Bot(TELEGRAM_TOKEN)
@@ -79,11 +77,10 @@ def permission_for_ind_train(bot, update, user):
         admin_text = 'Тренировка уже отменена.'
         markup = None
 
-    bot_edit_message(bot, admin_text, update, markup=markup)
+    bot_edit_message(context.bot, admin_text, update, markup=markup)
 
 
-@admin_handler_decor()
-def save_many_ind_trains(bot, update, user):
+def save_many_ind_trains(update, context):
     tr_day_id, num_lessons = update.callback_query.data[len(AMOUNT_OF_IND_TRAIN):].split("|")
     tr_day = GroupTrainingDay.objects.get(id=tr_day_id)
 
@@ -97,7 +94,7 @@ def save_many_ind_trains(bot, update, user):
         create_tr_days_for_future(tr_day)
         text += "Сохранил на 2 месяца вперед."
 
-    bot_edit_message(bot, text, update)
+    bot_edit_message(context.bot, text, update)
 
 
 def admin_calendar_selection(bot, update):
@@ -131,9 +128,8 @@ def admin_calendar_selection(bot, update):
     return False, purpose, []
 
 
-@admin_handler_decor()
-def inline_calendar_handler(bot, update, user):
-    selected, purpose, date_my = admin_calendar_selection(bot, update)
+def inline_calendar_handler(update, context):
+    selected, purpose, date_my = admin_calendar_selection(context.bot, update)
     if selected:
         if purpose == CLNDR_ADMIN_VIEW_SCHEDULE:
             tr_days = GroupTrainingDay.objects.filter(date=date_my).select_related('group').order_by('start_time')
@@ -144,55 +140,51 @@ def inline_calendar_handler(bot, update, user):
             else:
                 text = 'Нет тренировок в этот день'
                 markup = create_calendar(purpose, date_my.year, date_my.month)
-            bot_edit_message(bot, text, update, markup)
+            bot_edit_message(context.bot, text, update, markup)
 
 
-@admin_handler_decor()
-def show_coach_schedule(bot, update, user):
-    bot.send_message(user.id,
-                     'Тренировочные дни',
-                     reply_markup=create_calendar(CLNDR_ADMIN_VIEW_SCHEDULE))
+def show_coach_schedule(update, context):
+    update.message.reply_text(
+        text='Тренировочные дни',
+        reply_markup=create_calendar(CLNDR_ADMIN_VIEW_SCHEDULE)
+    )
 
 
-@admin_handler_decor()
-def redirect_to_site(bot, update, user):
+def redirect_to_site(update, context):
     markup = go_to_site_keyboard()
-    bot.send_message(user.id,
-                     ADMIN_SITE,
-                     reply_markup=markup)
+    update.message.reply_text(
+        text=ADMIN_SITE,
+        reply_markup=markup
+    )
 
 
 GROUP_IDS, TEXT_TO_SEND = 2, 3
 
 
-@admin_handler_decor()
-def select_groups_where_should_send(bot, update, user):
+def select_groups_where_should_send(update, context):
     text = 'Кому отправить?'
 
     banda_groups = TrainingGroup.objects.filter(name__iregex=r'БАНДА').order_by('name')
 
     if update.callback_query:
         group_ids = update.callback_query.data[len(SEND_MESSAGE):].split("|")
-        ids_counter = Counter(group_ids)
         markup = construct_menu_groups_for_send_message(banda_groups, f'{update.callback_query.data}')
 
         if len(group_ids) == 2 and group_ids[-1] == '-1':
             # ['', '-1'] -- just pressed confirm
             text = 'Сначала выбери группу, а потом подтверждай.'
-        bot_edit_message(bot, text, update, markup)
+        bot_edit_message(context.bot, text, update, markup)
         return GROUP_IDS
 
     else:
         markup = construct_menu_groups_for_send_message(banda_groups, f'{SEND_MESSAGE}')
-        bot.send_message(
-            user.id,
-            text,
+        update.message.reply_text(
+            text=text,
             reply_markup=markup
         )
 
 
-@admin_handler_decor()
-def text_to_send(bot, update, user):
+def text_to_send(update, context):
     group_ids = update.callback_query.data[len(SEND_MESSAGE):].split("|")
     group_ids.remove('')
     if group_ids[-1] == '-1': # if pressed "confirm"
@@ -220,16 +212,15 @@ def text_to_send(bot, update, user):
             AlertsLog.objects.bulk_create(objs)
 
         text += ' Или нажми /cancel для отмены.'
-        bot_edit_message(bot, text, update)
+        bot_edit_message(context.bot, text, update)
 
         return TEXT_TO_SEND
 
     else:
-        select_groups_where_should_send(bot, update)
+        select_groups_where_should_send(context.bot, update)
 
 
-@admin_handler_decor()
-def receive_text_and_send(bot, update, user):
+def receive_text_and_send(update, context):
     text = update.message.text
 
     alert_instances = AlertsLog.objects.filter(is_sent=False, tr_day__isnull=True,
@@ -246,8 +237,9 @@ def receive_text_and_send(bot, update, user):
 
     alert_instances.update(is_sent=True, info=text)
 
-    bot.send_message(user.id,
-                     'Отправлено.')
+    update.message.reply_text(
+        text='Отправлено.'
+    )
 
     return ConversationHandler.END
 
@@ -276,8 +268,7 @@ def info_about_users(users, for_admin=False, payment=False):
              users.values('first_name', 'last_name').order_by('last_name')))
 
 
-@admin_handler_decor()
-def show_traingroupday_info(bot, update, user):
+def show_traingroupday_info(update, context):
     tr_day_id = update.callback_query.data[len(SHOW_GROUPDAY_INFO):]
     tr_day = GroupTrainingDay.objects.select_related('group').get(id=tr_day_id)
 
@@ -310,11 +301,10 @@ def show_traingroupday_info(bot, update, user):
         day=tr_day.date.day
     )
 
-    bot_edit_message(bot, text, update, markup)
+    bot_edit_message(context.bot, text, update, markup)
 
 
-@admin_handler_decor()
-def start_payment(bot, update, user):
+def start_payment(update, context):
     text = 'Выбери год'
     now_date = moscow_datetime(datetime.datetime.now()).date()
     markup = choose_year_to_group_payment_keyboard(
@@ -323,24 +313,23 @@ def start_payment(bot, update, user):
     )
 
     if update.callback_query:
-        bot_edit_message(bot, text, update, markup)
+        bot_edit_message(context.bot, text, update, markup)
 
     else:
-        bot.send_message(user.id,
-                         text,
-                         reply_markup=markup)
+        update.message.reply_text(
+            text=text,
+            reply_markup=markup
+        )
 
 
-@admin_handler_decor()
-def year_payment(bot, update, user):
+def year_payment(update, context):
     year = update.callback_query.data[len(PAYMENT_YEAR):]
     text = 'Выбери месяц'
     markup = construct_menu_months(Payment.MONTHS, f'{PAYMENT_YEAR_MONTH}{year}|')
-    bot_edit_message(bot, text, update, markup)
+    bot_edit_message(context.bot, text, update, markup)
 
 
-@admin_handler_decor()
-def month_payment(bot, update, user):
+def month_payment(update, context):
     year, month = update.callback_query.data[len(PAYMENT_YEAR_MONTH):].split('|')
 
     amount_for_this_month = Payment.objects.filter(year=year, month=month).aggregate(sigma=Sum('fact_amount'))
@@ -364,13 +353,12 @@ def month_payment(bot, update, user):
 
     banda_groups = TrainingGroup.objects.filter(name__iregex=r'БАНДА').order_by('name')
     markup = construct_menu_groups(banda_groups, f'{PAYMENT_YEAR_MONTH_GROUP}{year}|{month}|')
-    bot_edit_message(bot, text, update, markup)
+    bot_edit_message(context.bot, text, update, markup)
 
     return ConversationHandler.END
 
 
-@admin_handler_decor()
-def group_payment(bot, update, user):
+def group_payment(update, context):
     year, month, group_id = update.callback_query.data[len(PAYMENT_YEAR_MONTH_GROUP):].split('|')
 
     if int(group_id) == 0:
@@ -415,14 +403,13 @@ def group_payment(bot, update, user):
         group_id=group_id
     )
 
-    bot_edit_message(bot, text, update, markup)
+    bot_edit_message(context.bot, text, update, markup)
 
 
 START_CHANGE_PAYMENT, CONFIRM_OR_CANCEL = range(2)
 
 
-@admin_handler_decor()
-def change_payment_data(bot, update, user):
+def change_payment_data(update, context):
     year, month, _ = update.callback_query.data[len(PAYMENT_START_CHANGE):].split('|')
     text = 'Для того, чтобы внести данные об оплате, введи данные в формате \n\n' \
            'id сумма_в_рублях через пробел, например, 18 3600\n\n'
@@ -433,17 +420,15 @@ def change_payment_data(bot, update, user):
         from_digit_to_month_dict=from_digit_to_month
     )
 
-    bot.send_message(
-        user.id,
-        text,
+    update.message.reply_text(
+        text=text,
         reply_markup=markup
     )
 
     return START_CHANGE_PAYMENT
 
 
-@admin_handler_decor()
-def get_id_amount(bot, update, user):
+def get_id_amount(update, context):
     try:
         payment_id, amount = update.message.text.split(' ')
         payment_id = int(payment_id)
@@ -458,32 +443,28 @@ def get_id_amount(bot, update, user):
             payment_id=payment_id,
             amount=amount
         )
-        bot.send_message(
-            user.id,
-            text,
+        update.message.reply_text(
+            text=text,
             reply_markup=markup,
             parse_mode='HTML'
         )
 
     except ValueError:
         text = 'Ошибка, скорее всего неправильно ввел id или сумму -- не ввел через пробел или есть лишние символы\n/cancel'
-        bot.send_message(
-            user.id,
-            text
+        update.message.reply_text(
+            text=text
         )
 
     except ObjectDoesNotExist:
         text = 'Нет такого объекта в базе данных -- неправильный id\n/cancel'
-        bot.send_message(
-            user.id,
-            text
+        update.message.reply_text(
+            text=text
         )
 
     return CONFIRM_OR_CANCEL
 
 
-@admin_handler_decor()
-def confirm_or_cancel_changing_payment(bot, update, user):
+def confirm_or_cancel_changing_payment(update, context):
     permission, payment_id, amount = update.callback_query.data[len(PAYMENT_CONFIRM_OR_CANCEL):].split('|')
     payment = Payment.objects.get(id=payment_id)
     if permission == 'NO':
@@ -500,13 +481,12 @@ def confirm_or_cancel_changing_payment(bot, update, user):
         from_digit_to_month_dict=from_digit_to_month
     )
 
-    bot_edit_message(bot, text, update, markup)
+    bot_edit_message(context.bot, text, update, markup)
 
     return ConversationHandler.END
 
 
-@admin_handler_decor()
-def cancel(bot, update, user):
+def cancel(update, context):
     update.message.reply_text('Вот так вот значит, да?',
                               reply_markup=construct_admin_main_menu())
 

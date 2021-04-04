@@ -9,6 +9,7 @@ from telegram.ext import (
 )
 import os
 import django
+import telegram
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'tennis_bot.settings')
 django.setup()
@@ -59,8 +60,7 @@ send_message_handler = ConversationHandler(
 )
 
 
-def add_handlers(updater):
-    dp = updater.dispatcher
+def setup_dispatcher(dp):
 
     dp.add_handler(CommandHandler("start", start))
 
@@ -82,7 +82,15 @@ def add_handlers(updater):
 
 def main():
     updater = Updater(ADMIN_TELEGRAM_TOKEN)
-    add_handlers(updater)
+
+    dp = updater.dispatcher
+    dp = setup_dispatcher(dp)
+
+    bot_info = telegram.Bot(ADMIN_TELEGRAM_TOKEN).get_me()
+    bot_link = f"https://t.me/" + bot_info["username"]
+
+    print(f"Pooling of '{bot_link}' started")
+
     updater.start_polling()
     updater.idle()
 

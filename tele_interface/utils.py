@@ -232,3 +232,19 @@ def balls_lessons_payment(year, month, user):
     should_pay_balls = 100 * round(balls_this_month / 4)
 
     return should_pay_this_month, should_pay_balls, num_of_group_lessons
+
+
+def make_group_name_group_players_info_for_skipping(tr_day):
+    all_players = tr_day.group.users.union(tr_day.visitors.all(), tr_day.pay_visitors.all()).\
+        difference(tr_day.absent.all()).\
+            values('first_name', 'last_name')
+
+    all_players = '\n'.join((f"{x['first_name']} {x['last_name']}" for x in all_players))
+
+    if not tr_day.is_individual:
+        group_name = f"{tr_day.group.name}\n"
+        group_players = f'Присутствующие:\n{all_players}\n'
+    else:
+        group_name = "🧞‍♂индивидуальная тренировка🧞‍♂️\n"
+        group_players = ''
+    return group_name, group_players

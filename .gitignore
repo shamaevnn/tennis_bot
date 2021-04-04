@@ -6,3 +6,4 @@ tennis_bot/gunicorn_config.py
 /bin
 tennis_bot/static
 /venv
+.env

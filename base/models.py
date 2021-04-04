@@ -19,7 +19,6 @@ from tele_interface.static_text import from_eng_to_rus_day_week
 from tennis_bot.settings import TARIF_ARBITRARY, TARIF_GROUP, TARIF_IND, TARIF_SECTION, TARIF_FEW, DEBUG
 
 
-
 class ModelwithTimeManager(models.Manager):
     def tr_day_is_my_available(self, *args, **kwargs):
         return self.filter(is_available=True, tr_day_status=GroupTrainingDay.MY_TRAIN_STATUS, *args, **kwargs)

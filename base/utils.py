@@ -166,3 +166,27 @@ def construct_main_menu(user=None, user_status=None):
         [MY_DATA_BUTTON, HELP_BUTTON],
         [SKIP_LESSON_BUTTON, TAKE_LESSON_BUTTON]],
         resize_keyboard=True)
+
+
+def info_about_users(users, for_admin=False, payment=False):
+    """
+    :param payment: info about payment or not
+    :param for_admin: show info for admin or not (number instead of smile)
+    :param users: User instance
+    :return: (first_name + last_name + \n){1,} -- str
+    """
+    if for_admin:
+        if payment:
+            return '\n'.join(
+                (f"<b>{x['id']}</b>. {x['player__last_name']} {x['player__first_name']} -- {x['fact_amount']}₽,"
+                 f" {x['n_fact_visiting']}"
+                 for x in users.values('player__first_name', 'player__last_name', 'fact_amount',
+                                       'n_fact_visiting', 'id').order_by('player__last_name', 'player__first_name')))
+        else:
+            return '\n'.join(
+                (f"{i + 1}. {x['last_name']} {x['first_name']}" for i, x in enumerate(users.values('first_name',
+                                                                                                   'last_name').order_by('last_name'))))
+    else:
+        return '\n'.join(
+            (f"👤{x['last_name']} {x['first_name']}" for x in
+             users.values('first_name', 'last_name').order_by('last_name')))

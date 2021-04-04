@@ -5,3 +5,4 @@ tennis_bot/config.py
 tennis_bot/gunicorn_config.py
 /bin
 base/static
+/venv

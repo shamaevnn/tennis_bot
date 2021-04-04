@@ -10,8 +10,6 @@ from django.core.exceptions import ValidationError
 from django import forms
 from django.shortcuts import redirect
 
-bot = telegram.Bot(TELEGRAM_TOKEN)
-
 
 class UserTabularForm(forms.ModelForm):
     def clean(self):
@@ -92,13 +90,13 @@ def make_trday_unavailable(modeladmin, request, queryset):
     queryset.update(is_available=False)
 
     for day in queryset:
-        send_alert_about_changing_tr_day_status(day, day.is_available, bot)
+        send_alert_about_changing_tr_day_status(day, day.is_available)
 
 
 def make_trday_available(modeladmin, request, queryset):
     queryset.update(is_available=True)
     for day in queryset:
-        send_alert_about_changing_tr_day_status(day, day.is_available, bot)
+        send_alert_about_changing_tr_day_status(day, day.is_available)
 
 
 make_trday_unavailable.short_description = "Сделать выбранные дни недоступными"

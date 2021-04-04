@@ -1,12 +1,11 @@
 import os
 import django
-import telegram
 import random
 import pytz
 import time
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'tennis_bot.settings')
-django.setup()
 
+
+import telegram
 from tennis_bot.celery import app
 from celery.utils.log import get_task_logger
 from django.db.models import ExpressionWrapper, F, DurationField
@@ -16,6 +15,8 @@ from datetime import datetime, timedelta
 from tennis_bot.settings import TELEGRAM_TOKEN
 from tele_interface.static_text import ALERT_TEXTS, from_digit_to_month
 
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'tennis_bot.settings')
+django.setup()
 
 utc=pytz.UTC
 

@@ -49,6 +49,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.postgres',
 
+    # 3rd party apps
+    'django_celery_beat',
+
     'base',
     'tele_interface',
     'tennis_bot',

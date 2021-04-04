@@ -7,7 +7,6 @@ from datetime import date
 from pytz import timezone
 from telegram import ReplyKeyboardMarkup
 
-from base.tasks import broadcast_message
 from tele_interface.static_text import TAKE_LESSON_BUTTON, MY_DATA_BUTTON, SKIP_LESSON_BUTTON, HELP_BUTTON, \
     NO_PAYMENT_BUTTON, from_eng_to_rus_day_week
 from tennis_bot.settings import TELEGRAM_TOKEN, DEBUG
@@ -59,7 +58,7 @@ def send_alert_about_changing_tr_day_status(tr_day, new_is_available: bool):
     else:
         text = 'Тренировка <b>{} в {}</b> доступна, ура!'.format(tr_day.date,
                                                                  tr_day.start_time)
-
+    from base.tasks import broadcast_message
     if DEBUG:
         broadcast_message(
             user_ids=list(group_members.union(visitors, pay_visitors).values_list('id', flat=True)),
@@ -80,6 +79,7 @@ def send_alert_about_changing_tr_day_time(tr_day, text):
     absents = tr_day.absent.all()
     pay_visitors = tr_day.visitors.all()
 
+    from base.tasks import broadcast_message
     if DEBUG:
         broadcast_message(
             user_ids=list(group_members.union(visitors, absents, pay_visitors).values_list('id', flat=True)),

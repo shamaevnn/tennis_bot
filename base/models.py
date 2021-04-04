@@ -91,6 +91,7 @@ class UserForm(forms.ModelForm):
                     new_status == User.STATUS_ARBITRARY or new_status == User.STATUS_TRAINING):
                 text = 'Теперь тебе доступен мой функционал, поздравляю!'
                 reply_markup = construct_main_menu(self.instance, self.instance.status)
+                from base.tasks import broadcast_message
                 if DEBUG:
                     broadcast_message(
                         user_ids=[self.instance.id],
@@ -236,6 +237,7 @@ class GroupTrainingDayForm(forms.ModelForm):
                 text = f'😱ATTENTION😱\n' \
                        f'У тебя есть запись на тренировку на <b> {self.cleaned_data.get("date")}.</b>\n' \
                        f'<b>Тренер ее отменил.</b> Но не отчаивайся, я добавлю тебе отыгрыш 🎾'
+                from base.tasks import broadcast_message
                 if DEBUG:
                     broadcast_message(list(canceled_users.values_list('id', flat=True)), text, reply_markup=construct_main_menu())
                 else:

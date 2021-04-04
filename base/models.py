@@ -8,9 +8,8 @@ from django.db.models import Q, F, Case, When, Sum, IntegerField, ExpressionWrap
 from django.utils import timezone
 from datetime import datetime, date
 
-from base.tasks import broadcast_message
 from base.utils import moscow_datetime, TM_TIME_SCHEDULE_FORMAT, DT_BOT_FORMAT, \
-    send_alert_about_changing_tr_day_time, construct_main_menu
+    send_alert_about_changing_tr_day_time, construct_main_menu, extract_user_data_from_update
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 
@@ -76,6 +75,27 @@ class User(AbstractUser):
 
     def __str__(self):
         return '{} {} -- {}'.format(self.first_name, self.last_name, self.phone_number)
+
+    @classmethod
+    def get_user_and_created(cls, update, context):
+        """ python-telegram-bot's Update, Context --> User instance """
+        data = extract_user_data_from_update(update)
+        u, created = cls.objects.update_or_create(
+            id=data["user_id"],
+            defaults={'telegram_username': data['username'],
+                      'first_name': data['first_name'],
+                      'last_name': data['last_name'],
+                      }
+        )
+
+        if created:
+            if context is not None and context.args is not None and len(context.args) > 0:
+                payload = context.args[0]
+                if str(payload).strip() != str(data["user_id"]).strip():  # you can't invite yourself
+                    u.deep_link = payload
+                    u.save()
+
+        return u, created
 
 
 class UserForm(forms.ModelForm):

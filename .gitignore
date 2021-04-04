@@ -4,5 +4,5 @@ tennis_bot/config.py
 *.pyc
 tennis_bot/gunicorn_config.py
 /bin
-base/static
+tennis_bot/static
 /venv

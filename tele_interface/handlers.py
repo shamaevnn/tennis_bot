@@ -9,7 +9,7 @@ from tennis_bot.settings import TARIF_ARBITRARY, TARIF_GROUP, TARIF_PAYMENT_ADD_
 from .utils import (handler_decor,
                     get_available_dt_time4ind_train, select_tr_days_for_skipping,
                     get_potential_days_for_group_training, separate_callback_data,
-                    balls_lessons_payment,
+                    balls_lessons_payment, make_group_name_group_players_info_for_skipping,
                     )
 from .keyboard_utils import create_calendar, construct_time_menu_for_group_lesson, construct_detail_menu_for_skipping, \
     construct_menu_skipping_much_lesson, construct_time_menu_4ind_lesson, back_to_group_times_when_no_left_keyboard, \
@@ -48,19 +48,13 @@ def update_user_info(update, user):
         user.save()
 
 
-@handler_decor()
-def start(bot, update, user):
-    update_user_info(update, user)
-    bot.send_message(user.id, 'Я здесь', reply_markup=construct_main_menu(user, user.status))
 
-
-@handler_decor()
 def get_help(bot, update, user):
     bot.send_message(user.id, 'По всем вопросам пиши @ta2asho.\n'
                               'Желательно описывать свою проблему со скриншотами.', reply_markup=construct_main_menu(user, user.status))
 
 
-@handler_decor()
+
 def get_personal_data(bot, update, user):
     text = update.message.text
     phone_number_candidate = re.findall(r'\d+', text)
@@ -409,7 +403,7 @@ def take_lesson(bot, update, user):
     bot_edit_message(bot, text, update, markup)
 
 
-@handler_decor()
+
 def select_dt_for_ind_lesson(bot, update, user):
     duration = float(update.callback_query.data[len(SELECT_DURATION_FOR_IND_TRAIN):])
     markup = create_calendar(f'{CLNDR_ACTION_TAKE_IND}{duration}')
@@ -417,7 +411,7 @@ def select_dt_for_ind_lesson(bot, update, user):
     bot_edit_message(bot, text, update, markup)
 
 
-@handler_decor()
+
 def select_precise_ind_lesson_time(bot, update, user):
     day_dt, start_time, end_time = update.callback_query.data[len(SELECT_PRECISE_IND_TIME):].split('|')
     date_dt = datetime.strptime(day_dt, DT_BOT_FORMAT)
@@ -465,7 +459,7 @@ def select_precise_ind_lesson_time(bot, update, user):
         )
 
 
-@handler_decor()
+
 def select_precise_group_lesson_time(bot, update, user):
     """
     после того, как выбрал точное время для групповой тренировки,
@@ -498,7 +492,6 @@ def select_precise_group_lesson_time(bot, update, user):
            f'👥Присутствующие:\n{all_players}\n\n' \
            f'Свободные места: {n_free_places if n_free_places > 0 else "есть за деньги"}'
 
-
     markup = take_lesson_back_keyboard(
         tr_day_id=tr_day_id,
         year=tr_day.date.year,
@@ -509,7 +502,7 @@ def select_precise_group_lesson_time(bot, update, user):
     bot_edit_message(bot, text, update, markup)
 
 
-@handler_decor()
+
 def confirm_group_lesson(bot, update, user):
     tr_day_id = update.callback_query.data[len(CONFIRM_GROUP_LESSON):]
     tr_day = GroupTrainingDay.objects.select_related('group').get(id=tr_day_id)
@@ -611,7 +604,7 @@ def confirm_group_lesson(bot, update, user):
             )
 
 
-@handler_decor()
+
 def choose_type_of_payment_for_pay_visiting(bot, update, user):
     payment_choice, tr_day_id = update.callback_query.data[len(PAYMENT_VISITING):].split('|')
     tr_day = GroupTrainingDay.objects.get(id=tr_day_id)
@@ -664,19 +657,3 @@ def choose_type_of_payment_for_pay_visiting(bot, update, user):
             None,
             ADMIN_TELEGRAM_TOKEN
         )
-
-
-def make_group_name_group_players_info_for_skipping(tr_day):
-    all_players = tr_day.group.users.union(tr_day.visitors.all(), tr_day.pay_visitors.all()).\
-        difference(tr_day.absent.all()).\
-            values('first_name', 'last_name')
-
-    all_players = '\n'.join((f"{x['first_name']} {x['last_name']}" for x in all_players))
-
-    if not tr_day.is_individual:
-        group_name = f"{tr_day.group.name}\n"
-        group_players = f'Присутствующие:\n{all_players}\n'
-    else:
-        group_name = "🧞‍♂индивидуальная тренировка🧞‍♂️\n"
-        group_players = ''
-    return group_name, group_players

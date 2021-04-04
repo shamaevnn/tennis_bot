@@ -33,7 +33,7 @@ from .manage_data import (
 from .static_text import NO_PAYMENT_BUTTON, SUCCESS_PAYMENT, from_eng_to_rus_day_week, \
     from_digit_to_month
 from calendar import monthrange
-from tennis_bot.config import ADMIN_TELEGRAM_TOKEN
+from tennis_bot.settings import ADMIN_TELEGRAM_TOKEN
 from datetime import date, datetime, timedelta
 from django.db.models import Q
 

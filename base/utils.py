@@ -1,4 +1,7 @@
 import calendar
+import telegram
+import datetime
+
 from datetime import date
 
 from pytz import timezone
@@ -7,8 +10,6 @@ from telegram import ReplyKeyboardMarkup
 from tele_interface.static_text import TAKE_LESSON_BUTTON, MY_DATA_BUTTON, SKIP_LESSON_BUTTON, HELP_BUTTON, \
     NO_PAYMENT_BUTTON, from_eng_to_rus_day_week
 
-import telegram
-import datetime
 
 DTTM_BOT_FORMAT = '%Y.%m.%d.%H.%M'
 DT_BOT_FORMAT = '%Y.%m.%d'

@@ -1,5 +1,8 @@
 import os
 import django
+import telegram
+import random
+import pytz
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'tennis_bot.settings')
 django.setup()
 
@@ -7,12 +10,9 @@ from django.db.models import ExpressionWrapper, F, DurationField
 from base.models import AlertsLog, GroupTrainingDay, Payment, User
 from base.utils import moscow_datetime, get_time_info_from_tr_day
 from datetime import datetime, timedelta
-from tennis_bot.config import TELEGRAM_TOKEN
+from tennis_bot.settings import TELEGRAM_TOKEN
 from tele_interface.static_text import ALERT_TEXTS, from_digit_to_month
-import schedule
-import telegram
-import random
-import pytz
+
 
 utc=pytz.UTC
 

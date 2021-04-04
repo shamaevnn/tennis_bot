@@ -160,10 +160,3 @@ class PaymentAdmin(admin.ModelAdmin):
     list_filter = ('year', 'month', 'player')
     search_fields = ('player__first_name', 'player__last_name')
     readonly_fields = ('theory_amount', 'n_fact_visiting')
-
-
-@admin.register(StaticData)
-class StaticDataAdmin(admin.ModelAdmin):
-    formfield_overrides = {
-        models.CharField: {'widget': forms.Textarea}
-    }

@@ -9,21 +9,31 @@ https://docs.djangoproject.com/en/1.11/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.11/ref/settings/
 """
-from tennis_bot.config import SECRET_KEY_DJANGO
 import os
+import dj_database_url
+import dotenv
+import sentry_sdk
 
+from sentry_sdk.integrations.django import DjangoIntegration
+from pathlib import Path
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Load env variables from file
+dotenv_file = BASE_DIR / ".env"
+if os.path.isfile(dotenv_file):
+    dotenv.load_dotenv(dotenv_file)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = SECRET_KEY_DJANGO
-
+SECRET_KEY = os.getenv(
+    "DJANGO_SECRET_KEY",
+    'x%#3&%giwv8f0+%r946en7z&d@9*rc$sl0qoql56xr%bh^w2mj',
+)
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = not not os.getenv("DJANGO_DEBUG", False)
 
 ALLOWED_HOSTS = ['*']
 
@@ -80,10 +90,7 @@ WSGI_APPLICATION = 'tennis_bot.wsgi.application'
 # https://docs.djangoproject.com/en/1.11/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'tennis',
-    }
+    'default': dj_database_url.config(conn_max_age=600),
 }
 
 
@@ -128,9 +135,39 @@ STATIC_ROOT = 'base/static'
 
 AUTH_USER_MODEL = 'base.User'
 
-if os.path.isfile(os.path.join(BASE_DIR, "tennis_bot", "config.py")):
-    from .config import *
+# -----> CELERY
+REDIS_URL = os.getenv('REDIS_URL', 'redis://redis:6379')
+BROKER_URL = REDIS_URL
+CELERY_BROKER_URL = REDIS_URL
+CELERY_RESULT_BACKEND = REDIS_URL
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_TASK_DEFAULT_QUEUE = 'default'
+
+# -----> TELEGRAM
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
+ADMIN_TELEGRAM_TOKEN = os.getenv("ADMIN_TELEGRAM_TOKEN")
+
+# -----> TARIFS
+TARIF_IND = 1400
+TARIF_GROUP = 400
+TARIF_ARBITRARY = 600
+TARIF_FEW = 400
+TARIF_SECTION = 4000
+TARIF_PAYMENT_ADD_LESSON = 100
 
 if DEBUG is True:
    MIDDLEWARE += ['debug_toolbar.middleware.DebugToolbarMiddleware']
 
+if not DEBUG:
+    sentry_sdk.init(
+        dsn="https://ef7345bbeca54acba97b7119b6e3d19c@o487996.ingest.sentry.io/5547550",
+        integrations=[DjangoIntegration()],
+        traces_sample_rate=1.0,
+
+        # If you wish to associate users to errors (assuming you are using
+        # django.contrib.auth) you may enable sending PII data.
+        send_default_pii=True
+    )

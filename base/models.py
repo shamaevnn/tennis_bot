@@ -14,7 +14,7 @@ from django.dispatch import receiver
 
 from base.utils import send_alert_about_changing_tr_day_status
 from tele_interface.static_text import from_eng_to_rus_day_week
-from tennis_bot.config import TELEGRAM_TOKEN
+from tennis_bot.settings import TELEGRAM_TOKEN, TARIF_ARBITRARY, TARIF_GROUP, TARIF_IND, TARIF_SECTION, TARIF_FEW
 
 import telegram
 

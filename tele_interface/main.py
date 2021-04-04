@@ -35,7 +35,7 @@ from tele_interface.manage_data import (
     SELECT_SKIP_TIME_BUTTON, PAYMENT_VISITING,
 )
 from tele_interface.static_text import TAKE_LESSON_BUTTON, MY_DATA_BUTTON, SKIP_LESSON_BUTTON, HELP_BUTTON
-from tennis_bot.config import TELEGRAM_TOKEN
+from tennis_bot.settings import TELEGRAM_TOKEN
 
 
 def add_handlers(updater):

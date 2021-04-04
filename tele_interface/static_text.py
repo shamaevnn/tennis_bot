@@ -43,10 +43,8 @@ ALERT_TEXTS = [{"Знаю, что лень идти, а надо. Сегодня
                {"Сегодня Владлен принесет свой ковёр, нужно помочь.\n": "https://www.anekdotovmir.ru/wp-content/uploads/2017/05/%D0%B0%D0%BD%D0%B5%D0%BA%D0%B4%D0%BE%D1%82-%D0%BF%D1%80%D0%BE-%D1%82%D0%B5%D0%BD%D0%BD%D0%B8%D1%81.jpg"},
                {"Сегодня тренируем телепатию.\n": "https://qph.fs.quoracdn.net/main-qimg-d58bd9d0e09aadddf367cd84b1b8c01b.webp"},
                {"Сегодня фотографируем твоё лицо во время удара.\n": "https://i.pinimg.com/236x/e8/c6/96/e8c6967e78de73e2ede88d6552f32baf--tennis-funny-tennis-memes.jpg"},]
-ADMIN_TIME_SCHEDULE_BUTTON = 'Расписание'
 ADMIN_SITE = 'Перейти на сайт'
 ADMIN_PAYMENT = 'Оплата'
-ADMIN_SEND_MESSAGE = 'Отправить сообщение'
 TAKE_LESSON_BUTTON = 'Записаться на занятие'
 MY_DATA_BUTTON = 'Мои данные'
 SKIP_LESSON_BUTTON = 'Пропустить занятие'

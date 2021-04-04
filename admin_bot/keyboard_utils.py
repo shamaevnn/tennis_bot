@@ -6,8 +6,8 @@ from base.utils import get_time_info_from_tr_day
 from tele_interface.manage_data import SEND_MESSAGE, CLNDR_ADMIN_VIEW_SCHEDULE, CLNDR_ACTION_BACK, \
     PAYMENT_YEAR_MONTH_GROUP, PAYMENT_YEAR, PERMISSION_FOR_IND_TRAIN, PAYMENT_YEAR_MONTH, PAYMENT_CONFIRM_OR_CANCEL, \
     PAYMENT_START_CHANGE, CLNDR_DAY, AMOUNT_OF_IND_TRAIN
-from tele_interface.static_text import ADMIN_PAYMENT, ADMIN_TIME_SCHEDULE_BUTTON, ADMIN_SITE, ADMIN_SEND_MESSAGE, \
-    BACK_BUTTON
+from tele_interface.static_text import ADMIN_PAYMENT, ADMIN_SITE, BACK_BUTTON
+from admin_bot.static_text import *
 from tele_interface.utils import create_callback_data
 
 
@@ -45,17 +45,17 @@ def construct_menu_groups_for_send_message(groups, button_text):
         buttons.append(row)
 
     if '0' not in group_ids:
-        all_groups_text = 'Всем группам'
+        all_groups_text = TO_ALL_GROUPS
     elif ids_counter['0'] > 1 and ids_counter['0'] % 2 == 0:
-        all_groups_text = 'Всем группам'
+        all_groups_text = TO_ALL_GROUPS
         group_ids.remove('0')
         group_ids.remove('0')
         button_text = button_text[:len(SEND_MESSAGE)] + "|".join(group_ids)
     else:
-        all_groups_text = 'Всем группам ✅'
+        all_groups_text = f'{TO_ALL_GROUPS} ✅'
 
     buttons.append([InlineKeyboardButton(all_groups_text, callback_data=f'{button_text}|{0}')])
-    buttons.append([InlineKeyboardButton('Подтвердить', callback_data=f'{button_text}|{-1}')])
+    buttons.append([InlineKeyboardButton(CONFIRM, callback_data=f'{button_text}|{-1}')])
 
     return InlineKeyboardMarkup(buttons)
 
@@ -121,7 +121,7 @@ def construct_menu_groups(groups, button_text):
     if len(row):
         buttons.append(row)
 
-    buttons.append([InlineKeyboardButton('Оставшиеся', callback_data=f'{button_text}{0}')])
+    buttons.append([InlineKeyboardButton(REST, callback_data=f'{button_text}{0}')])
 
     year, month, _ = button_text[len(PAYMENT_YEAR_MONTH_GROUP):].split('|')
     buttons.append([
@@ -134,9 +134,9 @@ def construct_menu_groups(groups, button_text):
 
 def yes_no_permission4ind_train_keyboard(user_id, tr_day_id):
     buttons = [[
-        InlineKeyboardButton('Да', callback_data=f"{PERMISSION_FOR_IND_TRAIN}yes|{user_id}|{tr_day_id}")
+        InlineKeyboardButton(YES, callback_data=f"{PERMISSION_FOR_IND_TRAIN}yes|{user_id}|{tr_day_id}")
     ], [
-        InlineKeyboardButton('Нет', callback_data=f"{PERMISSION_FOR_IND_TRAIN}no|{user_id}|{tr_day_id}")
+        InlineKeyboardButton(NO, callback_data=f"{PERMISSION_FOR_IND_TRAIN}no|{user_id}|{tr_day_id}")
     ]]
 
     return InlineKeyboardMarkup(buttons)
@@ -153,9 +153,9 @@ def back_to_payment_groups_when_changing_payment_keyboard(year, month, from_digi
 
 def cancel_confirm_changing_payment_info_keyboard(payment_id, amount):
     buttons = [[
-        InlineKeyboardButton('Подтвердить', callback_data=f'{PAYMENT_CONFIRM_OR_CANCEL}YES|{payment_id}|{amount}')
+        InlineKeyboardButton(CONFIRM, callback_data=f'{PAYMENT_CONFIRM_OR_CANCEL}YES|{payment_id}|{amount}')
         ,
-        InlineKeyboardButton('Отмена', callback_data=f'{PAYMENT_CONFIRM_OR_CANCEL}NO|{payment_id}|{payment_id}')
+        InlineKeyboardButton(CANCEL, callback_data=f'{PAYMENT_CONFIRM_OR_CANCEL}NO|{payment_id}|{payment_id}')
     ]]
 
     return InlineKeyboardMarkup(buttons)
@@ -163,7 +163,7 @@ def cancel_confirm_changing_payment_info_keyboard(payment_id, amount):
 
 def change_payment_info_keyboard(year, month, group_id):
     buttons = [[
-        InlineKeyboardButton('Изменить данные', callback_data=f'{PAYMENT_START_CHANGE}{year}|{month}|{group_id}')
+        InlineKeyboardButton(CHANGE_DATA, callback_data=f'{PAYMENT_START_CHANGE}{year}|{month}|{group_id}')
     ], [
         InlineKeyboardButton(f'{BACK_BUTTON}', callback_data=f'{PAYMENT_YEAR_MONTH}{year}|{month}')
     ]]
@@ -173,11 +173,11 @@ def change_payment_info_keyboard(year, month, group_id):
 
 def choose_year_to_group_payment_keyboard(year, month):
     buttons = [[
-        InlineKeyboardButton('2020', callback_data=f'{PAYMENT_YEAR}0')
+        InlineKeyboardButton(YEAR_2020, callback_data=f'{PAYMENT_YEAR}0')
         ,
-        InlineKeyboardButton('2021', callback_data=f'{PAYMENT_YEAR}1')
+        InlineKeyboardButton(YEAR_2021, callback_data=f'{PAYMENT_YEAR}1')
     ], [
-        InlineKeyboardButton('К группам', callback_data=f'{PAYMENT_YEAR_MONTH}{year - 2020}|{month}')
+        InlineKeyboardButton(TO_GROUPS, callback_data=f'{PAYMENT_YEAR_MONTH}{year - 2020}|{month}')
     ]]
 
     return InlineKeyboardMarkup(buttons)
@@ -194,9 +194,9 @@ def back_from_show_grouptrainingday_info_keyboard(year, month, day):
 
 def how_many_trains_to_save_keyboard(tr_day_id):
     buttons = [[
-        InlineKeyboardButton('Одну', callback_data=f'{AMOUNT_OF_IND_TRAIN}{tr_day_id}|one')]
+        InlineKeyboardButton(SAVE_ONE_TRAIN, callback_data=f'{AMOUNT_OF_IND_TRAIN}{tr_day_id}|one')]
         ,
-        [InlineKeyboardButton('На 2 месяца', callback_data=f'{AMOUNT_OF_IND_TRAIN}{tr_day_id}|many')]
+        [InlineKeyboardButton(SAVE_FOR_TWO_MONTHS, callback_data=f'{AMOUNT_OF_IND_TRAIN}{tr_day_id}|many')]
     ]
 
     return InlineKeyboardMarkup(buttons)
@@ -204,7 +204,7 @@ def how_many_trains_to_save_keyboard(tr_day_id):
 
 def go_to_site_keyboard():
     buttons = [[
-        InlineKeyboardButton('Сайт', url='http://vladlen82.fvds.ru/admin/base/'),
+        InlineKeyboardButton(SITE, url='http://vladlen82.fvds.ru/admin/base/'),
     ]]
 
     return InlineKeyboardMarkup(buttons)

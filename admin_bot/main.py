@@ -30,7 +30,8 @@ from tele_interface.manage_data import (
     SHOW_GROUPDAY_INFO, PAYMENT_YEAR, PAYMENT_YEAR_MONTH, PAYMENT_YEAR_MONTH_GROUP,
     CLNDR_ADMIN_VIEW_SCHEDULE, PAYMENT_START_CHANGE, PAYMENT_CONFIRM_OR_CANCEL, AMOUNT_OF_IND_TRAIN, SEND_MESSAGE
 )
-from tele_interface.static_text import ADMIN_TIME_SCHEDULE_BUTTON, ADMIN_SITE, ADMIN_PAYMENT, ADMIN_SEND_MESSAGE
+from tele_interface.static_text import ADMIN_SITE, ADMIN_PAYMENT
+from admin_bot.static_text import ADMIN_TIME_SCHEDULE_BUTTON, ADMIN_SEND_MESSAGE
 
 payment_handler = ConversationHandler(
     entry_points=[CallbackQueryHandler(change_payment_data, pattern=f'{PAYMENT_START_CHANGE}')],

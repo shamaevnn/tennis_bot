@@ -1,8 +1,12 @@
+import datetime
+import telegram
+
+from static_text import *
 from django.db.models import Sum, Q, Count, ExpressionWrapper, IntegerField, F
 from telegram.ext import ConversationHandler
 from django.core.exceptions import ObjectDoesNotExist
 from base.models import User, GroupTrainingDay, Payment, TrainingGroup, AlertsLog
-from base.utils import moscow_datetime, bot_edit_message, get_time_info_from_tr_day
+from base.utils import moscow_datetime, bot_edit_message, get_time_info_from_tr_day, info_about_users
 from tele_interface.manage_data import PERMISSION_FOR_IND_TRAIN, SHOW_GROUPDAY_INFO, \
     CLNDR_ADMIN_VIEW_SCHEDULE, CLNDR_ACTION_BACK, CLNDR_NEXT_MONTH, CLNDR_DAY, CLNDR_IGNORE, \
     CLNDR_PREV_MONTH, PAYMENT_YEAR, PAYMENT_YEAR_MONTH, PAYMENT_YEAR_MONTH_GROUP, PAYMENT_START_CHANGE, \
@@ -15,19 +19,14 @@ from .keyboard_utils import construct_admin_main_menu, construct_menu_groups_for
     construct_menu_months, construct_menu_groups, back_to_payment_groups_when_changing_payment_keyboard, \
     cancel_confirm_changing_payment_info_keyboard, change_payment_info_keyboard, choose_year_to_group_payment_keyboard, \
     back_from_show_grouptrainingday_info_keyboard, how_many_trains_to_save_keyboard, go_to_site_keyboard
-from .utils import admin_handler_decor, check_if_players_not_in_payments
+from .utils import check_if_players_not_in_payments
 from tennis_bot.settings import TELEGRAM_TOKEN
 from datetime import date, datetime, timedelta
-
-from collections import Counter
-
-import datetime
-import telegram
 
 
 def start(update, context):
     update.message.reply_text(
-        "Привет! я переехал на @TennisTula_bot",
+        HEY_I_MOVED_TO,
         parse_mode='HTML',
         reply_markup=construct_admin_main_menu(),
     )
@@ -49,17 +48,19 @@ def permission_for_ind_train(update, context):
 
         if permission == 'yes':
             markup = how_many_trains_to_save_keyboard(tr_day_id=tr_day_id)
-            admin_text = 'Сколько тренировок сохранить?'
+            admin_text = HOW_MANY_TRAINS_TO_SAVE
 
             user_text = f'Отлично, тренер подтвердил тренировку <b>{date_tlg}</b>\n' \
                         f'Время: <b>{time_tlg}</b>\n' \
                         f'Не забудь!'
 
         else:
-            admin_text = 'Хорошо, сообщу {} {}, что тренировка  {} \n<b>{}</b> отменена.'.format(player.last_name,
-                                                                                                 player.first_name,
-                                                                                                 date_tlg,
-                                                                                                 time_tlg, )
+            admin_text = WILL_SAY_THAT_TRAIN_IS_CANCELLED.format(
+                player.last_name,
+                player.first_name,
+                date_tlg,
+                time_tlg
+            )
 
             user_text = f'Внимание!!!\nИндивидуальная тренировка <b> {date_tlg}</b>\n' \
                         f'в <b>{time_tlg}</b>\n' \
@@ -74,7 +75,7 @@ def permission_for_ind_train(update, context):
         )
 
     else:
-        admin_text = 'Тренировка уже отменена.'
+        admin_text = TRAIN_IS_ALREADY_CANCELLED
         markup = None
 
     bot_edit_message(context.bot, admin_text, update, markup=markup)
@@ -85,14 +86,16 @@ def save_many_ind_trains(update, context):
     tr_day = GroupTrainingDay.objects.get(id=tr_day_id)
 
     time_tlg, _, _, date_tlg, day_of_week, _, _ = get_time_info_from_tr_day(tr_day)
-    text = f'Хорошо, приятной тренировки!\n' \
-           f'📅Дата: <b>{date_tlg} ({day_of_week})</b>\n' \
-           f'⏰Время: <b>{time_tlg}</b>\n\n'
+    text = WISH_GOOD_TRAIN.format(
+        date_tlg,
+        day_of_week,
+        time_tlg
+    )
     if num_lessons == 'one':
-        text += "Сохранил единожды."
+        text += SAVED_ONCE
     else:
         create_tr_days_for_future(tr_day)
-        text += "Сохранил на 2 месяца вперед."
+        text += SAVED_2_MONTHS_AHEAD
 
     bot_edit_message(context.bot, text, update)
 
@@ -119,9 +122,9 @@ def admin_calendar_selection(bot, update):
         bot_edit_message(bot, query.message.text, update, create_calendar(purpose, int(ne.year), int(ne.month)))
     elif action == CLNDR_ACTION_BACK:
         if purpose == CLNDR_ADMIN_VIEW_SCHEDULE:
-            text = 'Тренировочные дни'
+            text = TRAIN_DAYS
         else:
-            text = 'Тренировочные дни'
+            text = TRAIN_DAYS
         bot_edit_message(bot, text, update, create_calendar(purpose, int(year), int(month)))
     else:
         bot.answer_callback_query(callback_query_id=query.id, text="Something went wrong!")
@@ -138,14 +141,14 @@ def inline_calendar_handler(update, context):
                 _, _, _, date_tlg, day_of_week, _, _ = get_time_info_from_tr_day(tr_days.first())
                 text = '📅{} ({})'.format(date_tlg, day_of_week)
             else:
-                text = 'Нет тренировок в этот день'
+                text = NO_TRAINS_THIS_DAY
                 markup = create_calendar(purpose, date_my.year, date_my.month)
             bot_edit_message(context.bot, text, update, markup)
 
 
 def show_coach_schedule(update, context):
     update.message.reply_text(
-        text='Тренировочные дни',
+        text=TRAIN_DAYS,
         reply_markup=create_calendar(CLNDR_ADMIN_VIEW_SCHEDULE)
     )
 
@@ -162,7 +165,7 @@ GROUP_IDS, TEXT_TO_SEND = 2, 3
 
 
 def select_groups_where_should_send(update, context):
-    text = 'Кому отправить?'
+    text = WHOM_TO_SEND_TO
 
     banda_groups = TrainingGroup.objects.filter(name__iregex=r'БАНДА').order_by('name')
 
@@ -172,7 +175,7 @@ def select_groups_where_should_send(update, context):
 
         if len(group_ids) == 2 and group_ids[-1] == '-1':
             # ['', '-1'] -- just pressed confirm
-            text = 'Сначала выбери группу, а потом подтверждай.'
+            text = CHOOSE_GROUP_AFTER_THAT_CONFIRM
         bot_edit_message(context.bot, text, update, markup)
         return GROUP_IDS
 
@@ -191,8 +194,7 @@ def text_to_send(update, context):
         list_of_group_ids = list(set([int(x) for x in group_ids if x]))
         if 0 in list_of_group_ids:
             # pressed 'sent to all groups'
-            text = 'Отправлю сообщение всем группам.\n' \
-                   'Введи текст сообщения.'
+            text = SENDING_TO_ALL_GROUPS_TYPE_TEXT
 
             banda_groups = TrainingGroup.objects.filter(name__iregex=r'БАНДА').distinct()
 
@@ -201,17 +203,17 @@ def text_to_send(update, context):
             AlertsLog.objects.bulk_create(objs)
 
         else:
-            text = 'Отправлю сообщение следующим группам:\n'
+            text = WILL_SEND_TO_THE_FOLLOWING_GROUPS
 
             group_names = "\n".join(list(TrainingGroup.objects.filter(id__in=list_of_group_ids).values_list('name', flat=True)))
             text += group_names
-            text += '\nВведи текст сообщения.'
+            text += TYPE_TEXT_OF_MESSAGE
 
             players = User.objects.filter(traininggroup__in=list_of_group_ids).distinct()
             objs = [AlertsLog(player=player, alert_type=AlertsLog.CUSTOM_COACH_MESSAGE) for player in players]
             AlertsLog.objects.bulk_create(objs)
 
-        text += ' Или нажми /cancel для отмены.'
+        text += OR_PRESS_CANCEL
         bot_edit_message(context.bot, text, update)
 
         return TEXT_TO_SEND
@@ -238,51 +240,27 @@ def receive_text_and_send(update, context):
     alert_instances.update(is_sent=True, info=text)
 
     update.message.reply_text(
-        text='Отправлено.'
+        text=IS_SENT
     )
 
     return ConversationHandler.END
-
-
-def info_about_users(users, for_admin=False, payment=False):
-    """
-    :param payment: info about payment or not
-    :param for_admin: show info for admin or not (number instead of smile)
-    :param users: User instance
-    :return: (first_name + last_name + \n){1,} -- str
-    """
-    if for_admin:
-        if payment:
-            return '\n'.join(
-                (f"<b>{x['id']}</b>. {x['player__last_name']} {x['player__first_name']} -- {x['fact_amount']}₽,"
-                 f" {x['n_fact_visiting']}"
-                 for x in users.values('player__first_name', 'player__last_name', 'fact_amount',
-                                       'n_fact_visiting', 'id').order_by('player__last_name', 'player__first_name')))
-        else:
-            return '\n'.join(
-                (f"{i + 1}. {x['last_name']} {x['first_name']}" for i, x in enumerate(users.values('first_name',
-                                                                                                   'last_name').order_by('last_name'))))
-    else:
-        return '\n'.join(
-            (f"👤{x['last_name']} {x['first_name']}" for x in
-             users.values('first_name', 'last_name').order_by('last_name')))
 
 
 def show_traingroupday_info(update, context):
     tr_day_id = update.callback_query.data[len(SHOW_GROUPDAY_INFO):]
     tr_day = GroupTrainingDay.objects.select_related('group').get(id=tr_day_id)
 
-    availability = '❌нет тренировки❌\n' if not tr_day.is_available else ''
-    is_individual = '🧑🏻‍🦯индивидуальная🧑🏻‍🦯\n' if tr_day.is_individual else '🤼‍♂️групповая🤼‍♂️\n'
-    affiliation = '🧔🏻моя тренировка🧔🏻\n\n' if tr_day.tr_day_status == GroupTrainingDay.MY_TRAIN_STATUS else '👥аренда👥\n\n'
+    availability = f'{NO_TRAIN}\n' if not tr_day.is_available else ''
+    is_individual = f'{INDIVIDUAL_TRAIN}\n' if tr_day.is_individual else f'{GROUP_TRAIN}️\n'
+    affiliation = f'{MY_TRAIN}\n\n' if tr_day.tr_day_status == GroupTrainingDay.MY_TRAIN_STATUS else f'{RENT}\n\n'
 
     group_name = f"{tr_day.group.name}\n"
 
     if not tr_day.is_individual:
-        group_players = f'Игроки группы:\n{info_about_users(tr_day.group.users.all().difference(tr_day.absent.all()), for_admin=True)}\n'
-        visitors = f'\n➕Пришли из других:\n{info_about_users(tr_day.visitors, for_admin=True)}\n' if tr_day.visitors.count() else ''
-        pay_visitors = f'\n➕Пришли за ₽:\n{info_about_users(tr_day.pay_visitors, for_admin=True)}\n' if tr_day.pay_visitors.count() else ''
-        absents = f'\n➖Отсутствуют:\n{info_about_users(tr_day.absent, for_admin=True)}\n' if tr_day.absent.count() else ''
+        group_players = f'{PLAYERS_FROM_GROUP}:\n{info_about_users(tr_day.group.users.all().difference(tr_day.absent.all()), for_admin=True)}\n'
+        visitors = f'\n{HAVE_COME_FROM_OTHERS}:\n{info_about_users(tr_day.visitors, for_admin=True)}\n' if tr_day.visitors.count() else ''
+        pay_visitors = f'\n{HAVE_COME_FOR_MONEY}:\n{info_about_users(tr_day.pay_visitors, for_admin=True)}\n' if tr_day.pay_visitors.count() else ''
+        absents = f'\n{ARE_ABSENT}:\n{info_about_users(tr_day.absent, for_admin=True)}\n' if tr_day.absent.count() else ''
     else:
         group_players = ''
         visitors = ''
@@ -305,7 +283,7 @@ def show_traingroupday_info(update, context):
 
 
 def start_payment(update, context):
-    text = 'Выбери год'
+    text = CHOOSE_YEAR
     now_date = moscow_datetime(datetime.datetime.now()).date()
     markup = choose_year_to_group_payment_keyboard(
         year=now_date.year,
@@ -324,7 +302,7 @@ def start_payment(update, context):
 
 def year_payment(update, context):
     year = update.callback_query.data[len(PAYMENT_YEAR):]
-    text = 'Выбери месяц'
+    text = CHOOSE_MONTH
     markup = construct_menu_months(Payment.MONTHS, f'{PAYMENT_YEAR_MONTH}{year}|')
     bot_edit_message(context.bot, text, update, markup)
 
@@ -347,9 +325,9 @@ def month_payment(update, context):
                                                                  output_field=IntegerField())).aggregate(sigma=Sum('should_pay'))
 
     text = f'{int(year) + 2020}--{from_digit_to_month[int(month)]}\n' \
-           f'<b>Итого заплатили: {amount_for_this_month["sigma"]}</b>\n' \
-           f'<b>Должны заплатить: {should_pay_this_month["sigma"]}</b>\n' \
-           f'Выбери группу'
+           f'<b>{TOTAL_PAID}: {amount_for_this_month["sigma"]}</b>\n' \
+           f'<b>{MUST_PAY}: {should_pay_this_month["sigma"]}</b>\n' \
+           f'{CHOOSE_GROUP}'
 
     banda_groups = TrainingGroup.objects.filter(name__iregex=r'БАНДА').order_by('name')
     markup = construct_menu_groups(banda_groups, f'{PAYMENT_YEAR_MONTH_GROUP}{year}|{month}|')
@@ -362,7 +340,7 @@ def group_payment(update, context):
     year, month, group_id = update.callback_query.data[len(PAYMENT_YEAR_MONTH_GROUP):].split('|')
 
     if int(group_id) == 0:
-        title = 'Оставшиеся\n'
+        title = f'{REST}\n'
         payments = Payment.objects.filter(player__status__in=[User.STATUS_TRAINING, User.STATUS_ARBITRARY],
                                           month=month,
                                           year=year).exclude(player__traininggroup__name__iregex='БАНДА')
@@ -375,8 +353,8 @@ def group_payment(update, context):
         group = TrainingGroup.objects.get(id=group_id)
         n_lessons = GroupTrainingDay.objects.filter(date__month=month, date__year=int(year)+2020, group=group,
                                                     is_available=True).count()
-        n_lessons_info = f'Кол-во занятий: {n_lessons}\n'
-        tarif_info = f'Тариф: {group.tarif_for_one_lesson}\n'
+        n_lessons_info = f'{NUMBER_OF_TRAINS}: {n_lessons}\n'
+        tarif_info = f'{TARIF}: {group.tarif_for_one_lesson}\n'
         if group.status == TrainingGroup.STATUS_GROUP:
             should_pay = n_lessons * group.tarif_for_one_lesson
         elif group.status == TrainingGroup.STATUS_SECTION:
@@ -391,10 +369,13 @@ def group_payment(update, context):
         payment.save()
 
     date_info = f'{from_digit_to_month[int(month)]} {int(year) + 2020}\n'
-    payment_info = f'Должны <b>{should_pay}</b>₽ + {should_pay_balls}₽ за мячи\n'
-    this_month_payment_info = f'Итого заплатили: {paid_this_month["sigma"]}\n\n'
+    payment_info = MUST_PAY_FOR_TRAINS_AND_BALLS.format(
+        should_pay,
+        should_pay_balls
+    )
+    this_month_payment_info = f'{TOTAL_PAID}: {paid_this_month["sigma"]}\n\n'
     text = f"{title}{date_info}{n_lessons_info}{tarif_info}{payment_info}{this_month_payment_info}" \
-           f"<b>id</b>. Имя Фамилия -- факт₽, кол-во посещений\n\n" \
+           f"<b>id</b>. {FIRST_LAST_NAME_FACT_NUMBER_OF_VISITS}\n\n" \
            f"{info_about_users(payments, for_admin=True, payment=True)}"
 
     markup = change_payment_info_keyboard(
@@ -411,8 +392,7 @@ START_CHANGE_PAYMENT, CONFIRM_OR_CANCEL = range(2)
 
 def change_payment_data(update, context):
     year, month, _ = update.callback_query.data[len(PAYMENT_START_CHANGE):].split('|')
-    text = 'Для того, чтобы внести данные об оплате, введи данные в формате \n\n' \
-           'id сумма_в_рублях через пробел, например, 18 3600\n\n'
+    text = TO_INSERT_PAYMENT_DATA_HELP_INFO
 
     markup = back_to_payment_groups_when_changing_payment_keyboard(
         year=year,
@@ -436,8 +416,8 @@ def get_id_amount(update, context):
         payment = Payment.objects.select_related('player').get(id=payment_id)
 
         text = f'{payment.player.first_name} {payment.player.last_name}\n' \
-               f'Год: {2020 + int(payment.year)}\n' \
-               f'Месяц: {from_digit_to_month[int(payment.month)]}\n' \
+               f'{YEAR}: {2020 + int(payment.year)}\n' \
+               f'{MONTH}: {from_digit_to_month[int(payment.month)]}\n' \
                f'<b>{payment.fact_amount}₽ ➡ {amount}₽</b>'
         markup = cancel_confirm_changing_payment_info_keyboard(
             payment_id=payment_id,
@@ -450,13 +430,13 @@ def get_id_amount(update, context):
         )
 
     except ValueError:
-        text = 'Ошибка, скорее всего неправильно ввел id или сумму -- не ввел через пробел или есть лишние символы\n/cancel'
+        text = ERROR_INCORRECT_ID_OR_MONEY
         update.message.reply_text(
             text=text
         )
 
     except ObjectDoesNotExist:
-        text = 'Нет такого объекта в базе данных -- неправильный id\n/cancel'
+        text = NO_SUCH_OBJECT_IN_DATABASE
         update.message.reply_text(
             text=text
         )
@@ -468,12 +448,12 @@ def confirm_or_cancel_changing_payment(update, context):
     permission, payment_id, amount = update.callback_query.data[len(PAYMENT_CONFIRM_OR_CANCEL):].split('|')
     payment = Payment.objects.get(id=payment_id)
     if permission == 'NO':
-        text = 'Ну как хочешь'
+        text = UP_TO_YOU
     else:
         payment.fact_amount = int(amount)
         payment.save()
 
-        text = 'Изменения внесены'
+        text = CHANGES_ARE_MADE
 
     markup = back_to_payment_groups_when_changing_payment_keyboard(
         year=payment.year,
@@ -487,7 +467,7 @@ def confirm_or_cancel_changing_payment(update, context):
 
 
 def cancel(update, context):
-    update.message.reply_text('Вот так вот значит, да?',
+    update.message.reply_text(THIS_WAY_YEAH,
                               reply_markup=construct_admin_main_menu())
 
     return ConversationHandler.END

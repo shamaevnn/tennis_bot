@@ -1,4 +1,7 @@
 import datetime
+import sys
+import logging
+
 from datetime import time, timedelta, datetime
 from functools import wraps
 
@@ -16,8 +19,6 @@ from base.utils import moscow_datetime
 
 from tennis_bot.settings import DEBUG
 
-import sys
-import logging
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)

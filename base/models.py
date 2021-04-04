@@ -7,16 +7,17 @@ from django.utils.safestring import mark_safe
 from django.db.models import Q, F, Case, When, Sum, IntegerField, ExpressionWrapper, DateTimeField, Count
 from django.utils import timezone
 from datetime import datetime, date
-from base.utils import send_message, moscow_datetime, TM_TIME_SCHEDULE_FORMAT, DT_BOT_FORMAT, \
+
+from base.tasks import broadcast_message
+from base.utils import moscow_datetime, TM_TIME_SCHEDULE_FORMAT, DT_BOT_FORMAT, \
     send_alert_about_changing_tr_day_time, construct_main_menu
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 
 from base.utils import send_alert_about_changing_tr_day_status
 from tele_interface.static_text import from_eng_to_rus_day_week
-from tennis_bot.settings import TELEGRAM_TOKEN, TARIF_ARBITRARY, TARIF_GROUP, TARIF_IND, TARIF_SECTION, TARIF_FEW
+from tennis_bot.settings import TARIF_ARBITRARY, TARIF_GROUP, TARIF_IND, TARIF_SECTION, TARIF_FEW, DEBUG
 
-import telegram
 
 
 class ModelwithTimeManager(models.Manager):
@@ -89,9 +90,20 @@ class UserForm(forms.ModelForm):
             new_status = self.cleaned_data.get('status')
             if self.instance.status == User.STATUS_WAITING and (
                     new_status == User.STATUS_ARBITRARY or new_status == User.STATUS_TRAINING):
-                bot = telegram.Bot(TELEGRAM_TOKEN)
-                send_message([self.instance], 'Теперь тебе доступен мой функционал, поздравляю!',
-                             bot, markup=construct_main_menu(self.instance, self.instance.status))
+                text = 'Теперь тебе доступен мой функционал, поздравляю!'
+                reply_markup = construct_main_menu(self.instance, self.instance.status)
+                if DEBUG:
+                    broadcast_message(
+                        user_ids=[self.instance.id],
+                        message=text,
+                        reply_markup=reply_markup
+                    )
+                else:
+                    broadcast_message.delay(
+                        [self.instance.id],
+                        text,
+                        reply_markup
+                    )
 
 
 class TrainingGroup(ModelwithTime):
@@ -211,26 +223,26 @@ class GroupTrainingDayForm(forms.ModelForm):
     def clean(self):
 
         def send_alert_about_cancel_in_visitors(self, type_of_visitors='visitors'):
-            bot = telegram.Bot(TELEGRAM_TOKEN)
-
-            canceled_users = []
+            canceled_users = None
             if type_of_visitors == 'visitors':
                 if self.cleaned_data.get(type_of_visitors).count() < self.instance.visitors.count():
                     canceled_users = self.instance.visitors.all().exclude(
-                        id__in=self.cleaned_data.get(type_of_visitors).values('id'))
+                        id__in=self.cleaned_data.get(type_of_visitors))
             elif type_of_visitors == 'pay_visitors':
                 if self.cleaned_data.get(type_of_visitors).count() < self.instance.pay_visitors.count():
                     canceled_users = self.instance.pay_visitors.all().exclude(
-                        id__in=self.cleaned_data.get(type_of_visitors).values('id'))
+                        id__in=self.cleaned_data.get(type_of_visitors))
 
             if canceled_users:
                 text = f'😱ATTENTION😱\n' \
                        f'У тебя есть запись на тренировку на <b> {self.cleaned_data.get("date")}.</b>\n' \
                        f'<b>Тренер ее отменил.</b> Но не отчаивайся, я добавлю тебе отыгрыш 🎾'
-                send_message(canceled_users, text, bot, markup=construct_main_menu())
-                for player in canceled_users:
-                    player.bonus_lesson += 1
-                    player.save()
+                if DEBUG:
+                    broadcast_message(list(canceled_users.values_list('id', flat=True)), text, reply_markup=construct_main_menu())
+                else:
+                    broadcast_message.delay(list(canceled_users.values_list('id', flat=True)), text, reply_markup=construct_main_menu())
+
+                canceled_users.update(bonus_lesson=F('bonus_lesson') + 1)
 
         group = self.cleaned_data.get('group')
 
@@ -244,7 +256,6 @@ class GroupTrainingDayForm(forms.ModelForm):
             raise ValidationError(
                 'Превышен лимит игроков в группе — сейчас {}, максимум {}'.format(current_amount_of_players,
                                                                                   group.max_players))
-        bot = telegram.Bot(TELEGRAM_TOKEN)
         if 'start_time' in self.changed_data or 'duration' in self.changed_data or 'date' in self.changed_data:
             """
                 Если добавляется новый grouptrainingday, то нужно
@@ -287,10 +298,10 @@ class GroupTrainingDayForm(forms.ModelForm):
                        f'Изменились следующие параметры тренировки {self.instance.date.strftime(DT_BOT_FORMAT)}' \
                        f' ({day_of_week}): {", ".join(changed_data_custom)}\n' \
                        f'{before_after_text}'
-                send_alert_about_changing_tr_day_time(self.instance, text, bot)
+                send_alert_about_changing_tr_day_time(self.instance, text)
 
         if 'is_available' in self.changed_data:  # если статут дня меняется, то отсылаем алерт об изменении
-            send_alert_about_changing_tr_day_status(self.instance, self.cleaned_data.get('is_available'), bot)
+            send_alert_about_changing_tr_day_status(self.instance, self.cleaned_data.get('is_available'))
 
         if 'visitors' in self.changed_data:
             send_alert_about_cancel_in_visitors(self, 'visitors')

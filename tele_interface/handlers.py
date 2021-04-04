@@ -4,7 +4,8 @@ import calendar
 
 from admin_bot.handlers import info_about_users
 from admin_bot.keyboard_utils import yes_no_permission4ind_train_keyboard
-from tennis_bot.settings import TARIF_ARBITRARY, TARIF_GROUP, TARIF_PAYMENT_ADD_LESSON
+from base.tasks import broadcast_message
+from tennis_bot.settings import TARIF_ARBITRARY, TARIF_GROUP, TARIF_PAYMENT_ADD_LESSON, DEBUG
 from .utils import (handler_decor,
                     get_available_dt_time4ind_train, select_tr_days_for_skipping,
                     get_potential_days_for_group_training, separate_callback_data,
@@ -14,7 +15,7 @@ from .keyboard_utils import create_calendar, construct_time_menu_for_group_lesso
     construct_menu_skipping_much_lesson, construct_time_menu_4ind_lesson, back_to_group_times_when_no_left_keyboard, \
     choose_type_of_payment_for_group_lesson_keyboard, back_to_group_when_trying_to_enter_his_own_group, \
     take_lesson_back_keyboard, ind_train_choose_duration_keyboard, ind_group_type_training_keyboard
-from base.utils import (send_message, DT_BOT_FORMAT, moscow_datetime, bot_edit_message,
+from base.utils import (DT_BOT_FORMAT, moscow_datetime, bot_edit_message,
                         get_time_info_from_tr_day, construct_main_menu,
                         )
 from base.models import (User,
@@ -326,16 +327,28 @@ def skip_lesson(bot, update, user):
             text = 'Окей, занятие <b>{}</b> в <b>{}</b> отменено'.format(date_tlg, time_tlg)
 
             if training_day.is_individual:
-                admin_bot = telegram.Bot(ADMIN_TELEGRAM_TOKEN)
                 training_day.delete()
                 admins = User.objects.filter(is_superuser=True, is_blocked=False)
 
                 admin_text = f'⚠️ATTENTION⚠️\n' \
-                       f'{user.first_name} {user.last_name} отменил индивидуальную тренировку\n' \
-                       f'📅Дата: <b>{date_tlg} ({day_of_week})</b>\n' \
-                       f'⏰Время: <b>{time_tlg}</b>\n\n'
+                             f'{user.first_name} {user.last_name} отменил индивидуальную тренировку\n' \
+                             f'📅Дата: <b>{date_tlg} ({day_of_week})</b>\n' \
+                             f'⏰Время: <b>{time_tlg}</b>\n\n'
 
-                send_message(admins, admin_text, admin_bot)
+                if DEBUG:
+                    broadcast_message(
+                        user_ids=list(admins.values_list('id', flat=True)),
+                        message=admin_text,
+                        reply_markup=None,
+                        tg_token=ADMIN_TELEGRAM_TOKEN,
+                    )
+                else:
+                    broadcast_message.delay(
+                        list(admins.values_list('id', flat=True)),
+                        admin_text,
+                        None,
+                        ADMIN_TELEGRAM_TOKEN
+                    )
 
             else:
                 # проверяем его ли эта группа или он удаляется из занятия другой группы
@@ -425,7 +438,6 @@ def select_precise_ind_lesson_time(bot, update, user):
            f"Время: <b>{start_time} — {end_time}</b>"
     bot_edit_message(bot, text, update)
 
-    admin_bot = telegram.Bot(ADMIN_TELEGRAM_TOKEN)
     admins = User.objects.filter(is_staff=True, is_blocked=False)
     markup = yes_no_permission4ind_train_keyboard(
         user_id=user.id,
@@ -437,7 +449,20 @@ def select_precise_ind_lesson_time(bot, update, user):
            f" в <b>{start_time} — {end_time}</b>\n" \
            f"<b>Разрешить?</b>"
 
-    send_message(admins, text, admin_bot, markup=markup)
+    if DEBUG:
+        broadcast_message(
+            user_ids=list(admins.values_list('id', flat=True)),
+            message=text,
+            reply_markup=markup,
+            tg_token=ADMIN_TELEGRAM_TOKEN
+        )
+    else:
+        broadcast_message.delay(
+            list(admins.values_list('id', flat=True)),
+            text,
+            markup,
+            ADMIN_TELEGRAM_TOKEN
+        )
 
 
 @handler_decor()
@@ -568,9 +593,22 @@ def confirm_group_lesson(bot, update, user):
     bot_edit_message(bot, text, update, markup)
 
     if admit_message_text:
-        admin_bot = telegram.Bot(ADMIN_TELEGRAM_TOKEN)
         admins = User.objects.filter(is_staff=True, is_blocked=False)
-        send_message(admins, admit_message_text, admin_bot)
+
+        if DEBUG:
+            broadcast_message(
+                user_ids=list(admins.values_list('id', flat=True)),
+                message=admit_message_text,
+                reply_markup=None,
+                tg_token=ADMIN_TELEGRAM_TOKEN
+            )
+        else:
+            broadcast_message.delay(
+                list(admins.values_list('id', flat=True)),
+                admit_message_text,
+                None,
+                ADMIN_TELEGRAM_TOKEN
+            )
 
 
 @handler_decor()
@@ -611,9 +649,21 @@ def choose_type_of_payment_for_pay_visiting(bot, update, user):
 
     bot_edit_message(bot, text, update)
 
-    admin_bot = telegram.Bot(ADMIN_TELEGRAM_TOKEN)
     admins = User.objects.filter(is_staff=True, is_blocked=False)
-    send_message(admins, admin_text, admin_bot)
+    if DEBUG:
+        broadcast_message(
+            user_ids=list(admins.values_list('id', flat=True)),
+            message=admin_text,
+            reply_markup=None,
+            tg_token=ADMIN_TELEGRAM_TOKEN
+        )
+    else:
+        broadcast_message.delay(
+            list(admins.values_list('id', flat=True)),
+            admin_text,
+            None,
+            ADMIN_TELEGRAM_TOKEN
+        )
 
 
 def make_group_name_group_players_info_for_skipping(tr_day):

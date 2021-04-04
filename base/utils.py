@@ -7,9 +7,10 @@ from datetime import date
 from pytz import timezone
 from telegram import ReplyKeyboardMarkup
 
+from base.tasks import broadcast_message
 from tele_interface.static_text import TAKE_LESSON_BUTTON, MY_DATA_BUTTON, SKIP_LESSON_BUTTON, HELP_BUTTON, \
     NO_PAYMENT_BUTTON, from_eng_to_rus_day_week
-
+from tennis_bot.settings import TELEGRAM_TOKEN, DEBUG
 
 DTTM_BOT_FORMAT = '%Y.%m.%d.%H.%M'
 DT_BOT_FORMAT = '%Y.%m.%d'
@@ -18,27 +19,31 @@ TM_DAY_BOT_FORMAT = '%d'
 TM_TIME_SCHEDULE_FORMAT = '%H:%M'
 
 
-def send_message(users, message: str, bot, markup=None):
-    """
-    :param users: instance of User model, iterable object
-    :param message: text
-    :param bot: instance of telegram.Bot
-    :param markup: telegram markup
-    :return: send message to users in telegram bot
-    """
+def send_message(user_id, text, reply_markup=None, tg_token=TELEGRAM_TOKEN, parse_mode='HTML'):
+    bot = telegram.Bot(tg_token)
+    try:
+        m = bot.send_message(
+            chat_id=user_id,
+            text=text,
+            parse_mode=parse_mode,
+            reply_markup=reply_markup,
+        )
+    except telegram.error.Unauthorized:
+        from base.models import User
+        print(f"Can't send message to {user_id}. Reason: Bot was stopped.")
+        User.objects.filter(id=user_id).update(is_blocked=True)
+        success = False
+    except Exception as e:
+        print(f"Can't send message to {user_id}. Reason: {e}")
+        success = False
+    else:
+        success = True
+        from base.models import User
+        User.objects.filter(id=user_id).update(is_blocked=False)
+    return success
 
-    for user in users:
-        try:
-            bot.send_message(user.id,
-                             message,
-                             reply_markup=markup,
-                             parse_mode='HTML')
-        except (telegram.error.Unauthorized, telegram.error.BadRequest):
-            user.is_blocked = True
-            user.save()
 
-
-def send_alert_about_changing_tr_day_status(tr_day, new_is_available: bool, bot):
+def send_alert_about_changing_tr_day_status(tr_day, new_is_available: bool):
     group_members = tr_day.group.users.all()
     visitors = tr_day.visitors.all()
     pay_visitors = tr_day.visitors.all()
@@ -55,16 +60,38 @@ def send_alert_about_changing_tr_day_status(tr_day, new_is_available: bool, bot)
         text = 'Тренировка <b>{} в {}</b> доступна, ура!'.format(tr_day.date,
                                                                  tr_day.start_time)
 
-    send_message(group_members.union(visitors, pay_visitors), text, bot, construct_main_menu())
+    if DEBUG:
+        broadcast_message(
+            user_ids=list(group_members.union(visitors, pay_visitors).values_list('id', flat=True)),
+            message=text,
+            reply_markup=construct_main_menu()
+        )
+    else:
+        broadcast_message.delay(
+            list(group_members.union(visitors, pay_visitors).values_list('id', flat=True)),
+            text,
+            construct_main_menu()
+        )
 
 
-def send_alert_about_changing_tr_day_time(tr_day, text, bot):
+def send_alert_about_changing_tr_day_time(tr_day, text):
     group_members = tr_day.group.users.all()
     visitors = tr_day.visitors.all()
     absents = tr_day.absent.all()
     pay_visitors = tr_day.visitors.all()
 
-    send_message(group_members.union(visitors, absents, pay_visitors), text, bot, construct_main_menu())
+    if DEBUG:
+        broadcast_message(
+            user_ids=list(group_members.union(visitors, absents, pay_visitors).values_list('id', flat=True)),
+            message=text,
+            reply_markup=construct_main_menu()
+        )
+    else:
+        broadcast_message.delay(
+            list(group_members.union(visitors, absents, pay_visitors).values_list('id', flat=True)),
+            text,
+            construct_main_menu()
+        )
 
 
 def moscow_datetime(date_time):

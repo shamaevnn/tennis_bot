@@ -2,7 +2,6 @@ import re
 import telegram
 import calendar
 
-from admin_bot.handlers import info_about_users
 from admin_bot.keyboard_utils import yes_no_permission4ind_train_keyboard
 from base.tasks import broadcast_message
 from tennis_bot.settings import TARIF_ARBITRARY, TARIF_GROUP, TARIF_PAYMENT_ADD_LESSON, DEBUG
@@ -16,7 +15,7 @@ from .keyboard_utils import create_calendar, construct_time_menu_for_group_lesso
     choose_type_of_payment_for_group_lesson_keyboard, back_to_group_when_trying_to_enter_his_own_group, \
     take_lesson_back_keyboard, ind_train_choose_duration_keyboard, ind_group_type_training_keyboard
 from base.utils import (DT_BOT_FORMAT, moscow_datetime, bot_edit_message,
-                        get_time_info_from_tr_day, construct_main_menu,
+                        get_time_info_from_tr_day, construct_main_menu, info_about_users,
                         )
 from base.models import (User,
                          GroupTrainingDay,

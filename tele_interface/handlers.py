@@ -4,6 +4,7 @@ import calendar
 
 from admin_bot.handlers import info_about_users
 from admin_bot.keyboard_utils import yes_no_permission4ind_train_keyboard
+from tennis_bot.settings import TARIF_ARBITRARY, TARIF_GROUP, TARIF_PAYMENT_ADD_LESSON
 from .utils import (handler_decor,
                     get_available_dt_time4ind_train, select_tr_days_for_skipping,
                     get_potential_days_for_group_training, separate_callback_data,
@@ -533,8 +534,7 @@ def confirm_group_lesson(bot, update, user):
 
             else:
                 if tr_day.group.available_for_additional_lessons and tr_day.group.max_players < 6:
-                    tarif = StaticData.objects.first().tarif_arbitrary if user.status == User.STATUS_ARBITRARY \
-                        else StaticData.objects.first().tarif_group
+                    tarif = TARIF_ARBITRARY if user.status == User.STATUS_ARBITRARY else TARIF_GROUP
                     if user.bonus_lesson == 0:
                         tr_day.pay_visitors.add(user)
                         text = f'Записал тебя на <b>{date_tlg} ({day_of_week})</b>\n' \
@@ -551,7 +551,7 @@ def confirm_group_lesson(bot, update, user):
                     else:
                         text = "Выбери тип оплаты"
                         markup = choose_type_of_payment_for_group_lesson_keyboard(
-                            payment_add_lesson=StaticData.objects.first().tarif_payment_add_lesson,
+                            payment_add_lesson=TARIF_PAYMENT_ADD_LESSON,
                             tr_day_id=tr_day_id,
                             tarif=tarif,
                         )
@@ -589,17 +589,16 @@ def choose_type_of_payment_for_pay_visiting(bot, update, user):
         text = f'Записал тебя на <b>{date_tlg} ({day_of_week})</b>\n' \
                f'Время: <b>{time_tlg}</b>\n' \
                f'⚠️ATTENTION⚠️\n' \
-               f'Не забудь заплатить <b>{StaticData.objects.first().tarif_payment_add_lesson}₽</b>'
+               f'Не забудь заплатить <b>{TARIF_PAYMENT_ADD_LESSON}₽</b>'
 
         admin_text = f'⚠️ATTENTION⚠️\n' \
                      f'{user.first_name} {user.last_name} записался на <b>{date_tlg} ({day_of_week})</b>\n' \
                      f'Время: <b>{time_tlg}</b>\n' \
-                     f'<b>За счет платных отыгрешей, не забудь взять с него {StaticData.objects.first().tarif_payment_add_lesson}₽.</b>'
+                     f'<b>За счет платных отыгрешей, не забудь взять с него {TARIF_PAYMENT_ADD_LESSON}₽.</b>'
 
     elif payment_choice == PAYMENT_MONEY:
         tr_day.pay_visitors.add(user)
-        tarif = StaticData.objects.first().tarif_arbitrary if user.status == User.STATUS_ARBITRARY \
-            else StaticData.objects.first().tarif_group
+        tarif = TARIF_ARBITRARY if user.status == User.STATUS_ARBITRARY else TARIF_GROUP
 
         text = f'Записал тебя на <b>{date_tlg} ({day_of_week})</b>\n' \
                f'Время: <b>{time_tlg}</b>\n' \

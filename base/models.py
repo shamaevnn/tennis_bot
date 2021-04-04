@@ -64,9 +64,9 @@ class User(AbstractUser):
     )
 
     tarif_for_status = {
-        STATUS_TRAINING: StaticData.objects.first().tarif_group,
-        STATUS_ARBITRARY: StaticData.objects.first().tarif_arbitrary,
-        STATUS_IND_TRAIN: StaticData.objects.first().tarif_ind,
+        STATUS_TRAINING: TARIF_GROUP,
+        STATUS_ARBITRARY: TARIF_ARBITRARY,
+        STATUS_IND_TRAIN: TARIF_IND,
     }
 
     id = models.BigIntegerField(primary_key=True)  # telegram id
@@ -360,13 +360,13 @@ class Payment(models.Model):
         payment = 0
         for x in self.player.traininggroup_set.all().iterator():
             if x.status == TrainingGroup.STATUS_SECTION:
-                payment = StaticData.objects.first().tarif_section
+                payment = TARIF_SECTION
         if not payment:
             payment = base_query.annotate(
                 gr_status=F('group__status')).annotate(
-                tarif=Case(When(gr_status=TrainingGroup.STATUS_4IND, then=StaticData.objects.first().tarif_ind),
-                           When(gr_status=TrainingGroup.STATUS_GROUP, then=StaticData.objects.first().tarif_group),
-                           When(gr_status=TrainingGroup.STATUS_FEW, then=StaticData.objects.first().tarif_few),
+                tarif=Case(When(gr_status=TrainingGroup.STATUS_4IND, then=TARIF_IND),
+                           When(gr_status=TrainingGroup.STATUS_GROUP, then=TARIF_GROUP),
+                           When(gr_status=TrainingGroup.STATUS_FEW, then=TARIF_FEW),
                            output_field=IntegerField())).distinct().aggregate(
                 sigma=Sum('tarif'))['sigma']
 
@@ -399,13 +399,6 @@ class AlertsLog(models.Model):
 
     def __str__(self):
         return f"{self.player, self.tr_day}"
-
-
-class Channel(models.Model):
-    name = models.CharField(max_length=64, default='')
-    username = models.CharField(max_length=64, default='')
-    code = models.CharField(max_length=32, default='')
-    token = models.CharField(max_length=256, default='')
 
 
 """раздел с сигналами, в отедльном файле что-то не пошло"""

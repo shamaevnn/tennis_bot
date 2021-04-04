@@ -392,9 +392,9 @@ def group_payment(bot, update, user):
         if group.status == TrainingGroup.STATUS_GROUP:
             should_pay = n_lessons * group.tarif_for_one_lesson
         elif group.status == TrainingGroup.STATUS_SECTION:
-            should_pay = StaticData.objects.first().tarif_section
+            should_pay = TARIF_SECTION
         elif group.status == TrainingGroup.STATUS_FEW:
-            should_pay = n_lessons * StaticData.objects.first().tarif_few
+            should_pay = n_lessons * TARIF_FEW
 
         should_pay_balls = 100 * round(n_lessons / 4)
         title = f'{group.name}\n'

@@ -58,7 +58,7 @@ class DefaultGroupStatus(SimpleListFilter):
             }
 
     def queryset(self, request, queryset):
-        if self.value() in (TrainingGroup.STATUS_SECTION, TrainingGroup.STATUS_FEW, TrainingGroup.STATUS_4IND):
+        if self.value() in (TrainingGroup.STATUS_SECTION, TrainingGroup.STATUS_FEW, TrainingGroup.STATUS_4IND, TrainingGroup.STATUS_GROUP):
             return queryset.filter(status=self.value())
         elif self.value() is None:
             return queryset.filter(status=TrainingGroup.STATUS_GROUP)

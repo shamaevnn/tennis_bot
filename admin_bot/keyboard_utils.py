@@ -186,7 +186,10 @@ def choose_year_to_group_payment_keyboard(year, month):
 def back_from_show_grouptrainingday_info_keyboard(year, month, day):
     buttons = [[
         InlineKeyboardButton(f'{BACK_BUTTON}',
-                   callback_data=create_callback_data(CLNDR_ADMIN_VIEW_SCHEDULE, CLNDR_DAY, year, month, day)),
+                             callback_data=create_callback_data(
+                                 CLNDR_ADMIN_VIEW_SCHEDULE,
+                                 CLNDR_DAY,
+                                 year, month, day)),
     ]]
 
     return InlineKeyboardMarkup(buttons)
@@ -205,6 +208,14 @@ def how_many_trains_to_save_keyboard(tr_day_id):
 def go_to_site_keyboard():
     buttons = [[
         InlineKeyboardButton(SITE, url='http://vladlen82.fvds.ru/admin/base/'),
+    ]]
+
+    return InlineKeyboardMarkup(buttons)
+
+
+def go_to_site_set_up_personal_data(user_id):
+    buttons = [[
+        InlineKeyboardButton(SET_UP_DATA, url='http://vladlen82.fvds.ru/admin/base/user/{}/change/'.format(user_id)),
     ]]
 
     return InlineKeyboardMarkup(buttons)

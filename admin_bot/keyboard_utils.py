@@ -207,7 +207,7 @@ def how_many_trains_to_save_keyboard(tr_day_id):
 
 def go_to_site_keyboard():
     buttons = [[
-        InlineKeyboardButton(SITE, url='http://vladlen82.fvds.ru/admin/base/'),
+        InlineKeyboardButton(SITE, url='http://vladlen82.fvds.ru/tgadmin/base/'),
     ]]
 
     return InlineKeyboardMarkup(buttons)
@@ -215,7 +215,7 @@ def go_to_site_keyboard():
 
 def go_to_site_set_up_personal_data(user_id):
     buttons = [[
-        InlineKeyboardButton(SET_UP_DATA, url='http://vladlen82.fvds.ru/admin/base/user/{}/change/'.format(user_id)),
+        InlineKeyboardButton(SET_UP_DATA, url='http://vladlen82.fvds.ru/tgadmin/base/user/{}/change/'.format(user_id)),
     ]]
 
     return InlineKeyboardMarkup(buttons)

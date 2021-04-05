@@ -193,7 +193,7 @@ class TrainingGroupForm(forms.ModelForm):
                                                             F('group_users_cnt') -
                                                             F('absent_cnt')).distinct().values('id', 'date', 'start_time')
             if len(tr_day):
-                error_ids = "\n".join(['<a href="http://vladlen82.fvds.ru/admin/base/grouptrainingday/{}/change/">{} {}</a>'.format(x['id'], x['date'], x['start_time']) for x in tr_day])
+                error_ids = "\n".join(['<a href="http://vladlen82.fvds.ru/tgadmin/base/grouptrainingday/{}/change/">{} {}</a>'.format(x['id'], x['date'], x['start_time']) for x in tr_day])
                 error_text = f"{ERROR_MAX_PLAYERS_IN_FUTURE}:\n{error_ids}"
                 raise ValidationError(
                     {'users': mark_safe(error_text)})

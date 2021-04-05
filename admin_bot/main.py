@@ -2,29 +2,28 @@ from telegram.ext import (
     Updater,
     CallbackQueryHandler,
     CommandHandler,
-    RegexHandler,
     ConversationHandler,
     MessageHandler,
     Filters
 )
 import os
 import django
-import telegram
-
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'tennis_bot.settings')
 django.setup()
+import telegram
+
 
 from tennis_bot.settings import ADMIN_TELEGRAM_TOKEN
 from admin_bot.handlers import (
-    start,
     permission_for_ind_train,
     show_coach_schedule,
     show_traingroupday_info,
-    inline_calendar_handler, redirect_to_site, start_payment, cancel, year_payment,
+    inline_calendar_handler, redirect_to_site, start_payment, year_payment,
     month_payment, group_payment, change_payment_data, get_id_amount, START_CHANGE_PAYMENT, CONFIRM_OR_CANCEL,
     confirm_or_cancel_changing_payment, save_many_ind_trains, select_groups_where_should_send, GROUP_IDS, TEXT_TO_SEND,
     text_to_send, receive_text_and_send
 )
+from admin_bot.commands import start, cancel
 from tele_interface.manage_data import (
     PERMISSION_FOR_IND_TRAIN,
     SHOW_GROUPDAY_INFO, PAYMENT_YEAR, PAYMENT_YEAR_MONTH, PAYMENT_YEAR_MONTH_GROUP,
@@ -47,7 +46,7 @@ payment_handler = ConversationHandler(
 
 send_message_handler = ConversationHandler(
     entry_points=[CallbackQueryHandler(select_groups_where_should_send, pattern=f'^{SEND_MESSAGE}'),
-                  RegexHandler(f'{ADMIN_SEND_MESSAGE}', select_groups_where_should_send)],
+                  MessageHandler(Filters.regex(f'{ADMIN_SEND_MESSAGE}'), select_groups_where_should_send)],
 
     states={
         GROUP_IDS: [CallbackQueryHandler(text_to_send, pattern=f"^{SEND_MESSAGE}")],
@@ -69,9 +68,11 @@ def setup_dispatcher(dp):
 
     dp.add_handler(CallbackQueryHandler(permission_for_ind_train, pattern='^{}'.format(PERMISSION_FOR_IND_TRAIN)))
     dp.add_handler(CallbackQueryHandler(save_many_ind_trains, pattern='^{}'.format(AMOUNT_OF_IND_TRAIN)))
-    dp.add_handler(RegexHandler(fr'^{ADMIN_TIME_SCHEDULE_BUTTON}$', show_coach_schedule))
-    dp.add_handler(RegexHandler(f'{ADMIN_SITE}', redirect_to_site))
-    dp.add_handler(RegexHandler(f'{ADMIN_PAYMENT}', start_payment))
+
+    dp.add_handler(MessageHandler(Filters.regex(fr'^{ADMIN_TIME_SCHEDULE_BUTTON}$'), show_coach_schedule))
+    dp.add_handler(MessageHandler(Filters.regex(f'{ADMIN_SITE}'), redirect_to_site))
+    dp.add_handler(MessageHandler(Filters.regex(f'{ADMIN_PAYMENT}'), start_payment))
+
     dp.add_handler(CallbackQueryHandler(start_payment, pattern=f'^{ADMIN_PAYMENT}'))
     dp.add_handler(CallbackQueryHandler(show_traingroupday_info, pattern='^{}'.format(SHOW_GROUPDAY_INFO)))
     dp.add_handler(CallbackQueryHandler(year_payment, pattern='^{}'.format(PAYMENT_YEAR)))
@@ -84,7 +85,7 @@ def main():
     updater = Updater(ADMIN_TELEGRAM_TOKEN)
 
     dp = updater.dispatcher
-    dp = setup_dispatcher(dp)
+    setup_dispatcher(dp)
 
     bot_info = telegram.Bot(ADMIN_TELEGRAM_TOKEN).get_me()
     bot_link = f"https://t.me/" + bot_info["username"]

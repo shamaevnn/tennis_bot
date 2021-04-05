@@ -1,10 +1,10 @@
 from telegram.ext import (
     Updater,
     CommandHandler,
-    RegexHandler,
     CallbackQueryHandler,
     ConversationHandler,
-    Dispatcher, MessageHandler, Filters
+    MessageHandler,
+    Filters
 )
 import django
 import os
@@ -85,7 +85,7 @@ def main():
     updater = Updater(TELEGRAM_TOKEN)
 
     dp = updater.dispatcher
-    dp = setup_dispatcher(dp)
+    setup_dispatcher(dp)
 
     bot_info = telegram.Bot(TELEGRAM_TOKEN).get_me()
     bot_link = f"https://t.me/" + bot_info["username"]

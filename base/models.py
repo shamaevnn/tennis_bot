@@ -84,6 +84,7 @@ class User(AbstractUser):
             id=data["id"],
             defaults={
                 'telegram_username': data['username'],
+                'username': data['id'],
                 'is_blocked': data['is_blocked']
             }
         )
@@ -450,6 +451,10 @@ def create_group_for_arbitrary(sender, instance, created, **kwargs):
         для него группу, состояющую только из него.
     """
     if instance.status == User.STATUS_ARBITRARY:
-        group, _ = TrainingGroup.objects.update_or_create(name=instance.first_name + instance.last_name, max_players=1)
+        group, _ = TrainingGroup.objects.get_or_create(
+            name=instance.first_name + instance.last_name,
+            max_players=1,
+            status=TrainingGroup.STATUS_4IND
+        )
         if not group.users.count():
             group.users.add(instance)

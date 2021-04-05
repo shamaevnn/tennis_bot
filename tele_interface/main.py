@@ -3,6 +3,8 @@ from telegram.ext import (
     CommandHandler,
     RegexHandler,
     CallbackQueryHandler,
+    ConversationHandler,
+    Dispatcher, MessageHandler, Filters
 )
 import django
 import os
@@ -11,7 +13,6 @@ django.setup()
 import telegram
 
 from tele_interface.handlers import (
-    get_personal_data,
     skip_lesson_main_menu_button,
     take_lesson,
     user_main_info,
@@ -22,9 +23,9 @@ from tele_interface.handlers import (
     confirm_group_lesson,
     skip_lesson,
     get_help,
-    inline_calendar_handler, skip_lesson_whem_geq_2, choose_type_of_payment_for_pay_visiting,
-)
-from tele_interface.commands import start
+    inline_calendar_handler, skip_lesson_whem_geq_2, choose_type_of_payment_for_pay_visiting, INSERT_FIO,
+    get_first_last_name, INSERT_PHONE_NUMBER, get_phone_number, )
+from tele_interface.commands import start, cancel
 from tele_interface.manage_data import (
     SELECT_PRECISE_GROUP_TIME,
     SELECT_TRAINING_TYPE,
@@ -37,34 +38,51 @@ from tele_interface.manage_data import (
 from tele_interface.static_text import TAKE_LESSON_BUTTON, MY_DATA_BUTTON, SKIP_LESSON_BUTTON, HELP_BUTTON
 from tennis_bot.settings import TELEGRAM_TOKEN
 
+registration_handler = ConversationHandler(
+    entry_points=[CommandHandler("start", start)],
+
+    states={
+        INSERT_FIO: [MessageHandler(Filters.regex(r'^\w+\s\w+$'), get_first_last_name)],
+        INSERT_PHONE_NUMBER: [MessageHandler(Filters.regex(r'^\d+$'), get_phone_number)]
+    },
+
+    fallbacks=[CommandHandler('cancel', cancel)]
+
+)
+
 
 def setup_dispatcher(dp):
 
-    dp.add_handler(CommandHandler("start", start))
+    dp.add_handler(registration_handler)
 
-    dp.add_handler(RegexHandler(SKIP_LESSON_BUTTON, skip_lesson_main_menu_button))
-    dp.add_handler(RegexHandler(TAKE_LESSON_BUTTON, choose_type_of_training))
-    dp.add_handler(RegexHandler(MY_DATA_BUTTON, user_main_info))
-    dp.add_handler(RegexHandler(HELP_BUTTON, get_help))
+    dp.add_handler(MessageHandler(Filters.regex(SKIP_LESSON_BUTTON), skip_lesson_main_menu_button))
+    dp.add_handler(MessageHandler(Filters.regex(TAKE_LESSON_BUTTON), choose_type_of_training))
+    dp.add_handler(MessageHandler(Filters.regex(MY_DATA_BUTTON), user_main_info))
+    dp.add_handler(MessageHandler(Filters.regex(HELP_BUTTON), get_help))
 
-    dp.add_handler(RegexHandler(r'^\w+\s\w+$', get_personal_data))
-    dp.add_handler(RegexHandler(r'^\d+$', get_personal_data))
-
-    dp.add_handler(CallbackQueryHandler(select_precise_group_lesson_time, pattern='^{}'.format(SELECT_PRECISE_GROUP_TIME)))
-    dp.add_handler(CallbackQueryHandler(take_lesson, pattern='^{}'.format(SELECT_TRAINING_TYPE)))
-    dp.add_handler(CallbackQueryHandler(select_dt_for_ind_lesson, pattern='^{}'.format(SELECT_DURATION_FOR_IND_TRAIN)))
-    dp.add_handler(CallbackQueryHandler(select_precise_ind_lesson_time, pattern='^{}'.format(SELECT_PRECISE_IND_TIME)))
-    dp.add_handler(CallbackQueryHandler(choose_type_of_training, pattern='^{}'.format(TAKE_LESSON_BUTTON)))
-    dp.add_handler(CallbackQueryHandler(confirm_group_lesson, pattern='^{}'.format(CONFIRM_GROUP_LESSON)))
-    dp.add_handler(CallbackQueryHandler(skip_lesson, pattern='^{}'.format(SHOW_INFO_ABOUT_SKIPPING_DAY)))
-    dp.add_handler(CallbackQueryHandler(skip_lesson_whem_geq_2, pattern='^{}'.format(SELECT_SKIP_TIME_BUTTON)))
-    dp.add_handler(
-        CallbackQueryHandler(choose_type_of_payment_for_pay_visiting, pattern='^{}'.format(PAYMENT_VISITING)))
+    dp.add_handler(CallbackQueryHandler(select_precise_group_lesson_time,
+                                        pattern='^{}'.format(SELECT_PRECISE_GROUP_TIME)))
+    dp.add_handler(CallbackQueryHandler(take_lesson,
+                                        pattern='^{}'.format(SELECT_TRAINING_TYPE)))
+    dp.add_handler(CallbackQueryHandler(select_dt_for_ind_lesson,
+                                        pattern='^{}'.format(SELECT_DURATION_FOR_IND_TRAIN)))
+    dp.add_handler(CallbackQueryHandler(select_precise_ind_lesson_time,
+                                        pattern='^{}'.format(SELECT_PRECISE_IND_TIME)))
+    dp.add_handler(CallbackQueryHandler(choose_type_of_training,
+                                        pattern='^{}'.format(TAKE_LESSON_BUTTON)))
+    dp.add_handler(CallbackQueryHandler(confirm_group_lesson,
+                                        pattern='^{}'.format(CONFIRM_GROUP_LESSON)))
+    dp.add_handler(CallbackQueryHandler(skip_lesson,
+                                        pattern='^{}'.format(SHOW_INFO_ABOUT_SKIPPING_DAY)))
+    dp.add_handler(CallbackQueryHandler(skip_lesson_whem_geq_2,
+                                        pattern='^{}'.format(SELECT_SKIP_TIME_BUTTON)))
+    dp.add_handler(CallbackQueryHandler(choose_type_of_payment_for_pay_visiting,
+                                        pattern='^{}'.format(PAYMENT_VISITING)))
     dp.add_handler(CallbackQueryHandler(inline_calendar_handler))
 
 
 def main():
-    updater = Updater(TELEGRAM_TOKEN, workers=8)
+    updater = Updater(TELEGRAM_TOKEN)
 
     dp = updater.dispatcher
     dp = setup_dispatcher(dp)

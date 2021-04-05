@@ -16,21 +16,13 @@ from .static_text import ADMIN_SITE
 from tele_interface.utils import separate_callback_data, create_tr_days_for_future
 from tele_interface.keyboard_utils import create_calendar
 from tennis_bot.settings import TARIF_SECTION, TARIF_FEW
-from .keyboard_utils import construct_admin_main_menu, construct_menu_groups_for_send_message, day_buttons_coach_info, \
+from .keyboard_utils import construct_menu_groups_for_send_message, day_buttons_coach_info, \
     construct_menu_months, construct_menu_groups, back_to_payment_groups_when_changing_payment_keyboard, \
     cancel_confirm_changing_payment_info_keyboard, change_payment_info_keyboard, choose_year_to_group_payment_keyboard, \
     back_from_show_grouptrainingday_info_keyboard, how_many_trains_to_save_keyboard, go_to_site_keyboard
 from .utils import check_if_players_not_in_payments
 from tennis_bot.settings import TELEGRAM_TOKEN
 from datetime import date, datetime, timedelta
-
-
-def start(update, context):
-    update.message.reply_text(
-        HEY_I_MOVED_TO,
-        parse_mode='HTML',
-        reply_markup=construct_admin_main_menu(),
-    )
 
 
 def permission_for_ind_train(update, context):
@@ -463,12 +455,5 @@ def confirm_or_cancel_changing_payment(update, context):
     )
 
     bot_edit_message(context.bot, text, update, markup)
-
-    return ConversationHandler.END
-
-
-def cancel(update, context):
-    update.message.reply_text(THIS_WAY_YEAH,
-                              reply_markup=construct_admin_main_menu())
 
     return ConversationHandler.END

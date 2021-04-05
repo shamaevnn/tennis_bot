@@ -6,7 +6,7 @@ from django import forms
 from django.utils.safestring import mark_safe
 from django.db.models import Q, F, Case, When, Sum, IntegerField, ExpressionWrapper, DateTimeField, Count
 from django.utils import timezone
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 
 from base.utils import moscow_datetime, TM_TIME_SCHEDULE_FORMAT, DT_BOT_FORMAT, \
     send_alert_about_changing_tr_day_time, construct_main_menu, extract_user_data_from_update
@@ -64,7 +64,7 @@ class User(AbstractUser):
     status = models.CharField(max_length=1, choices=STATUSES, default=STATUS_WAITING, verbose_name='статус')
 
     time_before_cancel = models.DurationField(null=True, help_text='ЧАСЫ:МИНУТЫ:СЕКУНДЫ',
-                                              verbose_name='Время, за которое нужно предупредить', default='6:0:0')
+                                              verbose_name='Время, за которое нужно предупредить', default=timedelta(hours=6))
     bonus_lesson = models.SmallIntegerField(null=True, blank=True, default=0, verbose_name='Количество отыгрышей')
 
     add_info = models.CharField(max_length=128, null=True, blank=True, verbose_name='Доп. информация')
@@ -212,7 +212,7 @@ class GroupTrainingDay(ModelwithTime):
     date = models.DateField(default=timezone.now, verbose_name='Дата Занятия')
     is_available = models.BooleanField(default=True, help_text='Будет ли в этот день тренировка у этой группы')
     start_time = models.TimeField(null=True, help_text='ЧАСЫ:МИНУТЫ:СЕКУНДЫ', verbose_name='Время начала занятия')
-    duration = models.DurationField(null=True, default='1:0:0', help_text='ЧАСЫ:МИНУТЫ:СЕКУНДЫ',
+    duration = models.DurationField(null=True, default=timedelta(hours=1), help_text='ЧАСЫ:МИНУТЫ:СЕКУНДЫ',
                                     verbose_name='Продолжительность занятия')
     visitors = models.ManyToManyField(User, blank=True, help_text='Пришли из других групп\n', related_name='visitors',
                                       verbose_name='Игроки из других групп')

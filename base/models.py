@@ -81,17 +81,18 @@ class User(AbstractUser):
         """ python-telegram-bot's Update, Context --> User instance """
         data = extract_user_data_from_update(update)
         u, created = cls.objects.update_or_create(
-            id=data["user_id"],
-            defaults={'telegram_username': data['username'],
-                      'first_name': data['first_name'],
-                      'last_name': data['last_name'],
-                      }
+            id=data["id"],
+            defaults={
+                'telegram_username': data['username'],
+                'first_name': data['first_name'],
+                'is_blocked': data['is_blocked']
+            }
         )
 
         if created:
             if context is not None and context.args is not None and len(context.args) > 0:
                 payload = context.args[0]
-                if str(payload).strip() != str(data["user_id"]).strip():  # you can't invite yourself
+                if str(payload).strip() != str(data["id"]).strip():  # you can't invite yourself
                     u.deep_link = payload
                     u.save()
 

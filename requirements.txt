@@ -4,9 +4,8 @@ Django
 django-cors-headers
 whitenoise
 
-ipykernel==4.5.2
-ipython==5.3.0
-prompt-toolkit==1.0.13
+ipython
+prompt-toolkit
 python-telegram-bot
 
 redis

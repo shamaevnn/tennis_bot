@@ -1,7 +1,7 @@
 import datetime
 import telegram
 
-from static_text import *
+from .static_text import *
 from django.db.models import Sum, Q, Count, ExpressionWrapper, IntegerField, F
 from telegram.ext import ConversationHandler
 from django.core.exceptions import ObjectDoesNotExist
@@ -12,7 +12,6 @@ from tele_interface.manage_data import PERMISSION_FOR_IND_TRAIN, SHOW_GROUPDAY_I
     CLNDR_PREV_MONTH, PAYMENT_YEAR, PAYMENT_YEAR_MONTH, PAYMENT_YEAR_MONTH_GROUP, PAYMENT_START_CHANGE, \
     PAYMENT_CONFIRM_OR_CANCEL, AMOUNT_OF_IND_TRAIN, SEND_MESSAGE
 from tele_interface.static_text import from_digit_to_month
-from .static_text import ADMIN_SITE
 from tele_interface.utils import separate_callback_data, create_tr_days_for_future
 from tele_interface.keyboard_utils import create_calendar
 from tennis_bot.settings import TARIF_SECTION, TARIF_FEW

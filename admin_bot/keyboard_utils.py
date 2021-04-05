@@ -6,7 +6,7 @@ from base.utils import get_time_info_from_tr_day
 from tele_interface.manage_data import SEND_MESSAGE, CLNDR_ADMIN_VIEW_SCHEDULE, CLNDR_ACTION_BACK, \
     PAYMENT_YEAR_MONTH_GROUP, PAYMENT_YEAR, PERMISSION_FOR_IND_TRAIN, PAYMENT_YEAR_MONTH, PAYMENT_CONFIRM_OR_CANCEL, \
     PAYMENT_START_CHANGE, CLNDR_DAY, AMOUNT_OF_IND_TRAIN
-from tele_interface.static_text import ADMIN_PAYMENT, ADMIN_SITE, BACK_BUTTON
+from tele_interface.static_text import BACK_BUTTON
 from admin_bot.static_text import *
 from tele_interface.utils import create_callback_data
 

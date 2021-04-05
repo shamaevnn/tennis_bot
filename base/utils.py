@@ -48,16 +48,14 @@ def send_alert_about_changing_tr_day_status(tr_day, new_is_available: bool):
     pay_visitors = tr_day.visitors.all()
 
     if not new_is_available:
-        text = 'Тренировка <b>{} в {}</b> отменена. Но не переживай, я добавлю тебе отыгрыш.'.format(tr_day.date,
-                                                                                                     tr_day.start_time)
+        text = CANCEL_TRAIN_PLUS_BONUS_LESSON_2.format(tr_day.date, tr_day.start_time)
         users = group_members.union(visitors, pay_visitors).difference(tr_day.absent.all())
         for user in users:
             user.bonus_lesson += 1
             user.save()
 
     else:
-        text = 'Тренировка <b>{} в {}</b> доступна, ура!'.format(tr_day.date,
-                                                                 tr_day.start_time)
+        text = TRAIN_IS_AVAIABLE_CONGRATS.format(tr_day.date, tr_day.start_time)
     from base.tasks import broadcast_message
     if DEBUG:
         broadcast_message(

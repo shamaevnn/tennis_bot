@@ -13,7 +13,7 @@ from base.models import AlertsLog, GroupTrainingDay, Payment, User
 from base.utils import moscow_datetime, get_time_info_from_tr_day, send_message
 from datetime import datetime, timedelta
 from tennis_bot.settings import TELEGRAM_TOKEN
-from tele_interface.static_text import ALERT_TEXTS, from_digit_to_month
+from tele_interface.static_text import ALERT_TEXTS, from_digit_to_month, MY_DATA_BUTTON
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'tennis_bot.settings')
 django.setup()
@@ -105,7 +105,7 @@ def send_alert_about_payment():
         month = from_digit_to_month[int(now_day.month)].lower()
         bot = telegram.Bot(TELEGRAM_TOKEN)
         for payment in not_paid:
-            text = f'{payment.player.first_name}, нужно заплатить за {month}. Сумму можно узнать по кнопке "Мои данные".'
+            text = f'{payment.player.first_name}, нужно заплатить за {month}. Сумму можно узнать по кнопке "{MY_DATA_BUTTON}".'
             try:
                 bot.send_message(payment.player_id,
                                  text)

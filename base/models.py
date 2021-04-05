@@ -14,7 +14,7 @@ from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 
 from base.utils import send_alert_about_changing_tr_day_status
-from tele_interface.static_text import from_eng_to_rus_day_week
+from tele_interface.static_text import *
 from tennis_bot.settings import TARIF_ARBITRARY, TARIF_GROUP, TARIF_IND, TARIF_SECTION, TARIF_FEW, DEBUG
 
 
@@ -109,7 +109,7 @@ class UserForm(forms.ModelForm):
             new_status = self.cleaned_data.get('status')
             if self.instance.status == User.STATUS_WAITING and (
                     new_status == User.STATUS_ARBITRARY or new_status == User.STATUS_TRAINING):
-                text = 'Теперь тебе доступен мой функционал, поздравляю!'
+                text = NOW_YOU_HAVE_ACCESS_CONGRATS
                 reply_markup = construct_main_menu(self.instance, self.instance.status)
                 from base.tasks import broadcast_message
                 if DEBUG:
@@ -141,8 +141,8 @@ class TrainingGroup(ModelwithTime):
     LEVEL_ORANGE = 'O'
     LEVEL_GREEN = 'G'
     GROUP_LEVELS = (
-        (LEVEL_GREEN, '🍏зелёный мяч🍏'),
-        (LEVEL_ORANGE, '🧡оранжевый мяч🧡'),
+        (LEVEL_GREEN, GREEN_BALL),
+        (LEVEL_ORANGE, ORANGE_BALL),
     )
 
     name = models.CharField(max_length=32, verbose_name='Название')
@@ -174,8 +174,7 @@ class TrainingGroupForm(forms.ModelForm):
         max_players = self.cleaned_data.get('max_players')
         if users.count() > max_players:
             raise ValidationError(
-                {'max_players': 'Количество игроков в группе должно быть не больше {}, вы указали {}.'.
-                    format(max_players, users.count())})
+                {'max_players': ERROR_LIMIT_MAX_PLAYERS.format(max_players, users.count())})
 
         if 'users' in self.changed_data:
             tr_day = GroupTrainingDay.objects.filter(group__max_players__gt=1, group=self.instance, ).annotate(
@@ -194,7 +193,7 @@ class TrainingGroupForm(forms.ModelForm):
                                                             F('absent_cnt')).distinct().values('id', 'date', 'start_time')
             if len(tr_day):
                 error_ids = "\n".join(['<a href="http://vladlen82.fvds.ru/admin/base/grouptrainingday/{}/change/">{} {}</a>'.format(x['id'], x['date'], x['start_time']) for x in tr_day])
-                error_text = f"Со следующими днями может возникнуть проблема, что будет больше людей, чем нужно на тренирвоке:\n{error_ids}"
+                error_text = f"{ERROR_MAX_PLAYERS_IN_FUTURE}:\n{error_ids}"
                 raise ValidationError(
                     {'users': mark_safe(error_text)})
 
@@ -254,9 +253,7 @@ class GroupTrainingDayForm(forms.ModelForm):
                         id__in=self.cleaned_data.get(type_of_visitors))
 
             if canceled_users:
-                text = f'😱ATTENTION😱\n' \
-                       f'У тебя есть запись на тренировку на <b> {self.cleaned_data.get("date")}.</b>\n' \
-                       f'<b>Тренер ее отменил.</b> Но не отчаивайся, я добавлю тебе отыгрыш 🎾'
+                text = CANCEL_TRAIN_PLUS_BONUS_LESSON.format(self.cleaned_data.get("date"))
                 from base.tasks import broadcast_message
                 if DEBUG:
                     broadcast_message(list(canceled_users.values_list('id', flat=True)), text, reply_markup=construct_main_menu())
@@ -274,9 +271,7 @@ class GroupTrainingDayForm(forms.ModelForm):
                                         self.cleaned_data.get('pay_visitors').count() + \
                                             group.users.count() - self.cleaned_data.get('absent').count()
         if current_amount_of_players > group.max_players:
-            raise ValidationError(
-                'Превышен лимит игроков в группе — сейчас {}, максимум {}'.format(current_amount_of_players,
-                                                                                  group.max_players))
+            raise ValidationError(ERROR_LIMIT_MAX_PLAYERS.format(group.max_players, current_amount_of_players))
         if 'start_time' in self.changed_data or 'duration' in self.changed_data or 'date' in self.changed_data:
             """
                 Если добавляется новый grouptrainingday, то нужно
@@ -289,9 +284,7 @@ class GroupTrainingDayForm(forms.ModelForm):
             for train in exist_trainings:
                 exist_train_start_time = datetime.combine(train.date, train.start_time)
                 if exist_train_start_time <= start_time < exist_train_start_time + train.duration:
-                    raise ValidationError(
-                        'Нельзя добавить тренировку на это время в этот день, т.к. уже есть запись на {}' 
-                        ' с продолжительностью {}.'.format(train.start_time, train.duration))
+                    raise ValidationError(ERROR_CANT_ADD_NEW_TRAIN.format(train.start_time, train.duration))
 
             # send alert to players about changing lesson parameters
             # check only existing tr_days

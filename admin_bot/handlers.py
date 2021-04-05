@@ -277,7 +277,7 @@ def show_traingroupday_info(update, context):
 
 def start_payment(update, context):
     text = CHOOSE_YEAR
-    now_date = moscow_datetime(datetime.datetime.now()).date()
+    now_date = moscow_datetime(datetime.now()).date()
     markup = choose_year_to_group_payment_keyboard(
         year=now_date.year,
         month=now_date.month
@@ -318,7 +318,7 @@ def month_payment(update, context):
                                                                  output_field=IntegerField())).aggregate(sigma=Sum('should_pay'))
 
     text = f'{int(year) + 2020}--{from_digit_to_month[int(month)]}\n' \
-           f'<b>{TOTAL_PAID}: {amount_for_this_month["sigma"]}</b>\n' \
+           f'<b>{TOTAL_PAID}: {amount_for_this_month["sigma"] if amount_for_this_month["sigma"] else 0}</b>\n' \
            f'<b>{MUST_PAY}: {should_pay_this_month["sigma"]}</b>\n' \
            f'{CHOOSE_GROUP}'
 

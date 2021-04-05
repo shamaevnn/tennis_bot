@@ -4,10 +4,11 @@ from telegram.ext import (
     CallbackQueryHandler,
     ConversationHandler,
     MessageHandler,
-    Filters
+    Filters, Dispatcher
 )
 import django
 import os
+
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'tennis_bot.settings')
 django.setup()
 import telegram
@@ -26,6 +27,7 @@ from tele_interface.handlers import (
     inline_calendar_handler, skip_lesson_whem_geq_2, choose_type_of_payment_for_pay_visiting, INSERT_FIO,
     get_first_last_name, INSERT_PHONE_NUMBER, get_phone_number, )
 from tele_interface.commands import start, cancel
+from tennis_bot.celery import app
 from tele_interface.manage_data import (
     SELECT_PRECISE_GROUP_TIME,
     SELECT_TRAINING_TYPE,
@@ -80,12 +82,14 @@ def setup_dispatcher(dp):
                                         pattern='^{}'.format(PAYMENT_VISITING)))
     dp.add_handler(CallbackQueryHandler(inline_calendar_handler))
 
+    return dp
+
 
 def main():
     updater = Updater(TELEGRAM_TOKEN)
 
     dp = updater.dispatcher
-    setup_dispatcher(dp)
+    dp = setup_dispatcher(dp)
 
     bot_info = telegram.Bot(TELEGRAM_TOKEN).get_me()
     bot_link = f"https://t.me/" + bot_info["username"]
@@ -94,6 +98,16 @@ def main():
 
     updater.start_polling()
     updater.idle()
+
+
+@app.task(ignore_result=True)
+def process_telegram_event(update_json):
+    update = telegram.Update.de_json(update_json, bot)
+    dispatcher.process_update(update)
+
+
+bot = telegram.Bot(TELEGRAM_TOKEN)
+dispatcher = setup_dispatcher(Dispatcher(bot, None, workers=0, use_context=True))
 
 
 if __name__ == '__main__':

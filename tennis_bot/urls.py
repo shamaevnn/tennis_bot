@@ -15,13 +15,17 @@ Including another URLconf
 """
 from django.conf.urls import url
 from django.contrib import admin
-from base.views import home_redirect
+from django.urls import path
+from django.views.decorators.csrf import csrf_exempt
 
+from base.views import home_redirect, TelegramBotWebhookView, TelegramAdminBotWebhookView
 
 handler404 = 'base.views.my_custom_page_not_found_view'
 handler500 = 'base.views.my_custom_error_view'
 
 urlpatterns = [
-    url(r'^admin/', admin.site.urls),
-    url(r'^$', home_redirect, name='home')
+    url(r'^tgadmin/', admin.site.urls),
+    url(r'^$', home_redirect, name='home'),
+    path('super_secter_webhook/', csrf_exempt(TelegramBotWebhookView.as_view())),
+    path('super_secter_admin_webhook/', csrf_exempt(TelegramAdminBotWebhookView.as_view())),
 ]

@@ -4,10 +4,13 @@ from telegram.ext import (
     CommandHandler,
     ConversationHandler,
     MessageHandler,
-    Filters
+    Filters, Dispatcher
 )
 import os
 import django
+
+from tennis_bot.celery import app
+
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'tennis_bot.settings')
 django.setup()
 import telegram
@@ -80,12 +83,14 @@ def setup_dispatcher(dp):
     dp.add_handler(CallbackQueryHandler(group_payment, pattern='^{}'.format(PAYMENT_YEAR_MONTH_GROUP)))
     dp.add_handler(CallbackQueryHandler(inline_calendar_handler, pattern='^{}'.format(CLNDR_ADMIN_VIEW_SCHEDULE)))
 
+    return dp
+
 
 def main():
     updater = Updater(ADMIN_TELEGRAM_TOKEN)
 
     dp = updater.dispatcher
-    setup_dispatcher(dp)
+    dp = setup_dispatcher(dp)
 
     bot_info = telegram.Bot(ADMIN_TELEGRAM_TOKEN).get_me()
     bot_link = f"https://t.me/" + bot_info["username"]
@@ -94,6 +99,16 @@ def main():
 
     updater.start_polling()
     updater.idle()
+
+
+@app.task(ignore_result=True)
+def process_admin_telegram_event(update_json):
+    update = telegram.Update.de_json(update_json, admin_bot)
+    dispatcher.process_update(update)
+
+
+admin_bot = telegram.Bot(ADMIN_TELEGRAM_TOKEN)
+dispatcher = setup_dispatcher(Dispatcher(admin_bot, None, workers=0, use_context=True))
 
 
 if __name__ == '__main__':

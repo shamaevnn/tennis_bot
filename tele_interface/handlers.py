@@ -63,8 +63,7 @@ def get_phone_number(update, context):
         admins = User.objects.filter(is_staff=True)
         if DEBUG:
             broadcast_message(
-                # user_ids=list(admins.values_list('id', flat=True)),
-                user_ids=[350490234],
+                user_ids=list(admins.values_list('id', flat=True)),
                 message=NEW_CLIENT_HAS_COME.format(user),
                 reply_markup=go_to_site_set_up_personal_data(user.id),
                 tg_token=ADMIN_TELEGRAM_TOKEN,
@@ -81,12 +80,11 @@ def get_phone_number(update, context):
 
 def get_help(update, context):
     user, _ = User.get_user_and_created(update, context)
-    update.message.reply_text(text='По всем вопросам пиши @ta2asho.\n'
-                                   'Желательно описывать свою проблему со скриншотами.',
+    update.message.reply_text(text=HELP_MESSAGE,
                               reply_markup=construct_main_menu(user, user.status))
 
 
-# @handler_decor(check_status=True)
+@check_status_decor
 def user_main_info(update, context):
     """посмотреть, основную инфу:
         статус
@@ -195,7 +193,7 @@ def process_calendar_selection(update, context):
     return False, purpose, []
 
 
-# @handler_decor(check_status=True)
+@check_status_decor
 def inline_calendar_handler(update, context):
     user, _ = User.get_user_and_created(update, context)
 
@@ -281,7 +279,7 @@ def inline_calendar_handler(update, context):
         bot_edit_message(context.bot, text, update, markup)
 
 
-# @handler_decor(check_status=True)
+@check_status_decor
 def skip_lesson_main_menu_button(update, context):
     user, _ = User.get_user_and_created(update, context)
     available_grouptraining_dates = select_tr_days_for_skipping(user)
@@ -297,7 +295,7 @@ def skip_lesson_main_menu_button(update, context):
                          reply_markup=construct_main_menu(user, user.status))
 
 
-# @handler_decor(check_status=True)
+@check_status_decor
 def skip_lesson_whem_geq_2(update, context):
     tr_day_id = update.callback_query.data[len(SELECT_SKIP_TIME_BUTTON):]
     training_day = GroupTrainingDay.objects.get(id=tr_day_id)
@@ -307,7 +305,7 @@ def skip_lesson_whem_geq_2(update, context):
     bot_edit_message(context.bot, text, update, markup)
 
 
-# @handler_decor(check_status=True)
+@check_status_decor
 def skip_lesson(update, context):
     user, _ = User.get_user_and_created(update, context)
 
@@ -373,7 +371,7 @@ def skip_lesson(update, context):
         bot_edit_message(context.bot, text, update)
 
 
-# @handler_decor(check_status=True)
+@check_status_decor
 def choose_type_of_training(update, context):
     markup = ind_group_type_training_keyboard()
     text = 'Выбери тип тренировки.'
@@ -386,7 +384,7 @@ def choose_type_of_training(update, context):
         )
 
 
-# @handler_decor(check_status=True)
+@check_status_decor
 def take_lesson(update, context):
     """записаться на тренировку"""
     user, _ = User.get_user_and_created(update, context)

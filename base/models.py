@@ -84,7 +84,6 @@ class User(AbstractUser):
             id=data["id"],
             defaults={
                 'telegram_username': data['username'],
-                'first_name': data['first_name'],
                 'is_blocked': data['is_blocked']
             }
         )

@@ -1,19 +1,13 @@
 import re
-import telegram
-import calendar
 
-from admin_bot.keyboard_utils import yes_no_permission4ind_train_keyboard
+from telegram.ext import ConversationHandler
+
+from admin_bot.keyboard_utils import yes_no_permission4ind_train_keyboard, go_to_site_set_up_personal_data
+from admin_bot.static_text import NEW_CLIENT_HAS_COME
 from base.tasks import broadcast_message
-from tennis_bot.settings import TARIF_ARBITRARY, TARIF_GROUP, TARIF_PAYMENT_ADD_LESSON, DEBUG
-from .utils import (handler_decor,
-                    get_available_dt_time4ind_train, select_tr_days_for_skipping,
-                    get_potential_days_for_group_training, separate_callback_data,
-                    balls_lessons_payment, make_group_name_group_players_info_for_skipping,
-                    )
-from .keyboard_utils import create_calendar, construct_time_menu_for_group_lesson, construct_detail_menu_for_skipping, \
-    construct_menu_skipping_much_lesson, construct_time_menu_4ind_lesson, back_to_group_times_when_no_left_keyboard, \
-    choose_type_of_payment_for_group_lesson_keyboard, back_to_group_when_trying_to_enter_his_own_group, \
-    take_lesson_back_keyboard, ind_train_choose_duration_keyboard, ind_group_type_training_keyboard
+from tennis_bot.settings import TARIF_ARBITRARY, TARIF_GROUP, TARIF_PAYMENT_ADD_LESSON
+from .utils import *
+from .keyboard_utils import *
 from base.utils import (DT_BOT_FORMAT, moscow_datetime, bot_edit_message,
                         get_time_info_from_tr_day, construct_main_menu, info_about_users,
                         )
@@ -21,30 +15,68 @@ from base.models import (User,
                          GroupTrainingDay,
                          TrainingGroup,
                          Payment)
-from .manage_data import (
-    SELECT_PRECISE_GROUP_TIME,
-    SELECT_TRAINING_TYPE,
-    SELECT_DURATION_FOR_IND_TRAIN,
-    SELECT_PRECISE_IND_TIME,
-    CONFIRM_GROUP_LESSON,
-    SHOW_INFO_ABOUT_SKIPPING_DAY, CLNDR_IGNORE, CLNDR_DAY, CLNDR_PREV_MONTH, CLNDR_NEXT_MONTH,
-    CLNDR_ACTION_BACK, CLNDR_ACTION_SKIP, CLNDR_ACTION_TAKE_GROUP, CLNDR_ACTION_TAKE_IND, SELECT_SKIP_TIME_BUTTON,
-    PAYMENT_VISITING, PAYMENT_BONUS, PAYMENT_MONEY, )
-from .static_text import NO_PAYMENT_BUTTON, SUCCESS_PAYMENT, from_eng_to_rus_day_week, \
-    from_digit_to_month
+from .manage_data import *
+from .static_text import *
 from calendar import monthrange
 from tennis_bot.settings import ADMIN_TELEGRAM_TOKEN
 from datetime import date, datetime, timedelta
 from django.db.models import Q
 
 
-def update_user_info(update, user):
-    user_details = update.message.from_user if update.message else None
+INSERT_FIO, INSERT_PHONE_NUMBER = range(2)
 
-    if user_details:
-        user.is_blocked = False
-        user.telegram_username = user_details.username[:64] if user_details.username else ''
+
+def get_first_last_name(update, context):
+    user, _ = User.get_user_and_created(update, context)
+    text = update.message.text
+
+    last_name, first_name = text.split(' ')
+    user.last_name = last_name
+    user.first_name = first_name
+    user.save()
+
+    update.message.reply_text(
+        text=FIRST_TIME_INSERT_PHONE_NUMBER,
+    )
+    return INSERT_PHONE_NUMBER
+
+
+def get_phone_number(update, context):
+    user, _ = User.get_user_and_created(update, context)
+    text = update.message.text
+    phone_number_candidate = re.findall(r'\d+', text)
+
+    if len(phone_number_candidate[0]) != 11:
+        update.message.reply_text(
+            text=WRONG_PHONE_NUMBER_FORMAT.format(len(phone_number_candidate[0])),
+        )
+        return INSERT_PHONE_NUMBER
+    else:
+        user.phone_number = int(phone_number_candidate[0])
         user.save()
+
+        update.message.reply_text(
+            text=I_WILL_TEXT_AS_SOON_AS_COACH_CONFIRM,
+            reply_markup=construct_main_menu()
+        )
+
+        admins = User.objects.filter(is_staff=True)
+        if DEBUG:
+            broadcast_message(
+                # user_ids=list(admins.values_list('id', flat=True)),
+                user_ids=[350490234],
+                message=NEW_CLIENT_HAS_COME.format(user),
+                reply_markup=go_to_site_set_up_personal_data(user.id),
+                tg_token=ADMIN_TELEGRAM_TOKEN,
+            )
+        else:
+            broadcast_message.delay(
+                list(admins.values_list('id', flat=True)),
+                NEW_CLIENT_HAS_COME,
+                go_to_site_set_up_personal_data(user.id),
+                ADMIN_TELEGRAM_TOKEN
+            )
+    return ConversationHandler.END
 
 
 def get_help(update, context):
@@ -52,41 +84,6 @@ def get_help(update, context):
     update.message.reply_text(text='По всем вопросам пиши @ta2asho.\n'
                                    'Желательно описывать свою проблему со скриншотами.',
                               reply_markup=construct_main_menu(user, user.status))
-
-
-def get_personal_data(update, context):
-    user, _ = User.get_user_and_created(update, context)
-    text = update.message.text
-    phone_number_candidate = re.findall(r'\d+', text)
-    if phone_number_candidate:
-        if len(phone_number_candidate[0]) != 11:
-            context.bot.send_message(user.id, 'Неправильный формат данных, было введено {} цифр.'.
-                             format(len(phone_number_candidate[0])))
-        else:
-            user.phone_number = int(phone_number_candidate[0])
-            user.save()
-            context.bot.send_message(user.id,
-                             'Как только тренер подтвердит твою кандидатуру, я напишу.',
-                             reply_markup=construct_main_menu())
-            admin_bot = telegram.Bot(ADMIN_TELEGRAM_TOKEN)
-            admins = User.objects.filter(is_staff=True)
-
-            for admin in admins:
-                admin_bot.send_message(admin.id,
-                                       # todo: сделать вместо ссылки кнопки при отправке этого сообешния
-                                       'Пришел новый клиент:\n<b>{}</b>\n<a href="http://vladlen82.fvds.ru/admin/base/user/{}/change/">Настроить данные </a>'.format(
-                                           user, user.id),
-                                       parse_mode='HTML')
-
-    else:
-        if user.last_name and user.first_name and user.phone_number:
-            context.bot.send_message(user.id, 'Контактные данные уже есть.')
-        else:
-            last_name, first_name = text.split(' ')
-            user.last_name = last_name
-            user.first_name = first_name
-            user.save()
-            context.bot.send_message(user.id, 'Введи номер телефона в формате "89991112233" (11 цифр подряд).')
 
 
 # @handler_decor(check_status=True)
@@ -147,6 +144,7 @@ def user_main_info(update, context):
         parse_mode='HTML',
         reply_markup=construct_main_menu(user, user.status)
     )
+    return ConversationHandler.END
 
 
 def process_calendar_selection(update, context):

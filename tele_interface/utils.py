@@ -228,6 +228,11 @@ def balls_lessons_payment(year, month, user):
         balls_this_month = 0
         tarif = User.tarif_for_status[user.status]
 
+    else:
+        tarif = 0
+        tr_days_num_this_month = GroupTrainingDay.objects.none()
+        balls_this_month = 0
+
     should_pay_this_month = tr_days_num_this_month.count() * tarif
     should_pay_balls = 100 * round(balls_this_month / 4)
 

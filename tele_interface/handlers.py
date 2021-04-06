@@ -9,7 +9,7 @@ from tennis_bot.settings import TARIF_ARBITRARY, TARIF_GROUP, TARIF_PAYMENT_ADD_
 from .utils import *
 from .keyboard_utils import *
 from base.utils import (DT_BOT_FORMAT, moscow_datetime, bot_edit_message,
-                        get_time_info_from_tr_day, construct_main_menu, info_about_users,
+                        get_time_info_from_tr_day, info_about_users, clear_broadcast_messages, construct_main_menu,
                         )
 from base.models import (User,
                          GroupTrainingDay,
@@ -61,20 +61,14 @@ def get_phone_number(update, context):
         )
 
         admins = User.objects.filter(is_staff=True)
-        if DEBUG:
-            broadcast_message(
-                user_ids=list(admins.values_list('id', flat=True)),
-                message=NEW_CLIENT_HAS_COME.format(user),
-                reply_markup=go_to_site_set_up_personal_data(user.id),
-                tg_token=ADMIN_TELEGRAM_TOKEN,
-            )
-        else:
-            broadcast_message.delay(
-                list(admins.values_list('id', flat=True)),
-                NEW_CLIENT_HAS_COME,
-                go_to_site_set_up_personal_data(user.id),
-                ADMIN_TELEGRAM_TOKEN
-            )
+
+        clear_broadcast_messages(
+            user_ids=list(admins.values_list('id', flat=True)),
+            message=NEW_CLIENT_HAS_COME.format(user),
+            reply_markup=go_to_site_set_up_personal_data(user.id),
+            tg_token=ADMIN_TELEGRAM_TOKEN,
+        )
+
     return ConversationHandler.END
 
 
@@ -335,20 +329,12 @@ def skip_lesson(update, context):
                              f'📅Дата: <b>{date_tlg} ({day_of_week})</b>\n' \
                              f'⏰Время: <b>{time_tlg}</b>\n\n'
 
-                if DEBUG:
-                    broadcast_message(
-                        user_ids=list(admins.values_list('id', flat=True)),
-                        message=admin_text,
-                        reply_markup=None,
-                        tg_token=ADMIN_TELEGRAM_TOKEN,
-                    )
-                else:
-                    broadcast_message.delay(
-                        list(admins.values_list('id', flat=True)),
-                        admin_text,
-                        None,
-                        ADMIN_TELEGRAM_TOKEN
-                    )
+                clear_broadcast_messages(
+                    user_ids=list(admins.values_list('id', flat=True)),
+                    message=admin_text,
+                    reply_markup=None,
+                    tg_token=ADMIN_TELEGRAM_TOKEN,
+                )
 
             else:
                 # проверяем его ли эта группа или он удаляется из занятия другой группы
@@ -450,20 +436,12 @@ def select_precise_ind_lesson_time(update, context):
            f" в <b>{start_time} — {end_time}</b>\n" \
            f"<b>Разрешить?</b>"
 
-    if DEBUG:
-        broadcast_message(
-            user_ids=list(admins.values_list('id', flat=True)),
-            message=text,
-            reply_markup=markup,
-            tg_token=ADMIN_TELEGRAM_TOKEN
-        )
-    else:
-        broadcast_message.delay(
-            list(admins.values_list('id', flat=True)),
-            text,
-            markup,
-            ADMIN_TELEGRAM_TOKEN
-        )
+    clear_broadcast_messages(
+        user_ids=list(admins.values_list('id', flat=True)),
+        message=text,
+        reply_markup=markup,
+        tg_token=ADMIN_TELEGRAM_TOKEN
+    )
 
 
 def select_precise_group_lesson_time(update, context):
@@ -594,20 +572,12 @@ def confirm_group_lesson(update, context):
     if admit_message_text:
         admins = User.objects.filter(is_staff=True, is_blocked=False)
 
-        if DEBUG:
-            broadcast_message(
-                user_ids=list(admins.values_list('id', flat=True)),
-                message=admit_message_text,
-                reply_markup=None,
-                tg_token=ADMIN_TELEGRAM_TOKEN
-            )
-        else:
-            broadcast_message.delay(
-                list(admins.values_list('id', flat=True)),
-                admit_message_text,
-                None,
-                ADMIN_TELEGRAM_TOKEN
-            )
+        clear_broadcast_messages(
+            user_ids=list(admins.values_list('id', flat=True)),
+            message=admit_message_text,
+            reply_markup=None,
+            tg_token=ADMIN_TELEGRAM_TOKEN
+        )
 
 
 def choose_type_of_payment_for_pay_visiting(update, context):
@@ -649,17 +619,10 @@ def choose_type_of_payment_for_pay_visiting(update, context):
     bot_edit_message(context.bot, text, update)
 
     admins = User.objects.filter(is_staff=True, is_blocked=False)
-    if DEBUG:
-        broadcast_message(
-            user_ids=list(admins.values_list('id', flat=True)),
-            message=admin_text,
-            reply_markup=None,
-            tg_token=ADMIN_TELEGRAM_TOKEN
-        )
-    else:
-        broadcast_message.delay(
-            list(admins.values_list('id', flat=True)),
-            admin_text,
-            None,
-            ADMIN_TELEGRAM_TOKEN
-        )
+
+    clear_broadcast_messages(
+        user_ids=list(admins.values_list('id', flat=True)),
+        message=admin_text,
+        reply_markup=None,
+        tg_token=ADMIN_TELEGRAM_TOKEN
+    )

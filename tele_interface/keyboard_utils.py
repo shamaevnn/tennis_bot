@@ -218,8 +218,7 @@ def ind_train_choose_duration_keyboard():
     ], [
         InlineKeyboardButton('2 часа', callback_data=SELECT_DURATION_FOR_IND_TRAIN + '2.0')
     ], [
-        InlineKeyboardButton(f'{BACK_BUTTON}',
-                      callback_data=TAKE_LESSON_BUTTON),
+        InlineKeyboardButton(f'{BACK_BUTTON}', callback_data=TAKE_LESSON_BUTTON),
     ]]
 
     return InlineKeyboardMarkup(buttons)

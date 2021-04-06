@@ -9,7 +9,7 @@ from django.utils import timezone
 from datetime import datetime, date, timedelta
 
 from base.utils import moscow_datetime, TM_TIME_SCHEDULE_FORMAT, DT_BOT_FORMAT, \
-    send_alert_about_changing_tr_day_time, construct_main_menu, extract_user_data_from_update
+    send_alert_about_changing_tr_day_time, extract_user_data_from_update, clear_broadcast_messages, construct_main_menu
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 
@@ -112,19 +112,12 @@ class UserForm(forms.ModelForm):
                     new_status == User.STATUS_ARBITRARY or new_status == User.STATUS_TRAINING):
                 text = NOW_YOU_HAVE_ACCESS_CONGRATS
                 reply_markup = construct_main_menu(self.instance, self.instance.status)
-                from base.tasks import broadcast_message
-                if DEBUG:
-                    broadcast_message(
-                        user_ids=[self.instance.id],
-                        message=text,
-                        reply_markup=reply_markup
-                    )
-                else:
-                    broadcast_message.delay(
-                        [self.instance.id],
-                        text,
-                        reply_markup
-                    )
+
+                clear_broadcast_messages(
+                    user_ids=[self.instance.id],
+                    message=text,
+                    reply_markup=reply_markup
+                )
 
 
 class TrainingGroup(ModelwithTime):
@@ -255,11 +248,12 @@ class GroupTrainingDayForm(forms.ModelForm):
 
             if canceled_users:
                 text = CANCEL_TRAIN_PLUS_BONUS_LESSON.format(self.cleaned_data.get("date"))
-                from base.tasks import broadcast_message
-                if DEBUG:
-                    broadcast_message(list(canceled_users.values_list('id', flat=True)), text, reply_markup=construct_main_menu())
-                else:
-                    broadcast_message.delay(list(canceled_users.values_list('id', flat=True)), text, reply_markup=construct_main_menu())
+
+                clear_broadcast_messages(
+                    list(canceled_users.values_list('id', flat=True)),
+                    text,
+                    reply_markup=construct_main_menu()
+                )
 
                 canceled_users.update(bonus_lesson=F('bonus_lesson') + 1)
 

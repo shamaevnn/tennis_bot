@@ -83,7 +83,7 @@ class User(AbstractUser):
         u, created = cls.objects.update_or_create(
             id=data["id"],
             defaults={
-                'telegram_username': data['username'],
+                'telegram_username': data['username'] if data.get('username') else None,
                 'username': data['id'],
                 'is_blocked': data['is_blocked']
             }

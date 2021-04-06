@@ -15,7 +15,7 @@ django-celery-beat
 psycopg2-binary
 dj-database-url
 
-sentry-sdk==0.14.2
+sentry-sdk
 
 gunicorn
 uvicorn

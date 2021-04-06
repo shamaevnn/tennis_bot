@@ -19,7 +19,8 @@ jobs:
       name: Deploy to dokku
       uses: idoberko2/dokku-deploy-github-action@v1
       with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-          dokku-host: 37.46.131.27
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_PUBLIC_KEY: ${{ secrets.SSH_PUBLIC_KEY }}
+          dokku-host: 'vladlen82.fvds.ru'
           app-name: 'tennisbot'
           git-push-flags: '--force'

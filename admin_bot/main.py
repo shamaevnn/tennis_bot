@@ -104,11 +104,11 @@ def main():
 @app.task(ignore_result=True)
 def process_admin_telegram_event(update_json):
     update = telegram.Update.de_json(update_json, admin_bot)
-    dispatcher.process_update(update)
+    dispatcher_admin.process_update(update)
 
 
 admin_bot = telegram.Bot(ADMIN_TELEGRAM_TOKEN)
-dispatcher = setup_dispatcher(Dispatcher(admin_bot, None, workers=0, use_context=True))
+dispatcher_admin = setup_dispatcher(Dispatcher(admin_bot, None, workers=0, use_context=True))
 
 
 if __name__ == '__main__':

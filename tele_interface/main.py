@@ -103,11 +103,11 @@ def main():
 @app.task(ignore_result=True)
 def process_telegram_event(update_json):
     update = telegram.Update.de_json(update_json, bot)
-    dispatcher.process_update(update)
+    dispatcher_bot.process_update(update)
 
 
 bot = telegram.Bot(TELEGRAM_TOKEN)
-dispatcher = setup_dispatcher(Dispatcher(bot, None, workers=0, use_context=True))
+dispatcher_bot = setup_dispatcher(Dispatcher(bot, None, workers=0, use_context=True))
 
 
 if __name__ == '__main__':

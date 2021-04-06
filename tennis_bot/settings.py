@@ -68,7 +68,13 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 
     'whitenoise.middleware.WhiteNoiseMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+
+    'django.middleware.common.CommonMiddleware',
 ]
+
+CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOW_CREDENTIALS = True
 
 ROOT_URLCONF = 'tennis_bot.urls'
 
@@ -165,7 +171,7 @@ TARIF_FEW = 400
 TARIF_SECTION = 4000
 TARIF_PAYMENT_ADD_LESSON = 100
 
-if DEBUG is True:
+if DEBUG:
    MIDDLEWARE += ['debug_toolbar.middleware.DebugToolbarMiddleware']
 
 if not DEBUG:

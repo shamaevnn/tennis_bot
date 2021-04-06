@@ -26,7 +26,7 @@ def my_custom_error_view(*args, **kwargs):
 
 
 def home_redirect(request):
-    return redirect('admin/base/')
+    return redirect('tgadmin/base/')
 
 
 class TelegramBotWebhookView(View):

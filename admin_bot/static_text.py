@@ -43,7 +43,7 @@ REST = 'Оставшиеся'
 NUMBER_OF_TRAINS = 'Кол-во занятий'
 TARIF = 'Тариф'
 
-MUST_PAY_FOR_TRAINS_AND_BALLS = 'Должны <b>{should_pay}</b>₽ + {should_pay_balls}₽ за мячи'
+MUST_PAY_FOR_TRAINS_AND_BALLS = 'Должны <b>{}</b>₽ + {}₽ за мячи'
 FIRST_LAST_NAME_FACT_NUMBER_OF_VISITS = 'Имя Фамилия -- факт₽, кол-во посещений'
 
 TO_INSERT_PAYMENT_DATA_HELP_INFO = 'Для того, чтобы внести данные об оплате, введи данные в формате \n\n' \

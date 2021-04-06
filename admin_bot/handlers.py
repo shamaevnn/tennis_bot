@@ -339,6 +339,7 @@ def group_payment(update, context):
         paid_this_month = payments.aggregate(sigma=Sum('fact_amount'))
         n_lessons_info, should_pay, should_pay_balls, tarif_info = '', '', '', ''
     else:
+        should_pay = 0
         payments = Payment.objects.filter(player__traininggroup__id=group_id, month=month, year=year)
         check_if_players_not_in_payments(group_id, payments, year, month)
         paid_this_month = payments.aggregate(sigma=Sum('fact_amount'))

@@ -223,26 +223,30 @@ def text_to_send(update, context):
 def receive_text_and_send(update, context):
     text = update.message.text
 
-    alert_instances = AlertsLog.objects.filter(
-        is_sent=False,
-        tr_day__isnull=True,
-        alert_type=AlertsLog.CUSTOM_COACH_MESSAGE,
-        info__isnull=True
-    ).distinct()
-    player_ids = list(alert_instances.values_list('player', flat=True))
+    if text == CANCEL:
+        return ConversationHandler.END
 
-    clear_broadcast_messages(
-        user_ids=player_ids,
-        message=text
-    )
+    else:
+        alert_instances = AlertsLog.objects.filter(
+            is_sent=False,
+            tr_day__isnull=True,
+            alert_type=AlertsLog.CUSTOM_COACH_MESSAGE,
+            info__isnull=True
+        ).distinct()
+        player_ids = list(alert_instances.values_list('player', flat=True))
 
-    alert_instances.update(is_sent=True, info=text)
+        clear_broadcast_messages(
+            user_ids=player_ids,
+            message=text
+        )
 
-    update.message.reply_text(
-        text=IS_SENT
-    )
+        alert_instances.update(is_sent=True, info=text)
 
-    return ConversationHandler.END
+        update.message.reply_text(
+            text=IS_SENT
+        )
+
+        return ConversationHandler.END
 
 
 def show_traingroupday_info(update, context):

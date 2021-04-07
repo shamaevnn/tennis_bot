@@ -7,6 +7,7 @@ import datetime
 from pytz import timezone
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
 
+from tele_interface.manage_data import SEND_MESSAGE
 from tele_interface.static_text import from_eng_to_rus_day_week, CANCEL_TRAIN_PLUS_BONUS_LESSON_2, \
     TRAIN_IS_AVAIABLE_CONGRATS, NO_PAYMENT_BUTTON, MY_DATA_BUTTON, HELP_BUTTON, SKIP_LESSON_BUTTON, TAKE_LESSON_BUTTON
 from tennis_bot.settings import TELEGRAM_TOKEN, DEBUG
@@ -162,6 +163,20 @@ def get_time_info_from_tr_day(tr_day):
     date_tlg = tr_day.date.strftime(DT_BOT_FORMAT)
 
     return time_tlg, start_time_tlg, end_time_tlg, date_tlg, day_of_week, start_time, end_time
+
+
+def handle_selecting_groups_to_send_message_to(ids_counter, group_ids, group_id, button_data_text, button_text):
+    if group_id not in group_ids:
+        text = button_text
+    elif ids_counter[group_id] > 1 and ids_counter[group_id] % 2 == 0:
+        text = button_text
+        group_ids.remove(group_id)
+        group_ids.remove(group_id)
+        button_data_text = button_data_text[:len(SEND_MESSAGE)] + "|".join(group_ids)
+    else:
+        text = f'{button_text} ✅'
+
+    return text, button_data_text
 
 
 def info_about_users(users, for_admin=False, payment=False):

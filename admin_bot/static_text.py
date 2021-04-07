@@ -15,6 +15,8 @@ WHOM_TO_SEND_TO = 'Кому отправить?'
 CHOOSE_GROUP_AFTER_THAT_CONFIRM = 'Сначала выбери группу, а потом подтверждай.'
 SENDING_TO_ALL_GROUPS_TYPE_TEXT = 'Отправлю сообщение всем группам.\n' \
                                   'Введи текст сообщения.'
+WILL_SEND_TO_ALL_TYPE_TEXT = 'Отправлю сообщение вообще всем.\n' \
+                             'Введи текст сообщения.'
 WILL_SEND_TO_THE_FOLLOWING_GROUPS = 'Отправлю сообщение следующим группам:\n'
 TYPE_TEXT_OF_MESSAGE = '\nВведи текст сообщения.'
 OR_PRESS_CANCEL = ' Или нажми /cancel для отмены.'
@@ -61,6 +63,7 @@ CHANGES_ARE_MADE = 'Изменения внесены'
 THIS_WAY_YEAH = 'Вот так вот значит, да?'
 
 TO_ALL_GROUPS = 'Всем группам'
+TO_ALL = 'Вообще всем'
 CONFIRM = 'Подтвердить'
 YES = 'Да'
 NO = 'Нет'

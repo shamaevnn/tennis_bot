@@ -6,7 +6,8 @@ from django.db.models import Sum, Q, Count, ExpressionWrapper, IntegerField, F
 from telegram.ext import ConversationHandler
 from django.core.exceptions import ObjectDoesNotExist
 from base.models import User, GroupTrainingDay, Payment, TrainingGroup, AlertsLog
-from base.utils import moscow_datetime, bot_edit_message, get_time_info_from_tr_day, info_about_users
+from base.utils import moscow_datetime, bot_edit_message, get_time_info_from_tr_day, info_about_users, \
+    clear_broadcast_messages
 from tele_interface.manage_data import PERMISSION_FOR_IND_TRAIN, SHOW_GROUPDAY_INFO, \
     CLNDR_ADMIN_VIEW_SCHEDULE, CLNDR_ACTION_BACK, CLNDR_NEXT_MONTH, CLNDR_DAY, CLNDR_IGNORE, \
     CLNDR_PREV_MONTH, PAYMENT_YEAR, PAYMENT_YEAR_MONTH, PAYMENT_YEAR_MONTH_GROUP, PAYMENT_START_CHANGE, \
@@ -182,18 +183,22 @@ def select_groups_where_should_send(update, context):
 def text_to_send(update, context):
     group_ids = update.callback_query.data[len(SEND_MESSAGE):].split("|")
     group_ids.remove('')
-    if group_ids[-1] == '-1': # if pressed "confirm"
+    if group_ids[-1] == '-1':  # if pressed "confirm"
         list_of_group_ids = list(set([int(x) for x in group_ids if x]))
         if 0 in list_of_group_ids:
             # pressed 'send to all groups'
             text = SENDING_TO_ALL_GROUPS_TYPE_TEXT
 
-            banda_groups = TrainingGroup.objects.filter(status=TrainingGroup.STATUS_GROUP, max_players__gt=1).distinct()
-
+            banda_groups = TrainingGroup.objects.filter(status=TrainingGroup.STATUS_GROUP,
+                                                        max_players__gt=1).distinct()
             players = User.objects.filter(traininggroup__in=banda_groups).distinct()
-            objs = [AlertsLog(player=player, alert_type=AlertsLog.CUSTOM_COACH_MESSAGE) for player in players]
-            AlertsLog.objects.bulk_create(objs)
 
+        elif -2 in list_of_group_ids:
+            # pressed 'send to all'
+            text = WILL_SEND_TO_ALL_TYPE_TEXT
+            players = User.objects.filter(status__in=[User.STATUS_TRAINING,
+                                                      User.STATUS_ARBITRARY,
+                                                      User.STATUS_IND_TRAIN])
         else:
             text = WILL_SEND_TO_THE_FOLLOWING_GROUPS
 
@@ -202,8 +207,9 @@ def text_to_send(update, context):
             text += TYPE_TEXT_OF_MESSAGE
 
             players = User.objects.filter(traininggroup__in=list_of_group_ids).distinct()
-            objs = [AlertsLog(player=player, alert_type=AlertsLog.CUSTOM_COACH_MESSAGE) for player in players]
-            AlertsLog.objects.bulk_create(objs)
+
+        objs = [AlertsLog(player=player, alert_type=AlertsLog.CUSTOM_COACH_MESSAGE) for player in players]
+        AlertsLog.objects.bulk_create(objs)
 
         text += OR_PRESS_CANCEL
         bot_edit_message(context.bot, text, update)
@@ -217,17 +223,18 @@ def text_to_send(update, context):
 def receive_text_and_send(update, context):
     text = update.message.text
 
-    alert_instances = AlertsLog.objects.filter(is_sent=False, tr_day__isnull=True,
-                                               alert_type=AlertsLog.CUSTOM_COACH_MESSAGE,
-                                               info__isnull=True).distinct()
+    alert_instances = AlertsLog.objects.filter(
+        is_sent=False,
+        tr_day__isnull=True,
+        alert_type=AlertsLog.CUSTOM_COACH_MESSAGE,
+        info__isnull=True
+    ).distinct()
     player_ids = list(alert_instances.values_list('player', flat=True))
 
-    tennis_bot = telegram.Bot(TELEGRAM_TOKEN)
-    for player_id in player_ids:
-        try:
-            tennis_bot.send_message(player_id, text)
-        except (telegram.error.Unauthorized, telegram.error.BadRequest):
-            pass
+    clear_broadcast_messages(
+        user_ids=player_ids,
+        message=text
+    )
 
     alert_instances.update(is_sent=True, info=text)
 

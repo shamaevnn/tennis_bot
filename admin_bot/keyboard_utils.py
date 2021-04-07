@@ -2,7 +2,7 @@ from collections import Counter
 
 from telegram import ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup
 
-from base.utils import get_time_info_from_tr_day
+from base.utils import get_time_info_from_tr_day, handle_selecting_groups_to_send_message_to
 from tele_interface.manage_data import SEND_MESSAGE, CLNDR_ADMIN_VIEW_SCHEDULE, CLNDR_ACTION_BACK, \
     PAYMENT_YEAR_MONTH_GROUP, PAYMENT_YEAR, PERMISSION_FOR_IND_TRAIN, PAYMENT_YEAR_MONTH, PAYMENT_CONFIRM_OR_CANCEL, \
     PAYMENT_START_CHANGE, CLNDR_DAY, AMOUNT_OF_IND_TRAIN
@@ -44,17 +44,25 @@ def construct_menu_groups_for_send_message(groups, button_text):
     if len(row):
         buttons.append(row)
 
-    if '0' not in group_ids:
-        all_groups_text = TO_ALL_GROUPS
-    elif ids_counter['0'] > 1 and ids_counter['0'] % 2 == 0:
-        all_groups_text = TO_ALL_GROUPS
-        group_ids.remove('0')
-        group_ids.remove('0')
-        button_text = button_text[:len(SEND_MESSAGE)] + "|".join(group_ids)
-    else:
-        all_groups_text = f'{TO_ALL_GROUPS} ✅'
+    all_groups_text, button_text = handle_selecting_groups_to_send_message_to(
+        ids_counter=ids_counter,
+        group_ids=group_ids,
+        group_id='0',
+        button_data_text=button_text,
+        button_text=TO_ALL_GROUPS
+    )
+    all_text, button_text = handle_selecting_groups_to_send_message_to(
+        ids_counter=ids_counter,
+        group_ids=group_ids,
+        group_id='-2',
+        button_data_text=button_text,
+        button_text=TO_ALL
+    )
 
-    buttons.append([InlineKeyboardButton(all_groups_text, callback_data=f'{button_text}|{0}')])
+    buttons.append([
+        InlineKeyboardButton(all_groups_text, callback_data=f'{button_text}|{0}'),
+        InlineKeyboardButton(all_text, callback_data=f'{button_text}|{-2}')]
+    )
     buttons.append([InlineKeyboardButton(CONFIRM, callback_data=f'{button_text}|{-1}')])
 
     return InlineKeyboardMarkup(buttons)

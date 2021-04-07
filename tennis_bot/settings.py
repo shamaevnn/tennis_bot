@@ -171,8 +171,6 @@ TARIF_FEW = 400
 TARIF_SECTION = 4000
 TARIF_PAYMENT_ADD_LESSON = 100
 
-if DEBUG:
-   MIDDLEWARE += ['debug_toolbar.middleware.DebugToolbarMiddleware']
 
 if not DEBUG:
     sentry_sdk.init(

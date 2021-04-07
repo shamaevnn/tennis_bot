@@ -51,18 +51,25 @@ def send_alert_about_coming_train():
     alert_log_tr_days = list(AlertsLog.objects.filter(
         is_sent=True, alert_type=AlertsLog.COMING_TRAIN).values_list("tr_day_id", flat=True).distinct())
     # выбираем предстоящие тренировки, исключаем выше описанные
-    tr_days = GroupTrainingDay.objects.annotate(
-        diff=ExpressionWrapper(F('start_time') + F('date') - moscow_datetime(datetime.now()),
-                               output_field=DurationField()),
-        train_dttm=ExpressionWrapper(F('start_time') + F('date'),
-                                     output_field=DurationField())).filter(train_dttm__gte=moscow_datetime(datetime.now()),
-                                                                           diff__lte=timedelta(hours=5),
-                                                                           is_available=True).exclude(id__in=alert_log_tr_days).distinct()
+    tr_days = GroupTrainingDay.objects.select_related('group').annotate(
+        diff=ExpressionWrapper(
+            F('start_time') + F('date') - moscow_datetime(datetime.now()), output_field=DurationField()
+        ),
+        train_dttm=ExpressionWrapper(
+            F('start_time') + F('date'), output_field=DurationField())
+    ).filter(
+        train_dttm__gte=moscow_datetime(datetime.now()),
+        diff__lte=timedelta(hours=5),
+        is_available=True
+    ).exclude(
+        id__in=alert_log_tr_days
+    ).distinct()
 
     for tr_day in tr_days:
         group_members = tr_day.group.users.all()
         visitors = tr_day.visitors.all()
-        players = group_members.union(visitors).difference(tr_day.absent.all())
+        pay_visitors = tr_day.pay_visitors.all()
+        players = group_members.union(visitors, pay_visitors).difference(tr_day.absent.all())
 
         bot = telegram.Bot(TELEGRAM_TOKEN)
         for player in players:
@@ -90,34 +97,26 @@ def send_alert_about_coming_train():
 @app.task(ignore_result=True)
 def send_alert_about_payment():
     now_day = moscow_datetime(datetime.now())
-    # отправляем в первые 2 дня месяца
-    if now_day.day <= 2:
-        not_paid = Payment.objects.filter(
-                             fact_amount=0,
-                             player__status=User.STATUS_TRAINING,
-                             year=str(now_day.year - 2020),
-                             month=str(now_day.month)).exclude(
-                                        alertslog__is_sent=True,
-                                        alertslog__alert_type=AlertsLog.SHOULD_PAY,
-                                        alertslog__dttm_sent__gt=(datetime.now() + timedelta(hours=-7)).replace(tzinfo=utc)).distinct(
-                                                                                ).select_related('player')
 
-        month = from_digit_to_month[int(now_day.month)].lower()
-        bot = telegram.Bot(TELEGRAM_TOKEN)
-        for payment in not_paid:
-            text = f'{payment.player.first_name}, нужно заплатить за {month}. Сумму можно узнать по кнопке "{MY_DATA_BUTTON}".'
-            try:
-                bot.send_message(payment.player_id,
-                                 text)
-                AlertsLog.objects.create(is_sent=True, payment=payment, alert_type=AlertsLog.SHOULD_PAY)
-            except (telegram.error.Unauthorized, telegram.error.BadRequest) as e:
-                AlertsLog.objects.create(is_sent=False, payment=payment, alert_type=AlertsLog.COMING_TRAIN, info=e)
+    not_paid = Payment.objects.filter(
+                         fact_amount=0,
+                         player__status=User.STATUS_TRAINING,
+                         year=str(now_day.year - 2020),
+                         month=str(now_day.month)
+    ).exclude(
+        alertslog__is_sent=True,
+        alertslog__alert_type=AlertsLog.SHOULD_PAY,
+        alertslog__dttm_sent__gt=(datetime.now() + timedelta(hours=-11)).replace(tzinfo=utc)
+    ).distinct().select_related('player')
 
-
-# schedule.every(59).minutes.do(send_alert_about_coming_train)
-# schedule.every().day.at("19:00").do(send_alert_about_payment)
-# schedule.every().day.at("10:00").do(send_alert_about_payment)
-#
-# while 1:
-#     schedule.run_pending()
+    month = from_digit_to_month[int(now_day.month)].lower()
+    bot = telegram.Bot(TELEGRAM_TOKEN)
+    for payment in not_paid:
+        text = f'{payment.player.first_name}, нужно заплатить за {month}. Сумму можно узнать по кнопке "{MY_DATA_BUTTON}".'
+        try:
+            bot.send_message(payment.player_id,
+                             text)
+            AlertsLog.objects.create(is_sent=True, payment=payment, alert_type=AlertsLog.SHOULD_PAY)
+        except (telegram.error.Unauthorized, telegram.error.BadRequest) as e:
+            AlertsLog.objects.create(is_sent=False, payment=payment, alert_type=AlertsLog.COMING_TRAIN, info=e)
 

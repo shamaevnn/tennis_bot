@@ -159,7 +159,7 @@ GROUP_IDS, TEXT_TO_SEND = 2, 3
 def select_groups_where_should_send(update, context):
     text = WHOM_TO_SEND_TO
 
-    banda_groups = TrainingGroup.objects.filter(name__iregex=r'БАНДА').order_by('name')
+    banda_groups = TrainingGroup.objects.filter(status=TrainingGroup.STATUS_GROUP, max_players__gt=1).order_by('order')
 
     if update.callback_query:
         group_ids = update.callback_query.data[len(SEND_MESSAGE):].split("|")
@@ -185,10 +185,10 @@ def text_to_send(update, context):
     if group_ids[-1] == '-1': # if pressed "confirm"
         list_of_group_ids = list(set([int(x) for x in group_ids if x]))
         if 0 in list_of_group_ids:
-            # pressed 'sent to all groups'
+            # pressed 'send to all groups'
             text = SENDING_TO_ALL_GROUPS_TYPE_TEXT
 
-            banda_groups = TrainingGroup.objects.filter(name__iregex=r'БАНДА').distinct()
+            banda_groups = TrainingGroup.objects.filter(status=TrainingGroup.STATUS_GROUP, max_players__gt=1).distinct()
 
             players = User.objects.filter(traininggroup__in=banda_groups).distinct()
             objs = [AlertsLog(player=player, alert_type=AlertsLog.CUSTOM_COACH_MESSAGE) for player in players]
@@ -211,7 +211,7 @@ def text_to_send(update, context):
         return TEXT_TO_SEND
 
     else:
-        select_groups_where_should_send(context.bot, update)
+        select_groups_where_should_send(update, context)
 
 
 def receive_text_and_send(update, context):
@@ -321,7 +321,7 @@ def month_payment(update, context):
            f'<b>{MUST_PAY}: {should_pay_this_month["sigma"]}</b>\n' \
            f'{CHOOSE_GROUP}'
 
-    banda_groups = TrainingGroup.objects.filter(name__iregex=r'БАНДА').order_by('name')
+    banda_groups = TrainingGroup.objects.filter(name__iregex=r'БАНДА').order_by('order')
     markup = construct_menu_groups(banda_groups, f'{PAYMENT_YEAR_MONTH_GROUP}{year}|{month}|')
     bot_edit_message(context.bot, text, update, markup)
 

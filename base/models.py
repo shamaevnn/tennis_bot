@@ -1,4 +1,5 @@
 import calendar
+import re
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
@@ -148,6 +149,7 @@ class TrainingGroup(ModelwithTime):
     available_for_additional_lessons = models.BooleanField(default=False, verbose_name='Занятия за деньги',
                                                            help_text='Можно ли прийти в эту группу на занятия за деньги,'
                                                                      'если меньше, чем max_players')
+    order = models.PositiveSmallIntegerField(default=0, blank=True)
 
     class Meta:
         verbose_name = 'банда'
@@ -155,6 +157,13 @@ class TrainingGroup(ModelwithTime):
 
     def __str__(self):
         return '{}, max_players: {}'.format(self.name, self.max_players)
+
+    def save(self, *args, **kwargs):
+        # для того, чтобы БАНДА №10 была позже БАНДА №1
+        number_in_name = re.findall(r'\d+', self.name)
+        if len(number_in_name) == 1:
+            self.order = number_in_name[0]
+        super(TrainingGroup, self).save(*args, **kwargs)
 
 
 class TrainingGroupForm(forms.ModelForm):

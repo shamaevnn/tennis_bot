@@ -118,5 +118,5 @@ def send_alert_about_payment():
                              text)
             AlertsLog.objects.create(is_sent=True, payment=payment, alert_type=AlertsLog.SHOULD_PAY)
         except (telegram.error.Unauthorized, telegram.error.BadRequest) as e:
-            AlertsLog.objects.create(is_sent=False, payment=payment, alert_type=AlertsLog.COMING_TRAIN, info=e)
+            AlertsLog.objects.create(is_sent=False, payment=payment, alert_type=AlertsLog.SHOULD_PAY, info=e)
 

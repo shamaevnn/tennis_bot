@@ -386,6 +386,7 @@ START_CHANGE_PAYMENT, CONFIRM_OR_CANCEL = range(2)
 def change_payment_data(update, context):
     year, month, _ = update.callback_query.data[len(PAYMENT_START_CHANGE):].split('|')
     text = TO_INSERT_PAYMENT_DATA_HELP_INFO
+    user, _ = User.get_user_and_created(update, context)
 
     markup = back_to_payment_groups_when_changing_payment_keyboard(
         year=year,
@@ -393,7 +394,8 @@ def change_payment_data(update, context):
         from_digit_to_month_dict=from_digit_to_month
     )
 
-    update.message.reply_text(
+    context.bot.send_message(
+        chat_id=user.id,
         text=text,
         reply_markup=markup
     )
@@ -402,6 +404,7 @@ def change_payment_data(update, context):
 
 
 def get_id_amount(update, context):
+    user, _ = User.get_user_and_created(update, context)
     try:
         payment_id, amount = update.message.text.split(' ')
         payment_id = int(payment_id)
@@ -416,7 +419,8 @@ def get_id_amount(update, context):
             payment_id=payment_id,
             amount=amount
         )
-        update.message.reply_text(
+        context.bot.send_message(
+            chat_id=user.id,
             text=text,
             reply_markup=markup,
             parse_mode='HTML'
@@ -424,13 +428,15 @@ def get_id_amount(update, context):
 
     except ValueError:
         text = ERROR_INCORRECT_ID_OR_MONEY
-        update.message.reply_text(
+        context.bot.send_message(
+            chat_id=user.id,
             text=text
         )
 
     except ObjectDoesNotExist:
         text = NO_SUCH_OBJECT_IN_DATABASE
-        update.message.reply_text(
+        context.bot.send_message(
+            chat_id=user.id,
             text=text
         )
 

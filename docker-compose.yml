@@ -13,7 +13,7 @@ services:
     ports:
       - 8000:8000
     environment:
-      - DJANGO_DEBUG='True'
+      - DJANGO_DEBUG=True
     env_file:
       - ./.env
     depends_on:

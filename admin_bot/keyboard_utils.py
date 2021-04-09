@@ -142,8 +142,7 @@ def construct_menu_groups(groups, button_text):
 
 def yes_no_permission4ind_train_keyboard(user_id, tr_day_id):
     buttons = [[
-        InlineKeyboardButton(YES, callback_data=f"{PERMISSION_FOR_IND_TRAIN}yes|{user_id}|{tr_day_id}")
-    ], [
+        InlineKeyboardButton(YES, callback_data=f"{PERMISSION_FOR_IND_TRAIN}yes|{user_id}|{tr_day_id}"),
         InlineKeyboardButton(NO, callback_data=f"{PERMISSION_FOR_IND_TRAIN}no|{user_id}|{tr_day_id}")
     ]]
 

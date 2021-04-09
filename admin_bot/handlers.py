@@ -28,13 +28,10 @@ from datetime import date, datetime, timedelta
 def permission_for_ind_train(update, context):
     permission, user_id, tr_day_id = update.callback_query.data[len(PERMISSION_FOR_IND_TRAIN):].split('|')
 
-    tennis_bot = telegram.Bot(TELEGRAM_TOKEN)
-
     player = User.objects.get(id=user_id)
-
     tr_day = GroupTrainingDay.objects.filter(id=tr_day_id)
 
-    if tr_day.count():
+    if tr_day.exists():
         tr_day = tr_day.first()
         time_tlg, _, _, date_tlg, _, _, _ = get_time_info_from_tr_day(tr_day)
         markup = None
@@ -61,6 +58,7 @@ def permission_for_ind_train(update, context):
 
             tr_day.delete()
 
+        tennis_bot = telegram.Bot(TELEGRAM_TOKEN)
         tennis_bot.send_message(
             player.id,
             user_text,

@@ -135,8 +135,13 @@ def create_tr_days_for_future(instance):
     for _ in range(period):
         date += timedelta(days=7)
         dates.append(date)
-    instances = [GroupTrainingDay(group=instance.group, date=dat, start_time=instance.start_time,
-                                  duration=instance.duration) for dat in dates]
+    instances = [GroupTrainingDay(
+        group=instance.group,
+        date=dat,
+        start_time=instance.start_time,
+        duration=instance.duration,
+        is_individual=instance.is_individual
+    ) for dat in dates]
     GroupTrainingDay.objects.bulk_create(instances)
 
 

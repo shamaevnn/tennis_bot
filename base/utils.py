@@ -25,8 +25,7 @@ def send_message(user_id, text, reply_markup=None, tg_token=TELEGRAM_TOKEN, pars
         if not DEBUG:
             if reply_markup is not None:
                 if reply_markup.get('inline_keyboard'):
-                    reply_markup = InlineKeyboardMarkup([[InlineKeyboardButton(text=button['text'],
-                                                                               callback_data=button['callback_data'])
+                    reply_markup = InlineKeyboardMarkup([[InlineKeyboardButton(**button)
                                                           for button in reply_markup.get('inline_keyboard')[0]]])
 
         m = bot.send_message(
@@ -62,8 +61,6 @@ def clear_broadcast_messages(user_ids, message, reply_markup=None, tg_token=TELE
             parse_mode=parse_mode
         )
     else:
-        if reply_markup:
-            print(reply_markup.to_dict())
         broadcast_message.delay(
             user_ids=user_ids,
             message=message,

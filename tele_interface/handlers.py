@@ -4,7 +4,6 @@ from telegram.ext import ConversationHandler
 
 from admin_bot.keyboard_utils import yes_no_permission4ind_train_keyboard, go_to_site_set_up_personal_data
 from admin_bot.static_text import NEW_CLIENT_HAS_COME
-from base.tasks import broadcast_message
 from tennis_bot.settings import TARIF_ARBITRARY, TARIF_GROUP, TARIF_PAYMENT_ADD_LESSON
 from .utils import *
 from .keyboard_utils import *
@@ -99,12 +98,13 @@ def user_main_info(update, context):
     user_payment = Payment.objects.filter(player=user, player__status=User.STATUS_TRAINING, fact_amount=0,
                                           year=today_date.year - 2020, month=today_date.month)
 
-    if user_payment.exists():
-        payment_status = f'{NO_PAYMENT_BUTTON}\n'
-    elif user.status != User.STATUS_TRAINING:
-        payment_status = ''
+    if user.status == User.STATUS_TRAINING:
+        if user_payment.exists():
+            payment_status = f'{NO_PAYMENT_BUTTON}\n'
+        else:
+            payment_status = f'{SUCCESS_PAYMENT}\n'
     else:
-        payment_status = f'{SUCCESS_PAYMENT}\n'
+        payment_status = ''
 
     intro = f'В данный момент ты {from_user_to_intro[user.status]}\n\n'
 

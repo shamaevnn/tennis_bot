@@ -91,7 +91,7 @@ def send_alert_about_coming_train():
                 AlertsLog.objects.create(is_sent=True, player=player, tr_day=tr_day, alert_type=AlertsLog.COMING_TRAIN)
             except (telegram.error.Unauthorized, telegram.error.BadRequest) as e:
                 AlertsLog.objects.create(is_sent=False, player=player, tr_day=tr_day, alert_type=AlertsLog.COMING_TRAIN,
-                                         info=e + '\n\n' + photo_url)
+                                         info=str(e) + '\n\n' + photo_url)
 
 
 @app.task(ignore_result=True)
@@ -118,5 +118,5 @@ def send_alert_about_payment():
                              text)
             AlertsLog.objects.create(is_sent=True, payment=payment, alert_type=AlertsLog.SHOULD_PAY)
         except (telegram.error.Unauthorized, telegram.error.BadRequest) as e:
-            AlertsLog.objects.create(is_sent=False, payment=payment, alert_type=AlertsLog.SHOULD_PAY, info=e)
+            AlertsLog.objects.create(is_sent=False, payment=payment, alert_type=AlertsLog.SHOULD_PAY, info=str(e))
 

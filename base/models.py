@@ -1,5 +1,7 @@
 import calendar
 import re
+
+import telegram
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
@@ -16,7 +18,8 @@ from django.dispatch import receiver
 
 from base.utils import send_alert_about_changing_tr_day_status
 from tele_interface.static_text import *
-from tennis_bot.settings import TARIF_ARBITRARY, TARIF_GROUP, TARIF_IND, TARIF_SECTION, TARIF_FEW, DEBUG
+from tennis_bot.settings import TARIF_ARBITRARY, TARIF_GROUP, TARIF_IND, TARIF_SECTION, TARIF_FEW, DEBUG, \
+    ADMIN_TELEGRAM_TOKEN, TELEGRAM_TOKEN
 
 
 class ModelwithTimeManager(models.Manager):
@@ -412,6 +415,29 @@ class AlertsLog(models.Model):
 
     def __str__(self):
         return f"{self.player, self.tr_day}"
+
+
+class Photo(models.Model):
+    url = models.TextField(null=True, blank=True, verbose_name='Ссылка на картинку')
+    telegram_id = models.CharField(max_length=256, null=True, blank=True, verbose_name='id картинки на сервере телеграма')
+    text = models.TextField(null=True, blank=True, verbose_name='Текстовое описание')
+
+    class Meta:
+        verbose_name = 'фотография'
+        verbose_name_plural = 'фотографии'
+
+    def check_if_telegram_id_is_present(self):
+        return True if self.telegram_id else False
+
+    def save_telegram_id(self, tg_token=TELEGRAM_TOKEN):
+        bot = telegram.Bot(tg_token)
+        photo_message = bot.send_photo(
+            350490234,
+            photo=self.url,
+            disable_notification=True
+        ).to_dict()
+        self.telegram_id = photo_message['photo'][-1]['file_id']
+        self.save()
 
 
 """раздел с сигналами, в отедльном файле что-то не пошло"""

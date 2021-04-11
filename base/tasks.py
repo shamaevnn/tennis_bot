@@ -9,7 +9,7 @@ import telegram
 from tennis_bot.celery import app
 from celery.utils.log import get_task_logger
 from django.db.models import ExpressionWrapper, F, DurationField
-from base.models import AlertsLog, GroupTrainingDay, Payment, User
+from base.models import AlertsLog, GroupTrainingDay, Payment, User, Photo
 from base.utils import moscow_datetime, get_time_info_from_tr_day, send_message
 from datetime import datetime, timedelta
 from tennis_bot.settings import TELEGRAM_TOKEN
@@ -65,6 +65,8 @@ def send_alert_about_coming_train():
         id__in=alert_log_tr_days
     ).distinct()
 
+    photo_ids = list(Photo.objects.values_list('id', flat=True))
+
     for tr_day in tr_days:
         group_members = tr_day.group.users.all()
         visitors = tr_day.visitors.all()
@@ -73,25 +75,27 @@ def send_alert_about_coming_train():
 
         bot = telegram.Bot(TELEGRAM_TOKEN)
         for player in players:
-            alert_dict = random.choice(ALERT_TEXTS)
-            text_alert = list(alert_dict.keys())[0]
-            photo_url = alert_dict[text_alert]
+            photo_id = random.choice(photo_ids)
+            photo = Photo.objects.get(id=photo_id)
+            telegram_id_exists = photo.check_if_telegram_id_is_present()
+            if not telegram_id_exists:
+                photo.save_telegram_id()
 
             time_tlg, _, _, date_tlg, day_of_week, _, _ = get_time_info_from_tr_day(tr_day)
             dttm_train_info = f'📅Дата: <b>{date_tlg} ({day_of_week})</b>\n' \
                               f'⏰Время: <b>{time_tlg}</b>\n\n'
 
-            text_alert += dttm_train_info
+            text_alert = f'{photo.text}\n{dttm_train_info}'
 
             try:
                 bot.send_photo(player.id,
-                               photo=photo_url,
+                               photo=photo.url,
                                caption=text_alert,
                                parse_mode='HTML')
                 AlertsLog.objects.create(is_sent=True, player=player, tr_day=tr_day, alert_type=AlertsLog.COMING_TRAIN)
             except (telegram.error.Unauthorized, telegram.error.BadRequest) as e:
                 AlertsLog.objects.create(is_sent=False, player=player, tr_day=tr_day, alert_type=AlertsLog.COMING_TRAIN,
-                                         info=str(e) + '\n\n' + photo_url)
+                                         info=str(e) + '\n\n' + photo.url)
 
 
 @app.task(ignore_result=True)

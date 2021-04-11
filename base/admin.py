@@ -9,6 +9,7 @@ from django.contrib.admin import SimpleListFilter
 from django.core.exceptions import ValidationError
 from django import forms
 from django.shortcuts import redirect
+from django.utils.html import format_html
 
 
 class UserTabularForm(forms.ModelForm):
@@ -158,3 +159,16 @@ class PaymentAdmin(admin.ModelAdmin):
     list_filter = ('year', 'month', 'player')
     search_fields = ('player__first_name', 'player__last_name')
     readonly_fields = ('theory_amount', 'n_fact_visiting')
+
+
+@admin.register(Photo)
+class PhotoAdmin(admin.ModelAdmin):
+    list_display = ('pk', 'show_url', 'thumb')
+    readonly_fields = ('telegram_id',)
+
+    def show_url(self, obj):
+        return format_html('<a href="{}">{}</a>'.format(obj.url, obj.text))
+    show_url.allow_tags = True
+
+    def thumb(self, obj):
+        return format_html("<img src='{}' width='40' height='40'/>".format(obj.url))

@@ -89,13 +89,13 @@ def send_alert_about_coming_train():
 
             try:
                 bot.send_photo(player.id,
-                               photo=photo.url,
+                               photo=photo.telegram_id,
                                caption=text_alert,
                                parse_mode='HTML')
                 AlertsLog.objects.create(is_sent=True, player=player, tr_day=tr_day, alert_type=AlertsLog.COMING_TRAIN)
             except (telegram.error.Unauthorized, telegram.error.BadRequest) as e:
                 AlertsLog.objects.create(is_sent=False, player=player, tr_day=tr_day, alert_type=AlertsLog.COMING_TRAIN,
-                                         info=str(e) + '\n\n' + photo.url)
+                                         info=str(e) + '\n\n' + photo.telegram_id)
 
 
 @app.task(ignore_result=True)

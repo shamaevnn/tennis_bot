@@ -158,7 +158,11 @@ GROUP_IDS, TEXT_TO_SEND = 2, 3
 def select_groups_where_should_send(update, context):
     text = WHOM_TO_SEND_TO
 
-    banda_groups = TrainingGroup.objects.filter(status=TrainingGroup.STATUS_GROUP, max_players__gt=1).order_by('order')
+    banda_groups = TrainingGroup.objects.filter(
+        status=TrainingGroup.STATUS_GROUP,
+        max_players__gt=1,
+        name__iregex=r'БАНДА',
+    ).order_by('order')
 
     if update.callback_query:
         group_ids = update.callback_query.data[len(SEND_MESSAGE):].split("|")
@@ -197,6 +201,11 @@ def text_to_send(update, context):
             players = User.objects.filter(status__in=[User.STATUS_TRAINING,
                                                       User.STATUS_ARBITRARY,
                                                       User.STATUS_IND_TRAIN])
+        elif -3 in list_of_group_ids:
+            # pressed 'send to free schedule'
+            text = WILL_SEND_TO_FREE_SCHEDULE
+            players = User.objects.filter(status=User.STATUS_ARBITRARY)
+
         else:
             text = WILL_SEND_TO_THE_FOLLOWING_GROUPS
 
@@ -222,6 +231,9 @@ def receive_text_and_send(update, context):
     text = update.message.text
 
     if text == CANCEL_COMMAND:
+        update.message.reply_text(
+            text=UP_TO_YOU
+        )
         return ConversationHandler.END
 
     else:

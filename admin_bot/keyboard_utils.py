@@ -59,10 +59,21 @@ def construct_menu_groups_for_send_message(groups, button_text):
         button_text=TO_ALL
     )
 
+    free_schedule, button_text = handle_selecting_groups_to_send_message_to(
+        ids_counter=ids_counter,
+        group_ids=group_ids,
+        group_id='-3',
+        button_data_text=button_text,
+        button_text=TO_FREE_SCHEDULE
+    )
+
     buttons.append([
         InlineKeyboardButton(all_groups_text, callback_data=f'{button_text}|{0}'),
         InlineKeyboardButton(all_text, callback_data=f'{button_text}|{-2}')]
     )
+    buttons.append([
+        InlineKeyboardButton(free_schedule, callback_data=f'{button_text}|{-3}')
+    ])
     buttons.append([InlineKeyboardButton(CONFIRM, callback_data=f'{button_text}|{-1}')])
 
     return InlineKeyboardMarkup(buttons)

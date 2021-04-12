@@ -18,8 +18,7 @@ from django.dispatch import receiver
 
 from base.utils import send_alert_about_changing_tr_day_status
 from tele_interface.static_text import *
-from tennis_bot.settings import TARIF_ARBITRARY, TARIF_GROUP, TARIF_IND, TARIF_SECTION, TARIF_FEW, DEBUG, \
-    ADMIN_TELEGRAM_TOKEN, TELEGRAM_TOKEN
+from tennis_bot.settings import TARIF_ARBITRARY, TARIF_GROUP, TARIF_IND, TARIF_SECTION, TARIF_FEW, TELEGRAM_TOKEN, DEBUG
 
 
 class ModelwithTimeManager(models.Manager):
@@ -101,6 +100,11 @@ class User(AbstractUser):
                     u.save()
 
         return u, created
+
+    def save(self, *args, **kwargs):
+        if not self.username and DEBUG:
+            self.username = self.id
+        super(User, self).save()
 
 
 class UserForm(forms.ModelForm):

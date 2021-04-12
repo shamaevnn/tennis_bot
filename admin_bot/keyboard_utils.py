@@ -129,7 +129,7 @@ def construct_menu_groups(groups, button_text):
     if len(row):
         buttons.append(row)
 
-    buttons.append([InlineKeyboardButton(REST, callback_data=f'{button_text}{0}')])
+    buttons.append([InlineKeyboardButton(HAVE_NOT_PAID, callback_data=f'{button_text}{0}')])
 
     year, month, _ = button_text[len(PAYMENT_YEAR_MONTH_GROUP):].split('|')
     buttons.append([

@@ -176,6 +176,15 @@ def handle_selecting_groups_to_send_message_to(ids_counter, group_ids, group_id,
     return text, button_data_text
 
 
+def have_not_paid_users_info(payments_values):
+    return '\n'.join(
+        (
+            f"<b>{x['id']}</b>. {x['player__last_name']} {x['player__first_name']} -- {x['n_fact_visiting']} ({x['group_name']})"
+            for x in payments_values
+        )
+    )
+
+
 def info_about_users(users, for_admin=False, payment=False):
     """
     :param payment: info about payment or not
@@ -186,10 +195,19 @@ def info_about_users(users, for_admin=False, payment=False):
     if for_admin:
         if payment:
             return '\n'.join(
-                (f"<b>{x['id']}</b>. {x['player__last_name']} {x['player__first_name']} -- {x['fact_amount']}₽,"
-                 f" {x['n_fact_visiting']}"
-                 for x in users.values('player__first_name', 'player__last_name', 'fact_amount',
-                                       'n_fact_visiting', 'id').order_by('player__last_name', 'player__first_name')))
+                (f"<b>{x['id']}</b>. {x['player__last_name']} {x['player__first_name']} -- {x['fact_amount']}₽, {x['n_fact_visiting']}"
+                    for x in users.values(
+                        'player__first_name',
+                        'player__last_name',
+                        'fact_amount',
+                        'n_fact_visiting',
+                        'id'
+                    ).order_by(
+                        'player__last_name',
+                        'player__first_name'
+                    )
+                )
+            )
         else:
             return '\n'.join(
                 (f"{i + 1}. {x['last_name']} {x['first_name']}" for i, x in enumerate(users.values('first_name',

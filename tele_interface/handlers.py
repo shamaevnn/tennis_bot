@@ -3,7 +3,7 @@ import re
 from telegram.ext import ConversationHandler
 
 from admin_bot.keyboard_utils import yes_no_permission4ind_train_keyboard, go_to_site_set_up_personal_data
-from admin_bot.static_text import NEW_CLIENT_HAS_COME
+from admin_bot.static_text import NEW_CLIENT_HAS_COME, GROUP_LEVEL_DICT
 from tennis_bot.settings import TARIF_ARBITRARY, TARIF_GROUP, TARIF_PAYMENT_ADD_LESSON
 from .utils import *
 from .keyboard_utils import *
@@ -467,10 +467,9 @@ def select_precise_group_lesson_time(update, context):
     if n_free_places <= 0 and tr_day.group.max_players < 6 and tr_day.group.available_for_additional_lessons:
         text = f'⚠️ATTENTION⚠️\n' \
                f'<b>Это занятие платное!</b>\n\n'
-    group_level = {TrainingGroup.LEVEL_ORANGE: '🟠оранжевый мяч🟠', TrainingGroup.LEVEL_GREEN: '🟢зелёный мяч🟢'}
 
     all_players = '\n'.join((f"{x['first_name']} {x['last_name']}" for x in all_players))
-    text += f'{tr_day.group.name} -- {group_level[tr_day.group.level]}\n' \
+    text += f'{tr_day.group.name} -- {GROUP_LEVEL_DICT[tr_day.group.level]}\n' \
            f'📅Дата: <b>{date_tlg} ({day_of_week})</b>\n' \
            f'⏰Время: <b>{time_tlg}</b>\n\n' \
            f'👥Присутствующие:\n{all_players}\n\n' \

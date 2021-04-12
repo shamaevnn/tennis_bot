@@ -7,7 +7,7 @@ from telegram.ext import ConversationHandler
 from django.core.exceptions import ObjectDoesNotExist
 from base.models import User, GroupTrainingDay, Payment, TrainingGroup, AlertsLog
 from base.utils import moscow_datetime, bot_edit_message, get_time_info_from_tr_day, info_about_users, \
-    clear_broadcast_messages
+    clear_broadcast_messages, have_not_paid_users_info
 from tele_interface.manage_data import PERMISSION_FOR_IND_TRAIN, SHOW_GROUPDAY_INFO, \
     CLNDR_ADMIN_VIEW_SCHEDULE, CLNDR_ACTION_BACK, CLNDR_NEXT_MONTH, CLNDR_DAY, CLNDR_IGNORE, \
     CLNDR_PREV_MONTH, PAYMENT_YEAR, PAYMENT_YEAR_MONTH, PAYMENT_YEAR_MONTH_GROUP, PAYMENT_START_CHANGE, \
@@ -221,7 +221,7 @@ def text_to_send(update, context):
 def receive_text_and_send(update, context):
     text = update.message.text
 
-    if text == CANCEL:
+    if text == CANCEL_COMMAND:
         return ConversationHandler.END
 
     else:
@@ -262,17 +262,19 @@ def show_traingroupday_info(update, context):
         visitors = f'\n{HAVE_COME_FROM_OTHERS}:\n{info_about_users(tr_day.visitors, for_admin=True)}\n' if tr_day.visitors.count() else ''
         pay_visitors = f'\n{HAVE_COME_FOR_MONEY}:\n{info_about_users(tr_day.pay_visitors, for_admin=True)}\n' if tr_day.pay_visitors.count() else ''
         absents = f'\n{ARE_ABSENT}:\n{info_about_users(tr_day.absent, for_admin=True)}\n' if tr_day.absent.count() else ''
+        group_level = f"{GROUP_LEVEL_DICT[tr_day.group.level]}\n"
     else:
         group_players = ''
         visitors = ''
         pay_visitors = ''
         absents = ''
+        group_level = ''
 
     time_tlg, _, _, date_tlg, day_of_week, _, _ = get_time_info_from_tr_day(tr_day)
 
-    general_info = f'<b>{date_tlg} ({day_of_week})\n{time_tlg}</b>' + '\n' + availability + is_individual + affiliation
-    users_info = group_name + group_players + visitors + pay_visitors + absents
-    text = general_info + users_info
+    general_info = f'<b>{date_tlg} ({day_of_week})\n{time_tlg}</b>\n{availability}{is_individual}{affiliation}'
+    users_info = f'{group_name}{group_level}{group_players}{visitors}{pay_visitors}{absents}'
+    text = f'{general_info}{users_info}'
 
     markup = back_from_show_grouptrainingday_info_keyboard(
         year=tr_day.date.year,
@@ -313,17 +315,23 @@ def month_payment(update, context):
 
     amount_for_this_month = Payment.objects.filter(year=year, month=month).aggregate(sigma=Sum('fact_amount'))
 
-    should_pay_this_month = TrainingGroup.objects.annotate(count_tr_days=Count('grouptrainingday',
-                                                                               filter=Q(
-                                                                                   grouptrainingday__is_available=True,
-                                                                                   grouptrainingday__date__month=month,
-                                                                                   grouptrainingday__date__year=int(
-                                                                                       year) + 2020),
-                                                                               distinct=True),
-                                                           count_users=Count('users', distinct=True)).filter(
-        max_players__gt=1).annotate(should_pay=ExpressionWrapper(F('count_users') *
-                                                                 F('tarif_for_one_lesson') * F('count_tr_days'),
-                                                                 output_field=IntegerField())).aggregate(sigma=Sum('should_pay'))
+    should_pay_this_month = TrainingGroup.objects.annotate(
+        count_tr_days=Count('grouptrainingday',
+                            filter=Q(
+                                grouptrainingday__is_available=True,
+                                grouptrainingday__date__month=month,
+                                grouptrainingday__date__year=int(year) + 2020),
+                            distinct=True
+                            ),
+        count_users=Count('users', distinct=True)
+    ).filter(
+        max_players__gt=1
+    ).annotate(
+        should_pay=ExpressionWrapper(
+            F('count_users') * F('tarif_for_one_lesson') * F('count_tr_days'),
+            output_field=IntegerField()
+        )
+    ).aggregate(sigma=Sum('should_pay'))
 
     text = f'{int(year) + 2020}--{from_digit_to_month[int(month)]}\n' \
            f'<b>{TOTAL_PAID}: {amount_for_this_month["sigma"] if amount_for_this_month["sigma"] else 0}</b>\n' \
@@ -341,17 +349,52 @@ def group_payment(update, context):
     year, month, group_id = update.callback_query.data[len(PAYMENT_YEAR_MONTH_GROUP):].split('|')
 
     if int(group_id) == 0:
-        title = f'{REST}\n'
-        payments = Payment.objects.filter(player__status__in=[User.STATUS_TRAINING, User.STATUS_ARBITRARY],
-                                          month=month,
-                                          year=year).exclude(player__traininggroup__name__iregex='БАНДА')
-        paid_this_month = payments.aggregate(sigma=Sum('fact_amount'))
-        n_lessons_info, should_pay, should_pay_balls, tarif_info = '', '', '', ''
+        # нажал на "не заплатили"
+        title = f'{HAVE_NOT_PAID}\n'
+
+        payments = Payment.objects.filter(
+            player__status=User.STATUS_TRAINING,
+            fact_amount=0,
+            month=month,
+            year=year
+        ).annotate(
+            group_name=F('player__traininggroup__name'),
+            group_status=F('player__traininggroup__status'),
+            group_order=F('player__traininggroup__order')
+        ).filter(
+            group_status=TrainingGroup.STATUS_GROUP
+        )
+
+        help_info = FIRST_LAST_NAME_NUMBER_OF_VISITS_GROUP if payments.exists() else NO_SUCH
+        for payment in payments:
+            payment.save()
+
+        payments_values = payments.values(
+            'player__first_name',
+            'player__last_name',
+            'n_fact_visiting',
+            'id',
+            'group_name'
+        ).order_by(
+            'group_order',
+            'player__last_name',
+            'player__first_name'
+        )
+
+        users_info = have_not_paid_users_info(payments_values)
+        n_lessons_info, should_pay, should_pay_balls, tarif_info, this_month_payment_info, payment_info = '', '', '',\
+                                                                                                   '', '', ''
     else:
         should_pay = 0
         payments = Payment.objects.filter(player__traininggroup__id=group_id, month=month, year=year)
+        for payment in payments:
+            payment.save()
+
         check_if_players_not_in_payments(group_id, payments, year, month)
+
         paid_this_month = payments.aggregate(sigma=Sum('fact_amount'))
+        this_month_payment_info = f'{TOTAL_PAID}: {paid_this_month["sigma"]}\n\n'
+
         group = TrainingGroup.objects.get(id=group_id)
         n_lessons = GroupTrainingDay.objects.filter(date__month=month, date__year=int(year)+2020, group=group,
                                                     is_available=True).count()
@@ -366,19 +409,20 @@ def group_payment(update, context):
 
         should_pay_balls = 100 * round(n_lessons / 4)
         title = f'{group.name}\n'
+        help_info = FIRST_LAST_NAME_FACT_NUMBER_OF_VISITS
 
-    for payment in payments:
-        payment.save()
+        payment_info = MUST_PAY_FOR_TRAINS_AND_BALLS.format(
+            should_pay,
+            should_pay_balls
+        )
+
+        users_info = info_about_users(payments, for_admin=True, payment=True)
 
     date_info = f'{from_digit_to_month[int(month)]} {int(year) + 2020}\n'
-    payment_info = MUST_PAY_FOR_TRAINS_AND_BALLS.format(
-        should_pay,
-        should_pay_balls
-    )
-    this_month_payment_info = f'{TOTAL_PAID}: {paid_this_month["sigma"]}\n\n'
-    text = f"{title}{date_info}{n_lessons_info}{tarif_info}{payment_info}{this_month_payment_info}" \
-           f"<b>id</b>. {FIRST_LAST_NAME_FACT_NUMBER_OF_VISITS}\n\n" \
-           f"{info_about_users(payments, for_admin=True, payment=True)}"
+
+    text = f"{title}{date_info}{n_lessons_info}{tarif_info}{payment_info}\n{this_month_payment_info}" \
+           f"<b>id</b>. {help_info}\n\n" \
+           f"{users_info}"
 
     markup = change_payment_info_keyboard(
         year=year,

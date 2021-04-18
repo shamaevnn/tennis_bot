@@ -506,76 +506,51 @@ def confirm_group_lesson(update, context):
     n_free_places = tr_day.group.max_players - tr_day.visitors.distinct().count() + \
                     tr_day.absent.distinct().count() - tr_day.group.users.distinct().count()
     admit_message_text = ''
-    if user in tr_day.absent.all():
-        tr_day.absent.remove(user)
-        text = f'Сначала отменять, а потом записываться, мда 🤦🏻‍♂️🥴. Вот почему я скоро буду управлять кожаными ' \
-               f'мешками.\n' \
-               f'Ладно, записал тебя на <b>{date_tlg} ({day_of_week})</b>\n' \
-               f'Время: <b>{time_tlg}</b>'
+
+    if n_free_places > 0:
+        tr_day.visitors.add(user)
+        text = f'Записал тебя на тренировку.\n' \
+               f'{DATE_INFO.format(date_tlg, day_of_week, time_tlg)}'
         markup = None
 
-        if user.bonus_lesson > 0:
+        if user.bonus_lesson > 0 and user.status == User.STATUS_TRAINING:
+            admit_message_text = f'{user.first_name} {user.last_name} записался на групповую тренировку за отыгрыш.\n' \
+                                 f'{DATE_INFO.format(date_tlg, day_of_week, time_tlg)}'
             user.bonus_lesson -= 1
             user.save()
-
         else:
             admit_message_text = f'⚠️ATTENTION⚠️\n' \
                                  f'{user.first_name} {user.last_name} записался на <b>{date_tlg} ({day_of_week})</b>\n' \
                                  f'Время: <b>{time_tlg}</b>\n' \
                                  f'<b>Не за счет отыгрышей, не забудь взять с него денюжку.</b>'
     else:
-        if user not in tr_day.group.users.all():
-            if n_free_places > 0:
-                tr_day.visitors.add(user)
-
+        if tr_day.group.available_for_additional_lessons and tr_day.group.max_players < 6:
+            tarif = TARIF_ARBITRARY if user.status == User.STATUS_ARBITRARY else TARIF_GROUP
+            if user.bonus_lesson == 0:
+                tr_day.pay_visitors.add(user)
                 text = f'Записал тебя на <b>{date_tlg} ({day_of_week})</b>\n' \
-                       f'Время: <b>{time_tlg}</b>'
-
+                       f'Время: <b>{time_tlg}</b>\n' \
+                       f'⚠️ATTENTION⚠️\n' \
+                       f'Не забудь заплатить <b>{tarif}₽</b>'
+                admit_message_text = f'⚠️ATTENTION⚠️\n' \
+                                     f'{user.first_name} {user.last_name} записался на <b>{date_tlg} ({day_of_week})</b>\n' \
+                                     f'Время: <b>{time_tlg}</b>\n' \
+                                     f'<b>Не за счет отыгрышей, не забудь взять с него {tarif}₽.</b>'
                 markup = None
-
-                if user.bonus_lesson > 0 and user.status == User.STATUS_TRAINING:
-                    user.bonus_lesson -= 1
-                    user.save()
-
-                else:
-                    admit_message_text = f'⚠️ATTENTION⚠️\n' \
-                                         f'{user.first_name} {user.last_name} записался на <b>{date_tlg} ({day_of_week})</b>\n' \
-                                         f'Время: <b>{time_tlg}</b>\n' \
-                                         f'<b>Не за счет отыгрышей, не забудь взять с него денюжку.</b>'
-
             else:
-                if tr_day.group.available_for_additional_lessons and tr_day.group.max_players < 6:
-                    tarif = TARIF_ARBITRARY if user.status == User.STATUS_ARBITRARY else TARIF_GROUP
-                    if user.bonus_lesson == 0:
-                        tr_day.pay_visitors.add(user)
-                        text = f'Записал тебя на <b>{date_tlg} ({day_of_week})</b>\n' \
-                               f'Время: <b>{time_tlg}</b>\n' \
-                               f'⚠️ATTENTION⚠️\n' \
-                               f'Не забудь заплатить <b>{tarif}₽</b>'
-
-                        admit_message_text = f'⚠️ATTENTION⚠️\n' \
-                                             f'{user.first_name} {user.last_name} записался на <b>{date_tlg} ({day_of_week})</b>\n' \
-                                             f'Время: <b>{time_tlg}</b>\n' \
-                                             f'<b>Не за счет отыгрышей, не забудь взять с него {tarif}₽.</b>'
-
-                        markup = None
-                    else:
-                        text = "Выбери тип оплаты"
-                        markup = choose_type_of_payment_for_group_lesson_keyboard(
-                            payment_add_lesson=TARIF_PAYMENT_ADD_LESSON,
-                            tr_day_id=tr_day_id,
-                            tarif=tarif,
-                        )
-                else:
-                    text = 'Упс, похоже уже не осталось свободных мест на это время, выбери другое.'
-                    markup = back_to_group_times_when_no_left_keyboard(
-                        year=tr_day.date.year,
-                        month=tr_day.date.month,
-                        day=tr_day.date.day
-                    )
-        else:  # если пытается записаться в свою группу
-            text = 'Ну ты чего?🤕 \nЭто же твоя группа, выбери другое время.'
-            markup = back_to_group_when_trying_to_enter_his_own_group(tr_day_id=tr_day_id)
+                text = "Выбери тип оплаты"
+                markup = choose_type_of_payment_for_group_lesson_keyboard(
+                    payment_add_lesson=TARIF_PAYMENT_ADD_LESSON,
+                    tr_day_id=tr_day_id,
+                    tarif=tarif,
+                )
+        else:
+            text = 'Упс, похоже уже не осталось свободных мест на это время, выбери другое.'
+            markup = back_to_group_times_when_no_left_keyboard(
+                year=tr_day.date.year,
+                month=tr_day.date.month,
+                day=tr_day.date.day
+            )
 
     bot_edit_message(context.bot, text, update, markup)
 

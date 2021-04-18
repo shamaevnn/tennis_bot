@@ -24,7 +24,7 @@ from tele_interface.handlers import (
     confirm_group_lesson,
     skip_lesson,
     get_help,
-    inline_calendar_handler, skip_lesson_whem_geq_2, choose_type_of_payment_for_pay_visiting, INSERT_FIO,
+    inline_calendar_handler, skip_lesson_when_geq_2, choose_type_of_payment_for_pay_visiting, INSERT_FIO,
     get_first_last_name, INSERT_PHONE_NUMBER, get_phone_number, )
 from tele_interface.commands import start, cancel
 from tennis_bot.celery import app
@@ -76,7 +76,7 @@ def setup_dispatcher(dp):
                                         pattern='^{}'.format(CONFIRM_GROUP_LESSON)))
     dp.add_handler(CallbackQueryHandler(skip_lesson,
                                         pattern='^{}'.format(SHOW_INFO_ABOUT_SKIPPING_DAY)))
-    dp.add_handler(CallbackQueryHandler(skip_lesson_whem_geq_2,
+    dp.add_handler(CallbackQueryHandler(skip_lesson_when_geq_2,
                                         pattern='^{}'.format(SELECT_SKIP_TIME_BUTTON)))
     dp.add_handler(CallbackQueryHandler(choose_type_of_payment_for_pay_visiting,
                                         pattern='^{}'.format(PAYMENT_VISITING)))

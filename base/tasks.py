@@ -13,7 +13,7 @@ from base.models import AlertsLog, GroupTrainingDay, Payment, User, Photo
 from base.utils import moscow_datetime, get_time_info_from_tr_day, send_message
 from datetime import datetime, timedelta
 from tennis_bot.settings import TELEGRAM_TOKEN
-from tele_interface.static_text import ALERT_TEXTS, from_digit_to_month, MY_DATA_BUTTON
+from tele_interface.static_text import from_digit_to_month, MY_DATA_BUTTON
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'tennis_bot.settings')
 django.setup()

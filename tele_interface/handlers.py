@@ -3,7 +3,7 @@ import re
 from telegram.ext import ConversationHandler
 
 from admin_bot.keyboard_utils import yes_no_permission4ind_train_keyboard, go_to_site_set_up_personal_data
-from admin_bot.static_text import NEW_CLIENT_HAS_COME, GROUP_LEVEL_DICT
+from admin_bot.static_text import NEW_CLIENT_HAS_COME, GROUP_LEVEL_DICT, DATE_INFO
 from tennis_bot.settings import TARIF_ARBITRARY, TARIF_GROUP, TARIF_PAYMENT_ADD_LESSON
 from .utils import *
 from .keyboard_utils import *
@@ -151,7 +151,7 @@ def process_calendar_selection(update, context):
     curr = datetime(int(year), int(month), 1)
 
     if purpose == CLNDR_ACTION_SKIP:
-        highlight_dates = select_tr_days_for_skipping(user)
+        highlight_dates = list(select_tr_days_for_skipping(user).values_list('date', flat=True))
     elif purpose == CLNDR_ACTION_TAKE_GROUP:
         training_days = get_potential_days_for_group_training(user)
         highlight_dates = list(training_days.values_list('date', flat=True))
@@ -160,6 +160,8 @@ def process_calendar_selection(update, context):
 
     if action == CLNDR_IGNORE:
         context.bot.answer_callback_query(callback_query_id=query.id)
+    elif action == CLNDR_CHANGE_FREE_OR_FOR_MONEY:
+        pass
     elif action == CLNDR_DAY:
         bot_edit_message(context.bot, query.message.text, update)
         return True, purpose, datetime(int(year), int(month), int(day))
@@ -200,15 +202,15 @@ def inline_calendar_handler(update, context):
                 text = 'Тренировка уже прошла, ее нельзя отменить.\n' \
                        '✅ -- дни, доступные для отмены.'
                 markup = create_calendar(CLNDR_ACTION_SKIP, date_my.year, date_my.month,
-                                         select_tr_days_for_skipping(user))
+                                         list(select_tr_days_for_skipping(user).values_list('date', flat=True)))
             else:
-                training_days = GroupTrainingDay.objects.filter(Q(group__users__in=[user]) |
-                                                                Q(visitors__in=[user]) |
-                                                                Q(pay_visitors__in=[user]),
-                                                                date=date_my).exclude(absent__in=[user]).select_related(
-                    'group').order_by(
-                    'id').distinct('id')
-                if training_days.count():
+                training_days = GroupTrainingDay.objects.filter(
+                    Q(group__users__in=[user]) |
+                    Q(visitors__in=[user]) |
+                    Q(pay_visitors__in=[user]),
+                    date=date_my
+                ).exclude(absent__in=[user]).select_related('group').order_by('id').distinct('id')
+                if training_days.exists():
                     if training_days.count() > 1:
                         markup = construct_menu_skipping_much_lesson(training_days)
                         text = 'Выбери время'
@@ -222,7 +224,8 @@ def inline_calendar_handler(update, context):
                 else:
                     text = 'Нет тренировки в этот день, выбери другой.\n' \
                            '✅ -- дни, доступные для отмены.'
-                    markup = create_calendar(purpose, date_my.year, date_my.month, select_tr_days_for_skipping(user))
+                    markup = create_calendar(purpose, date_my.year, date_my.month,
+                                             list(select_tr_days_for_skipping(user).values_list('date', flat=True)))
 
         elif purpose == CLNDR_ACTION_TAKE_GROUP:
             training_days = get_potential_days_for_group_training(user)
@@ -233,7 +236,7 @@ def inline_calendar_handler(update, context):
                 markup = create_calendar(purpose, date_my.year, date_my.month, highlight_dates)
             else:
                 training_days = training_days.filter(date=date_comparison)
-                if training_days.count():
+                if training_days.exists():
                     buttons = construct_time_menu_for_group_lesson(SELECT_PRECISE_GROUP_TIME, training_days, date_my,
                                                                    purpose)
 
@@ -253,7 +256,6 @@ def inline_calendar_handler(update, context):
                 text = 'Это уже в прошлом, давай не будем об этом.'
                 markup = create_calendar(f'{CLNDR_ACTION_TAKE_IND}{duration}', date_my.year, date_my.month)
             else:
-
                 poss_time_for_train = []
                 if date_time_dict.get(date_comparison):
                     for i in range(len(date_time_dict[date_comparison]) - int(float(duration) * 2)):
@@ -277,20 +279,26 @@ def inline_calendar_handler(update, context):
 def skip_lesson_main_menu_button(update, context):
     user, _ = User.get_user_and_created(update, context)
     available_grouptraining_dates = select_tr_days_for_skipping(user)
-    if available_grouptraining_dates:
-        context.bot.send_message(user.id,
-                         'Выбери дату тренировки для отмены.\n'
-                         '✅ -- дни, доступные для отмены.',
-                         reply_markup=create_calendar(CLNDR_ACTION_SKIP,
-                                                      dates_to_highlight=available_grouptraining_dates))
+    if available_grouptraining_dates.exists():
+        context.bot.send_message(
+            user.id,
+            'Выбери дату тренировки для отмены.\n'
+            '✅ -- дни, доступные для отмены.',
+            reply_markup=create_calendar(CLNDR_ACTION_SKIP,
+                                         dates_to_highlight=list(
+                                             available_grouptraining_dates.values_list('date', flat=True))
+                                         )
+        )
     else:
-        context.bot.send_message(user.id,
-                         'Пока что нечего пропускать.',
-                         reply_markup=construct_main_menu(user, user.status))
+        context.bot.send_message(
+            user.id,
+            'Пока что нечего пропускать.',
+            reply_markup=construct_main_menu(user, user.status)
+        )
 
 
 @check_status_decor
-def skip_lesson_whem_geq_2(update, context):
+def skip_lesson_when_geq_2(update, context):
     tr_day_id = update.callback_query.data[len(SELECT_SKIP_TIME_BUTTON):]
     training_day = GroupTrainingDay.objects.get(id=tr_day_id)
 
@@ -307,6 +315,8 @@ def skip_lesson(update, context):
     training_day = GroupTrainingDay.objects.get(id=tr_day_id)
 
     time_tlg, _, _, date_tlg, day_of_week, _, _ = get_time_info_from_tr_day(training_day)
+
+    admins = User.objects.filter(is_superuser=True, is_blocked=False)
     if not training_day.is_available:
         text = "{} в {} ❌нет тренировки❌, т.к. она отменена тренером, поэтому ее нельзя пропустить.".format(date_tlg, time_tlg)
         bot_edit_message(context.bot, text, update)
@@ -322,34 +332,36 @@ def skip_lesson(update, context):
 
             if training_day.is_individual:
                 training_day.delete()
-                admins = User.objects.filter(is_superuser=True, is_blocked=False)
 
                 admin_text = f'⚠️ATTENTION⚠️\n' \
                              f'{user.first_name} {user.last_name} отменил индивидуальную тренировку\n' \
-                             f'📅Дата: <b>{date_tlg} ({day_of_week})</b>\n' \
-                             f'⏰Время: <b>{time_tlg}</b>\n\n'
-
-                clear_broadcast_messages(
-                    user_ids=list(admins.values_list('id', flat=True)),
-                    message=admin_text,
-                    reply_markup=None,
-                    tg_token=ADMIN_TELEGRAM_TOKEN,
-                )
-
+                             f'{DATE_INFO.format(date_tlg, day_of_week, time_tlg)}'
             else:
                 # проверяем его ли эта группа или он удаляется из занятия другой группы
+                # убавляем сначала отыгрыш у тех, кто ходит в свободном графике, а потом прибавляем
                 if user in training_day.visitors.all():
                     training_day.visitors.remove(user)
+                    admin_text = f'{user.first_name} {user.last_name} пропускает тренировку за <b>отыгрыш</b>\n' \
+                                 f'{DATE_INFO.format(date_tlg, day_of_week, time_tlg)}'
                     if user.status == User.STATUS_ARBITRARY:
                         user.bonus_lesson -= 1
-                        user.save()
                 elif user in training_day.pay_visitors.all():
                     training_day.pay_visitors.remove(user)
+                    admin_text = f'{user.first_name} {user.last_name} пропускает тренировку за <b>оплату</b>\n' \
+                                 f'{DATE_INFO.format(date_tlg, day_of_week, time_tlg)}'
                     user.bonus_lesson -= 1
-                    user.save()
-                    # сначала убавляем, потом прибавляем
+
                 else:
                     training_day.absent.add(user)
+                    admin_text = f'{user.first_name} {user.last_name} пропускает тренировку в <b>группе</b>\n' \
+                                 f'{DATE_INFO.format(date_tlg, day_of_week, time_tlg)}'
+
+            clear_broadcast_messages(
+                user_ids=list(admins.values_list('id', flat=True)),
+                message=admin_text,
+                reply_markup=None,
+                tg_token=ADMIN_TELEGRAM_TOKEN,
+            )
 
             user.bonus_lesson += 1
             user.save()
@@ -470,10 +482,9 @@ def select_precise_group_lesson_time(update, context):
 
     all_players = '\n'.join((f"{x['first_name']} {x['last_name']}" for x in all_players))
     text += f'{tr_day.group.name} -- {GROUP_LEVEL_DICT[tr_day.group.level]}\n' \
-           f'📅Дата: <b>{date_tlg} ({day_of_week})</b>\n' \
-           f'⏰Время: <b>{time_tlg}</b>\n\n' \
-           f'👥Присутствующие:\n{all_players}\n\n' \
-           f'Свободные места: {n_free_places if n_free_places > 0 else "есть за деньги"}'
+            f'{DATE_INFO.format(date_tlg, day_of_week, time_tlg)}' \
+            f'👥Присутствующие:\n{all_players}\n\n' \
+            f'Свободные места: {n_free_places if n_free_places > 0 else "есть за деньги"}'
 
     markup = take_lesson_back_keyboard(
         tr_day_id=tr_day_id,

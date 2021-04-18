@@ -160,8 +160,8 @@ def process_calendar_selection(update, context):
 
     if action == CLNDR_IGNORE:
         context.bot.answer_callback_query(callback_query_id=query.id)
-    elif action == CLNDR_CHANGE_FREE_OR_FOR_MONEY:
-        pass
+    # elif action == CLNDR_CHANGE_FREE_OR_FOR_MONEY:
+    #     pass
     elif action == CLNDR_DAY:
         bot_edit_message(context.bot, query.message.text, update)
         return True, purpose, datetime(int(year), int(month), int(day))

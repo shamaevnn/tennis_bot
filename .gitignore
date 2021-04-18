@@ -6,4 +6,4 @@ tennis_bot/static
 /venv
 .env
 
-test.sql
+sql/

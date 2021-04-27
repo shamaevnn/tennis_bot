@@ -109,7 +109,7 @@ class GroupTrainingDayAdmin(admin.ModelAdmin):
     form = GroupTrainingDayForm
     list_display = ('group', 'date', 'is_available', 'start_time', 'duration',)
     list_filter = ('group', 'date', 'tr_day_status')
-    filter_horizontal = ('visitors', 'pay_visitors', 'absent')
+    filter_horizontal = ('visitors', 'pay_visitors', 'pay_bonus_visitors', 'absent')
     date_hierarchy = 'date'
     actions = [make_trday_unavailable, make_trday_available]
     ordering = ['date', 'start_time']
@@ -125,11 +125,20 @@ class GroupTrainingDayAdmin(admin.ModelAdmin):
         if db_field.name == 'absent' and hasattr(request, 'report_obj'):
             kwargs['queryset'] = User.objects.filter(traininggroup__id=request.report_obj.group.id)
         if db_field.name == 'visitors' and hasattr(request, 'report_obj'):
-            kwargs['queryset'] = User.objects.exclude(Q(traininggroup__id=request.report_obj.group.id) |
-                                                      Q(id__in=request.report_obj.pay_visitors.values('id')))
+            kwargs['queryset'] = User.objects.exclude(
+                Q(traininggroup__id=request.report_obj.group.id) |
+                Q(id__in=request.report_obj.pay_visitors.all().union(request.report_obj.pay_bonus_visitors.all()).values('id'))
+            )
         if db_field.name == 'pay_visitors' and hasattr(request, 'report_obj'):
-            kwargs['queryset'] = User.objects.exclude(Q(traininggroup__id=request.report_obj.group.id) |
-                                                      Q(id__in=request.report_obj.visitors.values('id')))
+            kwargs['queryset'] = User.objects.exclude(
+                Q(traininggroup__id=request.report_obj.group.id) |
+                Q(id__in=request.report_obj.visitors.all().union(request.report_obj.pay_bonus_visitors.all()).values('id'))
+            )
+        if db_field.name == 'pay_bonus_visitors' and hasattr(request, 'report_obj'):
+            kwargs['queryset'] = User.objects.exclude(
+                Q(traininggroup__id=request.report_obj.group.id) |
+                Q(id__in=request.report_obj.visitors.all().union(request.report_obj.pay_visitors.all()).values('id')))
+
         return super(GroupTrainingDayAdmin, self).formfield_for_manytomany(db_field, request, **kwargs)
 
     def changelist_view(self, request, extra_context=None):

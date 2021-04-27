@@ -10,7 +10,7 @@ from tennis_bot.celery import app
 from celery.utils.log import get_task_logger
 from django.db.models import ExpressionWrapper, F, DurationField
 from base.models import AlertsLog, GroupTrainingDay, Payment, User, Photo
-from base.utils import moscow_datetime, get_time_info_from_tr_day, send_message
+from base.utils import moscow_datetime, get_time_info_from_tr_day, send_message, get_actual_players_without_absent
 from datetime import datetime, timedelta
 from tennis_bot.settings import TELEGRAM_TOKEN
 from tele_interface.static_text import from_digit_to_month, MY_DATA_BUTTON
@@ -68,10 +68,7 @@ def send_alert_about_coming_train():
     photo_ids = list(Photo.objects.values_list('id', flat=True))
 
     for tr_day in tr_days:
-        group_members = tr_day.group.users.all()
-        visitors = tr_day.visitors.all()
-        pay_visitors = tr_day.pay_visitors.all()
-        players = group_members.union(visitors, pay_visitors).difference(tr_day.absent.all())
+        players = get_actual_players_without_absent(tr_day)
 
         bot = telegram.Bot(TELEGRAM_TOKEN)
         for player in players:

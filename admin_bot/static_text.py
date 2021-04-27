@@ -35,7 +35,8 @@ GROUP_LEVEL_DICT = {TrainingGroup.LEVEL_ORANGE: '🟠оранжевый мяч�
 
 PLAYERS_FROM_GROUP = 'Игроки группы'
 HAVE_COME_FROM_OTHERS = '➕Пришли из других'
-HAVE_COME_FOR_MONEY = '➕Пришли за ₽'
+HAVE_COME_FOR_MONEY = '💲Пришли за ₽'
+HAVE_COME_FOR_PAY_BONUS_LESSON = '💲Пришли за ₽ отыгрыши'
 ARE_ABSENT = '➖Отсутствуют'
 
 CHOOSE_YEAR = 'Выбери год'

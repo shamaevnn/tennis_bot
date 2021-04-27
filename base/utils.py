@@ -4,6 +4,7 @@ from datetime import date
 import telegram
 import datetime
 
+from django.db.models import F
 from pytz import timezone
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
 
@@ -71,36 +72,37 @@ def clear_broadcast_messages(user_ids, message, reply_markup=None, tg_token=TELE
         )
 
 
-def send_alert_about_changing_tr_day_status(tr_day, new_is_available: bool):
+def get_players_for_tr_day(tr_day):
     group_members = tr_day.group.users.all()
     visitors = tr_day.visitors.all()
     pay_visitors = tr_day.visitors.all()
+    pay_bonus_visitors = tr_day.pay_bonus_visitors.all()
+    return group_members.union(visitors, pay_visitors, pay_bonus_visitors)
 
+
+def get_actual_players_without_absent(tr_day):
+    return get_players_for_tr_day(tr_day).difference(tr_day.absent.all())
+
+
+def send_alert_about_changing_tr_day_status(tr_day, new_is_available):
     if not new_is_available:
         text = CANCEL_TRAIN_PLUS_BONUS_LESSON_2.format(tr_day.date, tr_day.start_time)
-        users = group_members.union(visitors, pay_visitors).difference(tr_day.absent.all())
-        for user in users:
-            user.bonus_lesson += 1
-            user.save()
-
+        users = get_actual_players_without_absent(tr_day)
+        users.update(bonus_lesson=F('bonus_lesson') + 1)
     else:
         text = TRAIN_IS_AVAIABLE_CONGRATS.format(tr_day.date, tr_day.start_time)
 
     clear_broadcast_messages(
-        user_ids=list(group_members.union(visitors, pay_visitors).values_list('id', flat=True)),
+        user_ids=list(get_players_for_tr_day(tr_day).values_list('id', flat=True)),
         message=text,
         reply_markup=construct_main_menu()
     )
 
 
 def send_alert_about_changing_tr_day_time(tr_day, text):
-    group_members = tr_day.group.users.all()
-    visitors = tr_day.visitors.all()
     absents = tr_day.absent.all()
-    pay_visitors = tr_day.visitors.all()
-
     clear_broadcast_messages(
-        user_ids=list(group_members.union(visitors, absents, pay_visitors).values_list('id', flat=True)),
+        user_ids=list(get_players_for_tr_day(tr_day).union(absents).values_list('id', flat=True)),
         message=text,
         reply_markup=construct_main_menu()
     )

@@ -15,7 +15,7 @@ from django.db.models.functions import TruncDate
 from base.models import (User,
                          GroupTrainingDay,
                          TrainingGroup, )
-from base.utils import moscow_datetime
+from base.utils import moscow_datetime, get_actual_players_without_absent
 from tele_interface.static_text import COACH_HAVE_NOT_CONFIRMED_YET
 
 from tennis_bot.settings import DEBUG
@@ -150,10 +150,15 @@ def get_available_dt_time4ind_train(duration: float, tr_day_date=moscow_datetime
     poss_date = moscow_datetime(datetime.now()).date()
     start_time = time(8, 0, 0)
 
-    exist_tr_days = GroupTrainingDay.objects.tr_day_is_my_available(date=tr_day_date,
-                                                                    start_time__gte=start_time).annotate(
-        end_time=ExpressionWrapper(F('start_time') + F('duration'), output_field=DateTimeField()),
-        date_tmp=TruncDate('date')).values('date_tmp', 'start_time', 'end_time').order_by('date', 'start_time')
+    exist_tr_days = GroupTrainingDay.objects.tr_day_is_my_available(
+        date=tr_day_date,
+        start_time__gte=start_time
+    ).annotate(
+        end_time=ExpressionWrapper(
+            F('start_time') + F('duration'), output_field=DateTimeField()
+        ),
+        date_tmp=TruncDate('date')
+    ).values('date_tmp', 'start_time', 'end_time').order_by('date', 'start_time')
 
     possible_times = []
     for i in range(8, 21):  # занятия могут идти с 8 до 20
@@ -204,7 +209,8 @@ def select_tr_days_for_skipping(user):
     ).filter(
         Q(group__users__in=[user]) |
         Q(visitors__in=[user]) |
-        Q(pay_visitors__in=[user]),
+        Q(pay_visitors__in=[user]) |
+        Q(pay_bonus_visitors__in=[user]),
         date__gte=now.date(),
         diff__gt=user.time_before_cancel
     ).exclude(
@@ -220,6 +226,7 @@ def get_potential_days_for_group_training(user):
         Count('group__users', distinct=True),
         Count('visitors', distinct=True),
         Count('pay_visitors', distinct=True),
+        Count('pay_bonus_visitors', distinct=True),
         max_players=F('group__max_players'),
         diff=ExpressionWrapper(
             F('start_time') + F('date') - moscow_datetime(datetime.now()),
@@ -228,6 +235,7 @@ def get_potential_days_for_group_training(user):
     ).annotate(
         all_users=F('pay_visitors__count') +
                   F('visitors__count') +
+                  F('pay_bonus_visitors__count') +
                   F('group__users__count') -
                   F('absent__count')
     ).filter(
@@ -242,7 +250,8 @@ def get_potential_days_for_group_training(user):
     ).exclude(
         Q(visitors__in=[user]) |
         Q(group__users__in=[user]) |
-        Q(pay_visitors__in=[user])
+        Q(pay_visitors__in=[user]) |
+        Q(pay_bonus_visitors__in=[user])
     ).order_by('start_time')
 
     return potential_free_places
@@ -277,12 +286,9 @@ def balls_lessons_payment(year, month, user):
 
 
 def make_group_name_group_players_info_for_skipping(tr_day):
-    all_players = tr_day.group.users.union(tr_day.visitors.all(), tr_day.pay_visitors.all()).\
-        difference(tr_day.absent.all()).\
-            values('first_name', 'last_name')
+    all_players = get_actual_players_without_absent(tr_day).values('first_name', 'last_name')
 
     all_players = '\n'.join((f"{x['first_name']} {x['last_name']}" for x in all_players))
-
     if not tr_day.is_individual:
         group_name = f"{tr_day.group.name}\n"
         group_players = f'Присутствующие:\n{all_players}\n'

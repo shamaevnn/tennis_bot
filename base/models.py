@@ -187,21 +187,28 @@ class TrainingGroupForm(forms.ModelForm):
                 {'max_players': ERROR_LIMIT_MAX_PLAYERS.format(max_players, users.count())})
 
         if 'users' in self.changed_data:
-            tr_day = GroupTrainingDay.objects.filter(group__max_players__gt=1, group=self.instance, ).annotate(
-                                        start=ExpressionWrapper(F('start_time') + F('date'), output_field=DateTimeField()),
-                                        group_users_cnt=Count('group__users', distinct=True),
-                                        absent_cnt=Count('absent', distinct=True),
-                                        visitors_cnt=Count('visitors', distinct=True),
-                                        pay_visitors_cnt=Count('visitors', distinct=True),
-                                        max_players=F('group__max_players')).filter(
-                                                group_users_cnt__lt=users.count(),
-                                                start__gte=moscow_datetime(datetime.now()),
-                                                is_available=True,
-                                                max_players=F('visitors_cnt') +
-                                                            F('pay_visitors_cnt') +
-                                                            F('group_users_cnt') -
-                                                            F('absent_cnt')).distinct().values('id', 'date', 'start_time')
-            if len(tr_day):
+            tr_day = GroupTrainingDay.objects.filter(
+                group__max_players__gt=1,
+                group=self.instance,
+                is_available=True
+            ).annotate(
+                start=ExpressionWrapper(F('start_time') + F('date'), output_field=DateTimeField()),
+                group_users_cnt=Count('group__users', distinct=True),
+                absent_cnt=Count('absent', distinct=True),
+                visitors_cnt=Count('visitors', distinct=True),
+                pay_visitors_cnt=Count('pay_visitors', distinct=True),
+                pay_bonus_visitors_cnt=Count('pay_bonus_visitors', distinct=True),
+                max_players=F('group__max_players')
+            ).filter(
+                start__gte=moscow_datetime(datetime.now()),
+                group_users_cnt__lt=users.count(),
+                max_players=F('visitors_cnt') +
+                            F('pay_visitors_cnt') +
+                            F('pay_bonus_visitors_cnt') +
+                            F('group_users_cnt') -
+                            F('absent_cnt')
+            ).distinct().values('id', 'date', 'start_time')
+            if tr_day.exists():
                 error_ids = "\n".join(['<a href="http://vladlen82.fvds.ru/tgadmin/base/grouptrainingday/{}/change/">{} {}</a>'.format(x['id'], x['date'], x['start_time']) for x in tr_day])
                 error_text = f"{ERROR_MAX_PLAYERS_IN_FUTURE}:\n{error_ids}"
                 raise ValidationError(
@@ -224,14 +231,16 @@ class GroupTrainingDay(ModelwithTime):
     start_time = models.TimeField(null=True, help_text='ЧАСЫ:МИНУТЫ:СЕКУНДЫ', verbose_name='Время начала занятия')
     duration = models.DurationField(null=True, default=timedelta(hours=1), help_text='ЧАСЫ:МИНУТЫ:СЕКУНДЫ',
                                     verbose_name='Продолжительность занятия')
+
     visitors = models.ManyToManyField(User, blank=True, help_text='Пришли из других групп\n', related_name='visitors',
                                       verbose_name='Игроки из других групп')
-
     pay_visitors = models.ManyToManyField(User, blank=True, help_text='Заплатили за занятие',
                                           related_name='pay_visitors', verbose_name='Заплатившие игроки')
+    pay_bonus_visitors = models.ManyToManyField(User, blank=True, help_text='Платный отыгрыш',
+                                                related_name='pay_bonus_visitors', verbose_name='Заплатили ₽ + отыгрыш')
+
     tr_day_status = models.CharField(max_length=1, default=MY_TRAIN_STATUS, help_text='Моя тренировка или аренда',
                                      choices=TR_DAY_STATUSES, verbose_name='Статус')
-
     is_individual = models.BooleanField(default=False, help_text='индивидуальная ли тренировка')
 
     class Meta:
@@ -246,11 +255,10 @@ class GroupTrainingDay(ModelwithTime):
 class GroupTrainingDayForm(forms.ModelForm):
     class Meta:
         model = GroupTrainingDay
-        fields = ['group', 'absent', 'visitors', 'pay_visitors', 'date', 'is_available', 'is_individual', 'tr_day_status', 'start_time',
+        fields = ['group', 'absent', 'visitors', 'pay_visitors', 'pay_bonus_visitors', 'date', 'is_available', 'is_individual', 'tr_day_status', 'start_time',
                   'duration']
 
     def clean(self):
-
         def send_alert_about_cancel_in_visitors(self, type_of_visitors='visitors'):
             canceled_users = None
             if type_of_visitors == 'visitors':
@@ -260,6 +268,10 @@ class GroupTrainingDayForm(forms.ModelForm):
             elif type_of_visitors == 'pay_visitors':
                 if self.cleaned_data.get(type_of_visitors).count() < self.instance.pay_visitors.count():
                     canceled_users = self.instance.pay_visitors.all().exclude(
+                        id__in=self.cleaned_data.get(type_of_visitors))
+            elif type_of_visitors == 'pay_bonus_visitors':
+                if self.cleaned_data.get(type_of_visitors).count() < self.instance.pay_bonus_visitors.count():
+                    canceled_users = self.instance.pay_bonus_visitors.all().exclude(
                         id__in=self.cleaned_data.get(type_of_visitors))
 
             if canceled_users:
@@ -279,10 +291,17 @@ class GroupTrainingDayForm(forms.ModelForm):
             raise ValidationError('Не выбрана группа')
 
         current_amount_of_players = self.cleaned_data.get('visitors').count() + \
-                                        self.cleaned_data.get('pay_visitors').count() + \
-                                            group.users.count() - self.cleaned_data.get('absent').count()
-        if current_amount_of_players > group.max_players:
-            raise ValidationError(ERROR_LIMIT_MAX_PLAYERS.format(group.max_players, current_amount_of_players))
+                                    self.cleaned_data.get('pay_visitors').count() + \
+                                    self.cleaned_data.get('pay_bonus_visitors').count() + \
+                                    group.users.count() - self.cleaned_data.get('absent').count()
+
+        if group.available_for_additional_lessons:
+            if current_amount_of_players > 6:
+                raise ValidationError(ERROR_LIMIT_MAX_PLAYERS.format(6, current_amount_of_players))
+        else:
+            if current_amount_of_players > group.max_players:
+                raise ValidationError(ERROR_LIMIT_MAX_PLAYERS.format(group.max_players, current_amount_of_players))
+
         if 'start_time' in self.changed_data or 'duration' in self.changed_data or 'date' in self.changed_data:
             """
                 Если добавляется новый grouptrainingday, то нужно
@@ -333,6 +352,9 @@ class GroupTrainingDayForm(forms.ModelForm):
 
         if 'pay_visitors' in self.changed_data:
             send_alert_about_cancel_in_visitors(self, 'pay_visitors')
+
+        if 'pay_bonus_visitors' in self.changed_data:
+            send_alert_about_cancel_in_visitors(self, 'pay_bonus_visitors')
 
 
 class Payment(models.Model):

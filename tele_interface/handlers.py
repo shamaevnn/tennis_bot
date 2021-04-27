@@ -9,6 +9,7 @@ from .utils import *
 from .keyboard_utils import *
 from base.utils import (DT_BOT_FORMAT, moscow_datetime, bot_edit_message,
                         get_time_info_from_tr_day, info_about_users, clear_broadcast_messages, construct_main_menu,
+                        get_actual_players_without_absent,
                         )
 from base.models import (User,
                          GroupTrainingDay,
@@ -207,7 +208,8 @@ def inline_calendar_handler(update, context):
                 training_days = GroupTrainingDay.objects.filter(
                     Q(group__users__in=[user]) |
                     Q(visitors__in=[user]) |
-                    Q(pay_visitors__in=[user]),
+                    Q(pay_visitors__in=[user]) |
+                    Q(pay_bonus_visitors__in=[user]),
                     date=date_my
                 ).exclude(absent__in=[user]).select_related('group').order_by('id').distinct('id')
                 if training_days.exists():
@@ -338,33 +340,33 @@ def skip_lesson(update, context):
                              f'{DATE_INFO.format(date_tlg, day_of_week, time_tlg)}'
             else:
                 # проверяем его ли эта группа или он удаляется из занятия другой группы
-                # убавляем сначала отыгрыш у тех, кто ходит в свободном графике, а потом прибавляем
                 if user in training_day.visitors.all():
+                    user.bonus_lesson += 1
                     training_day.visitors.remove(user)
                     admin_text = f'{user.first_name} {user.last_name} пропускает тренировку за <b>отыгрыш</b>\n' \
                                  f'{DATE_INFO.format(date_tlg, day_of_week, time_tlg)}'
-                    if user.status == User.STATUS_ARBITRARY:
-                        user.bonus_lesson -= 1
                 elif user in training_day.pay_visitors.all():
+                    # в этом случае не должно поменяться кол-во отыгрышей
                     training_day.pay_visitors.remove(user)
                     admin_text = f'{user.first_name} {user.last_name} пропускает тренировку за <b>оплату</b>\n' \
                                  f'{DATE_INFO.format(date_tlg, day_of_week, time_tlg)}'
-                    user.bonus_lesson -= 1
-
-                else:
-                    training_day.absent.add(user)
-                    admin_text = f'{user.first_name} {user.last_name} пропускает тренировку в <b>группе</b>\n' \
+                elif user in training_day.pay_bonus_visitors.all():
+                    user.bonus_lesson += 1
+                    training_day.pay_bonus_visitors.remove(user)
+                    admin_text = f'{user.first_name} {user.last_name} пропускает тренировку за <b>платный отыгрыш</b>\n' \
                                  f'{DATE_INFO.format(date_tlg, day_of_week, time_tlg)}'
+                else:
+                    user.bonus_lesson += 1
+                    training_day.absent.add(user)
+                    admin_text = f'{user.first_name} {user.last_name} пропускает тренировку в <b>своей группе</b>\n' \
+                                 f'{DATE_INFO.format(date_tlg, day_of_week, time_tlg)}'
+                user.save()
 
             clear_broadcast_messages(
                 user_ids=list(admins.values_list('id', flat=True)),
                 message=admin_text,
-                reply_markup=None,
                 tg_token=ADMIN_TELEGRAM_TOKEN,
             )
-
-            user.bonus_lesson += 1
-            user.save()
 
         bot_edit_message(context.bot, text, update)
 
@@ -471,10 +473,9 @@ def select_precise_group_lesson_time(update, context):
 
     time_tlg, _, _, date_tlg, day_of_week, _, _ = get_time_info_from_tr_day(tr_day)
     # сколько сейчас свободных мест
-    n_free_places = tr_day.group.max_players - tr_day.pay_visitors.count() - tr_day.visitors.count() + \
-                    tr_day.absent.count() - tr_day.group.users.count()
-    all_players = tr_day.group.users.union(tr_day.visitors.all(), tr_day.pay_visitors.all()) \
-        .difference(tr_day.absent.all()).values('first_name', 'last_name')
+    players = get_actual_players_without_absent(tr_day)
+    n_free_places = tr_day.group.max_players - players.count()
+    all_players = players.values('first_name', 'last_name')
     text = ''
     if n_free_places <= 0 and tr_day.group.max_players < 6 and tr_day.group.available_for_additional_lessons:
         text = f'⚠️ATTENTION⚠️\n' \
@@ -576,7 +577,7 @@ def choose_type_of_payment_for_pay_visiting(update, context):
         user.bonus_lesson -= 1
         user.save()
 
-        tr_day.pay_visitors.add(user)
+        tr_day.pay_bonus_visitors.add(user)
         text = f'Записал тебя на <b>{date_tlg} ({day_of_week})</b>\n' \
                f'Время: <b>{time_tlg}</b>\n' \
                f'⚠️ATTENTION⚠️\n' \

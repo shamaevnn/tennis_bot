@@ -9,7 +9,7 @@ from django.db.models import (ExpressionWrapper,
                               F, Q,
                               DateTimeField,
                               Count,
-                              DurationField)
+                              DurationField, QuerySet)
 from django.db.models.functions import TruncDate
 
 from base.models import (User,
@@ -19,7 +19,6 @@ from base.utils import moscow_datetime, get_actual_players_without_absent
 from tele_interface.static_text import COACH_HAVE_NOT_CONFIRMED_YET
 
 from tennis_bot.settings import DEBUG
-
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -101,6 +100,7 @@ def check_status_decor(func):
             context.bot.send_message(user.id,
                                      COACH_HAVE_NOT_CONFIRMED_YET)
         return res
+
     return wrapper
 
 
@@ -259,28 +259,29 @@ def get_potential_days_for_group_training(user):
 
 
 def balls_lessons_payment(year, month, user):
-    tr_days_this_month = GroupTrainingDay.objects.filter(date__year=year, date__month=month, is_available=True)
+    tr_days_this_month: QuerySet[GroupTrainingDay] = GroupTrainingDay.objects.filter(date__year=year, date__month=month, is_available=True)
     num_of_group_lessons = 0
     if user.status == User.STATUS_TRAINING:
-        tr_days_num_this_month = tr_days_this_month.filter(group__users__in=[user],
-                                                           group__status=TrainingGroup.STATUS_GROUP).distinct()
-        num_of_group_lessons = tr_days_num_this_month.count()
-        balls_this_month = tr_days_num_this_month.count()
+        tr_days_num_this_month: int = tr_days_this_month.filter(
+            group__users__in=[user], group__status=TrainingGroup.STATUS_GROUP
+        ).distinct().count()
+        num_of_group_lessons: int = tr_days_num_this_month
+        balls_this_month: int = tr_days_num_this_month
 
-        group = TrainingGroup.objects.filter(users__in=[user], max_players__gte=3).first()
-        tarif = group.tarif_for_one_lesson if group else 0
+        group: TrainingGroup = TrainingGroup.objects.filter(users__in=[user], max_players__gte=3).first()
+        tarif: int = group.tarif_for_one_lesson if group else 0
 
     elif user.status == User.STATUS_ARBITRARY:
-        tr_days_num_this_month = tr_days_this_month.filter(visitors__in=[user]).distinct()
-        balls_this_month = 0
-        tarif = User.tarif_for_status[user.status]
+        tr_days_num_this_month: int = tr_days_this_month.filter(visitors__in=[user]).distinct().count()
+        balls_this_month: int = 0
+        tarif: int = User.tarif_for_status[user.status]
 
     else:
-        tarif = 0
-        tr_days_num_this_month = GroupTrainingDay.objects.none()
-        balls_this_month = 0
+        tarif: int = 0
+        tr_days_num_this_month: int = 0
+        balls_this_month: int = 0
 
-    should_pay_this_month = tr_days_num_this_month.count() * tarif
+    should_pay_this_month = tr_days_num_this_month * tarif
     should_pay_balls = 100 * round(balls_this_month / 4)
 
     return should_pay_this_month, should_pay_balls, num_of_group_lessons

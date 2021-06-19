@@ -3,6 +3,7 @@ from django.contrib import admin
 from django.utils.http import urlencode
 
 from tele_interface.utils import create_tr_days_for_future
+from .forms import UserForm, TrainingGroupForm, GroupTrainingDayForm
 from .models import *
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.admin import SimpleListFilter
@@ -10,6 +11,8 @@ from django.core.exceptions import ValidationError
 from django import forms
 from django.shortcuts import redirect
 from django.utils.html import format_html
+
+from .utils import send_alert_about_changing_tr_day_status
 
 
 class UserTabularForm(forms.ModelForm):
@@ -107,7 +110,7 @@ make_trday_available.short_description = 'Сделать выбранные дн
 @admin.register(GroupTrainingDay)
 class GroupTrainingDayAdmin(admin.ModelAdmin):
     form = GroupTrainingDayForm
-    list_display = ('group', 'date', 'is_available', 'start_time', 'duration',)
+    list_display = ('group', 'date', 'is_available', 'is_individual', 'start_time', 'duration',)
     list_filter = ('group', 'date', 'tr_day_status')
     filter_horizontal = ('visitors', 'pay_visitors', 'pay_bonus_visitors', 'absent')
     date_hierarchy = 'date'

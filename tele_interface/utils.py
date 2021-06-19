@@ -221,7 +221,10 @@ def select_tr_days_for_skipping(user):
 
 
 def get_potential_days_for_group_training(user):
-    potential_free_places = GroupTrainingDay.objects.tr_day_is_my_available(group__status=TrainingGroup.STATUS_GROUP).annotate(
+    potential_free_places = GroupTrainingDay.objects.tr_day_is_my_available(
+        group__status=TrainingGroup.STATUS_GROUP,
+        is_individual=False
+    ).annotate(
         Count('absent', distinct=True),
         Count('group__users', distinct=True),
         Count('visitors', distinct=True),
@@ -233,20 +236,18 @@ def get_potential_days_for_group_training(user):
             output_field=DurationField()
         )
     ).annotate(
-        all_users=F('pay_visitors__count') +
-                  F('visitors__count') +
-                  F('pay_bonus_visitors__count') +
-                  F('group__users__count') -
-                  F('absent__count')
+        all_users=F('pay_visitors__count') + F('visitors__count') + F('pay_bonus_visitors__count') +
+                  F('group__users__count') - F('absent__count')
     ).filter(
         Q(max_players__gt=F('all_users')) |
         (
-            Q(max_players__lte=F('all_users')) &
-            Q(group__available_for_additional_lessons=True) &
-            Q(max_players__lt=6) &
-            Q(all_users__lt=6)
+                Q(max_players__lte=F('all_users')) &
+                Q(group__available_for_additional_lessons=True) &
+                Q(max_players__lt=6) &
+                Q(all_users__lt=6)
         ),
-        diff__gte=timedelta(hours=1),
+        diff__gte=timedelta(minutes=1),
+        max_players__gt=1
     ).exclude(
         Q(visitors__in=[user]) |
         Q(group__users__in=[user]) |

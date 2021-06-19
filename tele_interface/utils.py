@@ -79,7 +79,7 @@ def handler_decor(check_status=False):
                     else:
                         res = func(bot, update, user)
                 except Exception as e:
-                    msg = f'{e}\n\nЧто-то пошло не так, напиши @ta2asho'
+                    msg = f'{e}\n\nЧто-то пошло не так, напиши @shamaevn'
                     res = [bot.send_message(user.id, msg)]
                     tb = sys.exc_info()[2]
                     raise e.with_traceback(tb)

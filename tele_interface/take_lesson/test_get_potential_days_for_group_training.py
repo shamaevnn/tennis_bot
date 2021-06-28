@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 
 from django.test import TestCase
 from base.models import User, TrainingGroup, GroupTrainingDay
-from tele_interface.utils import get_potential_days_for_group_training
+from tele_interface.take_lesson.utils import get_potential_days_for_group_training
 
 
 def create_group_user(id: int, first_name: str):
@@ -26,8 +26,9 @@ def create_group(name="БАНДА №1", max_players=6, status=TrainingGroup.STA
 
 def create_tr_day_for_group(group, **kwargs):
     today = datetime.today()
+    date = (today + timedelta(days=2)).date()
     tr_day = GroupTrainingDay.objects.create(
-        group=group, date=today + timedelta(days=1), start_time="09:30:00", **kwargs
+        group=group, date=date, start_time="09:30:00", **kwargs
     )
     return tr_day
 
@@ -50,7 +51,7 @@ class BaseTestCases(TestCase):
     def test_no_1_max_players(self):
         # нельзя записаться в группу, если там максимум 1 игрок.
         # Даже если статус групповой и не индивидуальная тренировка
-        group = create_group()
+        group = create_group(max_players=1)
         tr_day = create_tr_day_for_group(group)
 
         days = get_potential_days_for_group_training(user=self.me_training_in_group)
@@ -166,3 +167,102 @@ class NotAvailableForAdditionalLessonsTestCases(TestCase):
 
         days = get_potential_days_for_group_training(user=self.me_training_in_group)
         self.assertIn(tr_day, days)
+
+
+class AvailableForAdditionalLessonsTestCases(TestCase):
+    def setUp(self):
+        self.me_training_in_group = create_group_user(id=350490234, first_name='Nikita')
+
+        self.user_1 = create_group_user(id=1, first_name='user_1')
+        self.user_2 = create_group_user(id=2, first_name='user_2')
+        self.user_3 = create_group_user(id=3, first_name='user_3')
+        self.user_4 = create_group_user(id=4, first_name='user_4')
+        self.user_5 = create_group_user(id=5, first_name='user_5')
+        self.user_6 = create_group_user(id=6, first_name='user_6')
+        self.user_7 = create_group_user(id=7, first_name='user_7')
+        self.user_8 = create_group_user(id=7, first_name='user_8')
+        self.user_9 = create_group_user(id=7, first_name='user_9')
+
+        self.group_with_4_players = create_group(name="Банда №1", max_players=4, available_for_additional_lessons=True)
+        self.group_with_6_players = create_group(name="Банда №2", max_players=6, available_for_additional_lessons=True)
+
+        self.group_with_4_players.users.add(self.user_1, self.user_2, self.user_3, self.user_4)
+        self.group_with_6_players.users.add(self.user_1, self.user_2, self.user_3, self.user_4, self.user_5, self.user_6)
+
+    def test_full_group(self):
+        # нельзя записаться, если есть все игроки из группы и при этом 6 человек
+        tr_day_6 = create_tr_day_for_group(self.group_with_6_players)
+
+        days = get_potential_days_for_group_training(user=self.me_training_in_group)
+        self.assertNotIn(tr_day_6, days)
+
+    def test_full_group_with_mixed_players(self):
+        # нельзя записаться, если есть отсутствующие, посетители и при этом всего 6 человек
+        tr_day_6 = create_tr_day_for_group(self.group_with_6_players)
+        tr_day_6.absent.add(self.user_1, self.user_2, self.user_3)
+        tr_day_6.visitors.add(self.user_7)
+        tr_day_6.pay_visitors.add(self.user_8)
+        tr_day_6.pay_bonus_visitors.add(self.user_9)
+
+        days = get_potential_days_for_group_training(user=self.me_training_in_group)
+        self.assertNotIn(tr_day_6, days)
+
+    def test_one_empty_place(self):
+        # можно записаться, если одно свободное место
+        tr_day_6 = create_tr_day_for_group(self.group_with_6_players)
+        tr_day_6.absent.add(self.user_1)
+
+        tr_day_4 = create_tr_day_for_group(self.group_with_6_players)
+        tr_day_4.absent.add(self.user_1)
+
+        days = get_potential_days_for_group_training(user=self.me_training_in_group)
+        self.assertIn(tr_day_6, days)
+        self.assertIn(tr_day_4, days)
+
+    def test_one_empty_place_with_mixed_players(self):
+        # можно записаться, если одно свободное место и различные виды посетителей
+        tr_day_6 = create_tr_day_for_group(self.group_with_6_players)
+        tr_day_6.absent.add(self.user_1, self.user_2, self.user_3, self.user_4)
+        tr_day_6.visitors.add(self.user_7)
+        tr_day_6.pay_visitors.add(self.user_8)
+        tr_day_6.pay_bonus_visitors.add(self.user_9)
+
+        days = get_potential_days_for_group_training(user=self.me_training_in_group)
+        self.assertIn(tr_day_6, days)
+
+    def test_can_take_with_4_max_players(self):
+        # можно записаться, если в группе максимум 4 человека
+        tr_day_4 = create_tr_day_for_group(self.group_with_4_players)
+        days = get_potential_days_for_group_training(user=self.me_training_in_group)
+        self.assertIn(tr_day_4, days)
+
+    def test_max_4_players_and_visitor(self):
+        # можно записаться, если в группе макс. 4 человека и один посетитель
+        tr_day_4 = create_tr_day_for_group(self.group_with_4_players)
+        tr_day_4.visitors.add(self.user_6)
+
+        days = get_potential_days_for_group_training(user=self.me_training_in_group)
+        self.assertIn(tr_day_4, days)
+
+    def test_max_4_players_and_all_kind_of_players(self):
+        # можно записаться, если макс. 4 человека и различные виды посетителей
+        tr_day_4 = create_tr_day_for_group(self.group_with_4_players)
+        tr_day_4.absent.add(self.user_1, self.user_2, self.user_3)
+        tr_day_4.visitors.add(self.user_5)
+        tr_day_4.pay_visitors.add(self.user_6)
+        tr_day_4.pay_bonus_visitors.add(self.user_7)
+
+        days = get_potential_days_for_group_training(user=self.me_training_in_group)
+        self.assertIn(tr_day_4, days)
+
+    def test_full_max_4_players_and_all_kind_of_players(self):
+        # нельзя записаться, если макс. 4 человека, различные виды посетителей и уже всего 6 человек
+        tr_day_4 = create_tr_day_for_group(self.group_with_4_players)
+        tr_day_4.absent.add(self.user_1)
+        tr_day_4.visitors.add(self.user_5)
+        tr_day_4.pay_visitors.add(self.user_6)
+        tr_day_4.pay_bonus_visitors.add(self.user_7)
+
+        days = get_potential_days_for_group_training(user=self.me_training_in_group)
+        self.assertNotIn(tr_day_4, days)
+

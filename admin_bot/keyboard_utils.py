@@ -2,7 +2,8 @@ from collections import Counter
 
 from telegram import ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup
 
-from base.utils import get_time_info_from_tr_day, handle_selecting_groups_to_send_message_to
+from base.utils import get_time_info_from_tr_day
+from admin_bot.utils import handle_selecting_groups_to_send_message_to
 from tele_interface.manage_data import SEND_MESSAGE, CLNDR_ADMIN_VIEW_SCHEDULE, CLNDR_ACTION_BACK, \
     PAYMENT_YEAR_MONTH_GROUP, PAYMENT_YEAR, PERMISSION_FOR_IND_TRAIN, PAYMENT_YEAR_MONTH, PAYMENT_CONFIRM_OR_CANCEL, \
     PAYMENT_START_CHANGE, CLNDR_DAY, AMOUNT_OF_IND_TRAIN

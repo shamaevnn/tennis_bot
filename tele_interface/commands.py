@@ -3,7 +3,8 @@ from telegram.ext import ConversationHandler
 from admin_bot.static_text import THIS_WAY_YEAH
 from base.models import User
 from base.utils import construct_main_menu
-from tele_interface.handlers import user_main_info, INSERT_FIO, INSERT_PHONE_NUMBER
+from tele_interface.handlers import INSERT_FIO, INSERT_PHONE_NUMBER
+from tele_interface.user_info.handlers import user_main_info
 from tele_interface.static_text import FIRST_TIME_GREETING, FIRST_TIME_INSERT_FIRST_LAST_MAME, \
     FIRST_TIME_INSERT_PHONE_NUMBER
 

@@ -1,3 +1,8 @@
+import django
+import os
+
+# os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'tennis_bot.settings')
+# django.setup()
 from telegram.ext import (
     Updater,
     CommandHandler,
@@ -6,26 +11,19 @@ from telegram.ext import (
     MessageHandler,
     Filters, Dispatcher
 )
-import django
-import os
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'tennis_bot.settings')
-django.setup()
 import telegram
 
 from tele_interface.handlers import (
-    skip_lesson_main_menu_button,
-    take_lesson,
-    user_main_info,
-    select_precise_group_lesson_time,
-    choose_type_of_training,
-    select_dt_for_ind_lesson,
-    select_precise_ind_lesson_time,
-    confirm_group_lesson,
-    skip_lesson,
     get_help,
-    inline_calendar_handler, skip_lesson_when_geq_2, choose_type_of_payment_for_pay_visiting, INSERT_FIO,
-    get_first_last_name, INSERT_PHONE_NUMBER, get_phone_number, )
+    inline_calendar_handler, INSERT_FIO,
+    INSERT_PHONE_NUMBER, )
+from tele_interface.user_info.handlers import user_main_info
+from tele_interface.onboarding import get_first_last_name, get_phone_number
+from tele_interface.skip_lesson.handlers import skip_lesson_main_menu_button, skip_lesson_when_geq_2, skip_lesson
+from tele_interface.take_lesson.handlers import choose_type_of_training, take_lesson, select_dt_for_ind_lesson, \
+    select_precise_ind_lesson_time, select_precise_group_lesson_time, confirm_group_lesson, \
+    choose_type_of_payment_for_pay_visiting
 from tele_interface.commands import start, cancel
 from tennis_bot.celery import app
 from tele_interface.manage_data import (

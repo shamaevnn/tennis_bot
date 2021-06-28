@@ -89,3 +89,10 @@ ADMIN_SITE = 'Перейти на сайт'
 ADMIN_PAYMENT = 'Оплата'
 
 NEW_CLIENT_HAS_COME = 'Пришел новый клиент:\n<b>{}</b>'
+
+ATTENTION = '⚠️ATTENTION⚠️'
+USER_CANCELLED_IND_TRAIN = '{}\n{} {} отменил индивидуальную тренировку\n{}'
+USER_SKIPPED_TRAIN_FOR_BONUS = '{} {} пропускает тренировку за <b>отыгрыш</b>\n{}'
+USER_SKIPPED_TRAIN_FOR_MONEY = '{} {} пропускает тренировку за <b>оплату</b>\n{}'
+USER_SKIPPED_TRAIN_FOR_PAY_BONUS = '{} {} пропускает тренировку за <b>платный отыгрыш</b>\n{}'
+USER_SKIPPED_TRAIN_IN_HIS_GROUP = '{} {} пропускает тренировку за <b>своей группе</b>\n{}'

@@ -7,7 +7,7 @@ from telegram.ext import ConversationHandler
 from django.core.exceptions import ObjectDoesNotExist
 from base.models import User, GroupTrainingDay, Payment, TrainingGroup, AlertsLog
 from base.utils import moscow_datetime, bot_edit_message, get_time_info_from_tr_day, info_about_users, \
-    clear_broadcast_messages, have_not_paid_users_info
+    clear_broadcast_messages
 from tele_interface.manage_data import PERMISSION_FOR_IND_TRAIN, SHOW_GROUPDAY_INFO, \
     CLNDR_ADMIN_VIEW_SCHEDULE, CLNDR_ACTION_BACK, CLNDR_NEXT_MONTH, CLNDR_DAY, CLNDR_IGNORE, \
     CLNDR_PREV_MONTH, PAYMENT_YEAR, PAYMENT_YEAR_MONTH, PAYMENT_YEAR_MONTH_GROUP, PAYMENT_START_CHANGE, \
@@ -20,7 +20,7 @@ from .keyboard_utils import construct_menu_groups_for_send_message, day_buttons_
     construct_menu_months, construct_menu_groups, back_to_payment_groups_when_changing_payment_keyboard, \
     cancel_confirm_changing_payment_info_keyboard, change_payment_info_keyboard, choose_year_to_group_payment_keyboard, \
     back_from_show_grouptrainingday_info_keyboard, how_many_trains_to_save_keyboard, go_to_site_keyboard
-from .utils import check_if_players_not_in_payments
+from .utils import check_if_players_not_in_payments, have_not_paid_users_info
 from tennis_bot.settings import TELEGRAM_TOKEN
 from datetime import date, datetime, timedelta
 

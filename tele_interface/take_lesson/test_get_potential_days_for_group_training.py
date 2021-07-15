@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
 
 from django.test import TestCase
 from base.models import User, TrainingGroup, GroupTrainingDay
@@ -28,7 +28,7 @@ def create_tr_day_for_group(group, **kwargs):
     today = datetime.today()
     date = (today + timedelta(days=2)).date()
     tr_day = GroupTrainingDay.objects.create(
-        group=group, date=date, start_time="09:30:00", **kwargs
+        group=group, date=date, start_time=time(9,30), **kwargs
     )
     return tr_day
 

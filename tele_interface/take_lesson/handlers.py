@@ -47,7 +47,8 @@ def take_lesson(update, context):
                    'В данный момент у тебя нет отыгрышей.\n' \
                    '<b> Занятие будет стоить 600₽ </b>\n' \
                    '✅ -- дни, доступные для групповых тренировок.'
-        training_days = get_potential_days_for_group_training(user)
+        training_days = get_potential_days_for_group_training(user).filter(
+            date__gte=moscow_datetime(datetime.now()).date())
         highlight_dates = list(training_days.values_list('date', flat=True))
         markup = create_calendar(CLNDR_ACTION_TAKE_GROUP, dates_to_highlight=highlight_dates)
 

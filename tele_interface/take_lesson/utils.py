@@ -22,7 +22,6 @@ from tennis_bot.settings import TARIF_ARBITRARY, TARIF_GROUP, TARIF_PAYMENT_ADD_
 
 def get_potential_days_for_group_training(user, **filters):
     potential_free_places = GroupTrainingDay.objects.tr_day_is_my_available(
-        date__gte=moscow_datetime(datetime.now()).date(),
         group__status=TrainingGroup.STATUS_GROUP,
         is_individual=False
     ).annotate(

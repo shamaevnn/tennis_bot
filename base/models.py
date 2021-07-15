@@ -138,6 +138,13 @@ class TrainingGroup(ModelwithTime):
     def __str__(self):
         return '{}, max_players: {}'.format(self.name, self.max_players)
 
+    @classmethod
+    def get_or_create_ind_group_for_user(cls, user: User):
+        group, _ = cls.objects.create(
+            name=user.first_name + user.last_name, status=TrainingGroup.STATUS_4IND, max_players=1
+        )
+        return group
+
     def save(self, *args, **kwargs):
         # для того, чтобы БАНДА №10 была позже БАНДА №1
         number_in_name = re.findall(r'\d+', self.name)

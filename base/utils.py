@@ -6,9 +6,8 @@ import datetime
 
 from django.db.models import F
 from pytz import timezone
-from telegram import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
+from telegram import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup
 
-from tele_interface.manage_data import SEND_MESSAGE
 from tele_interface.static_text import from_eng_to_rus_day_week, CANCEL_TRAIN_PLUS_BONUS_LESSON_2, \
     TRAIN_IS_AVAIABLE_CONGRATS, NO_PAYMENT_BUTTON, MY_DATA_BUTTON, HELP_BUTTON, SKIP_LESSON_BUTTON, TAKE_LESSON_BUTTON
 from tennis_bot.settings import TELEGRAM_TOKEN, DEBUG
@@ -75,13 +74,18 @@ def clear_broadcast_messages(user_ids, message, reply_markup=None, tg_token=TELE
 def get_players_for_tr_day(tr_day):
     group_members = tr_day.group.users.all()
     visitors = tr_day.visitors.all()
-    pay_visitors = tr_day.visitors.all()
+    pay_visitors = tr_day.pay_visitors.all()
     pay_bonus_visitors = tr_day.pay_bonus_visitors.all()
-    return group_members.union(visitors, pay_visitors, pay_bonus_visitors)
+    return group_members.union(visitors, pay_visitors, pay_bonus_visitors).distinct()
 
 
 def get_actual_players_without_absent(tr_day):
-    return get_players_for_tr_day(tr_day).difference(tr_day.absent.all())
+    return get_players_for_tr_day(tr_day).difference(tr_day.absent.all()).distinct()
+
+
+def get_n_free_places(tr_day):
+    players = get_actual_players_without_absent(tr_day)
+    return tr_day.group.max_players - players.count()
 
 
 def send_alert_about_changing_tr_day_status(tr_day, new_is_available):
@@ -162,29 +166,6 @@ def get_time_info_from_tr_day(tr_day):
     date_tlg = tr_day.date.strftime(DT_BOT_FORMAT)
 
     return time_tlg, start_time_tlg, end_time_tlg, date_tlg, day_of_week, start_time, end_time
-
-
-def handle_selecting_groups_to_send_message_to(ids_counter, group_ids, group_id, button_data_text, button_text):
-    if group_id not in group_ids:
-        text = button_text
-    elif ids_counter[group_id] > 1 and ids_counter[group_id] % 2 == 0:
-        text = button_text
-        group_ids.remove(group_id)
-        group_ids.remove(group_id)
-        button_data_text = button_data_text[:len(SEND_MESSAGE)] + "|".join(group_ids)
-    else:
-        text = f'{button_text} ✅'
-
-    return text, button_data_text
-
-
-def have_not_paid_users_info(payments_values):
-    return '\n'.join(
-        (
-            f"<b>{x['id']}</b>. {x['player__last_name']} {x['player__first_name']} -- {x['n_fact_visiting']} ({x['group_name']})"
-            for x in payments_values
-        )
-    )
 
 
 def info_about_users(users, for_admin=False, payment=False):

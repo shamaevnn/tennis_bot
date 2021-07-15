@@ -6,12 +6,18 @@ from datetime import timedelta, datetime, time
 from django.db.models import Count, F, ExpressionWrapper, DurationField, Q, DateTimeField
 from django.db.models.functions import TruncDate
 
-from base.models import GroupTrainingDay, TrainingGroup
-from base.utils import moscow_datetime, DT_BOT_FORMAT
-from tele_interface.keyboard_utils import construct_time_menu_for_group_lesson, create_calendar, \
-    construct_time_menu_4ind_lesson
-from tele_interface.manage_data import SELECT_PRECISE_GROUP_TIME, CLNDR_ACTION_TAKE_IND, SELECT_PRECISE_IND_TIME
-from tele_interface.static_text import from_eng_to_rus_day_week
+from admin_bot.static_text import DATE_INFO
+from base.models import GroupTrainingDay, TrainingGroup, User
+from base.utils import moscow_datetime, DT_BOT_FORMAT, get_time_info_from_tr_day, get_n_free_places
+from tele_interface.keyboard_utils import create_calendar
+from tele_interface.take_lesson.keyboard_utils import construct_time_menu_for_group_lesson, \
+    construct_time_menu_4ind_lesson, choose_type_of_payment_for_group_lesson_keyboard, \
+    back_to_group_times_when_no_left_keyboard
+from tele_interface.manage_data import SELECT_PRECISE_GROUP_TIME, CLNDR_ACTION_TAKE_IND, SELECT_PRECISE_IND_TIME, \
+    PAYMENT_MONEY_AND_BONUS_LESSONS, PAYMENT_MONEY
+from tele_interface.static_text import from_eng_to_rus_day_week, NO_PLACES_FOR_THIS_TIME_CHOOSE_ANOTHER, \
+    CHOOSE_TYPE_OF_PAYMENT
+from tennis_bot.settings import TARIF_ARBITRARY, TARIF_GROUP, TARIF_PAYMENT_ADD_LESSON
 
 
 def get_potential_days_for_group_training(user, **filters):
@@ -160,3 +166,91 @@ def calendar_taking_ind_lesson(user, purpose, date_my, date_comparison):
     return text, markup
 
 
+def handle_taking_group_lesson(user: User, tr_day: GroupTrainingDay):
+    time_tlg, _, _, date_tlg, day_of_week, _, end_time = get_time_info_from_tr_day(tr_day)
+    date_info = DATE_INFO.format(date_tlg, day_of_week, time_tlg)
+
+    n_free_places = get_n_free_places(tr_day)
+
+    admin_text = ''
+    admin_markup = None
+    if n_free_places > 0:
+        tr_day.visitors.add(user)
+        user_text = f'Записал тебя на тренировку.\n{date_info}'
+        user_markup = None
+
+        if user.bonus_lesson > 0 and user.status == User.STATUS_TRAINING:
+            admin_text = f'{user.first_name} {user.last_name} придёт на гр. тренировку за отыгрыш.\n{date_info}'
+            user.bonus_lesson -= 1
+            user.save()
+        else:
+            admin_text = f'⚠️ATTENTION⚠️\n' \
+                         f'{user.first_name} {user.last_name} придёт на гр. тренировку ' \
+                         f'<b>не за счет отыгрышей, не забудь взять {TARIF_ARBITRARY}₽.</b>\n' \
+                         f'{date_info}'
+    else:
+        if tr_day.group.available_for_additional_lessons and tr_day.group.max_players < 6:
+            tarif = TARIF_ARBITRARY if user.status == User.STATUS_ARBITRARY else TARIF_GROUP
+            if user.bonus_lesson == 0:
+                tr_day.pay_visitors.add(user)
+                user_text = f'Записал тебя на тренировку' \
+                            f'⚠️ATTENTION⚠️\n' \
+                            f'Не забудь заплатить <b>{tarif}₽</b>\n' \
+                            f'{date_info}'
+                admin_text = f'⚠️ATTENTION⚠️\n' \
+                             f'{user.first_name} {user.last_name} придёт на гр. тренировку ' \
+                             f'<b>не за счет отыгрышей, не забудь взять {tarif}₽.</b>\n' \
+                             f'{date_info}'
+                user_markup = None
+            else:
+                user_text = CHOOSE_TYPE_OF_PAYMENT
+                user_markup = choose_type_of_payment_for_group_lesson_keyboard(
+                    payment_add_lesson=TARIF_PAYMENT_ADD_LESSON,
+                    tr_day_id=tr_day.id,
+                    tarif=tarif,
+                )
+        else:
+            user_text = NO_PLACES_FOR_THIS_TIME_CHOOSE_ANOTHER
+            user_markup = back_to_group_times_when_no_left_keyboard(
+                year=tr_day.date.year,
+                month=tr_day.date.month,
+                day=tr_day.date.day
+            )
+
+    return user_text, user_markup, admin_text, admin_markup
+
+
+def handle_choosing_type_of_payment_for_pay_visiting_when_have_bonus_lessons(
+        user: User, tr_day: GroupTrainingDay, payment_choice: str
+    ):
+    # todo: tests on this function
+    time_tlg, _, _, date_tlg, day_of_week, _, _ = get_time_info_from_tr_day(tr_day)
+    date_info = DATE_INFO.format(date_tlg, day_of_week, time_tlg)
+
+    user_text, admin_text = '', ''
+    if payment_choice == PAYMENT_MONEY_AND_BONUS_LESSONS:
+        user.bonus_lesson -= 1
+        user.save()
+
+        tr_day.pay_bonus_visitors.add(user)
+        user_text = f'Записал тебя на тренировку\n' \
+                    f'⚠️ATTENTION⚠️\n' \
+                    f'Не забудь заплатить <b>{TARIF_PAYMENT_ADD_LESSON}₽</b>\n{date_info}'
+
+        admin_text = f'⚠️ATTENTION⚠️\n' \
+                     f'{user.first_name} {user.last_name} придёт ' \
+                     f'<b>за счёт платных отыгрышей, не забудь взять {TARIF_PAYMENT_ADD_LESSON}₽.</b>\n{date_info}'
+
+    elif payment_choice == PAYMENT_MONEY:
+        tr_day.pay_visitors.add(user)
+        tarif = TARIF_ARBITRARY if user.status == User.STATUS_ARBITRARY else TARIF_GROUP
+
+        user_text = f'Записал тебя на тренировку\n' \
+                    f'⚠️ATTENTION⚠️\n' \
+                    f'Не забудь заплатить <b>{tarif}₽</b>\n{date_info}'
+
+        admin_text = f'⚠️ATTENTION⚠️\n' \
+                     f'{user.first_name} {user.last_name} придёт '\
+                     f'<b>в дополнительное время, не забудь взять {tarif}₽.</b>\n{date_info}'
+
+    return user_text, admin_text

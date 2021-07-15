@@ -6,8 +6,9 @@ from admin_bot.static_text import USER_CANCELLED_IND_TRAIN, ATTENTION, USER_SKIP
     USER_SKIPPED_TRAIN_FOR_MONEY, USER_SKIPPED_TRAIN_FOR_PAY_BONUS, USER_SKIPPED_TRAIN_IN_HIS_GROUP
 from base.models import GroupTrainingDay
 from base.utils import moscow_datetime, get_actual_players_without_absent
-from tele_interface.keyboard_utils import construct_menu_skipping_much_lesson, construct_detail_menu_for_skipping, \
-    create_calendar
+from tele_interface.keyboard_utils import create_calendar
+from tele_interface.skip_lesson.keyboard_utils import construct_menu_skipping_much_lesson, \
+    construct_detail_menu_for_skipping
 from tele_interface.static_text import CANT_CANCEL_LESSON_TO_LATE, OKAY_TRAIN_CANCELLED
 
 

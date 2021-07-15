@@ -47,3 +47,6 @@ COACH_HAVE_NOT_CONFIRMED_YET = 'Тренер еще не одобрил.'
 
 CANT_CANCEL_LESSON_TO_LATE = 'Неа, уже нельзя отменить занятие.\nКоличество часов, за которое тебе нужно отменять: {}'
 OKAY_TRAIN_CANCELLED = 'Окей, занятие отменено.\n{}'
+
+NO_PLACES_FOR_THIS_TIME_CHOOSE_ANOTHER = 'Упс, похоже уже не осталось свободных мест на это время, выбери другое.'
+CHOOSE_TYPE_OF_PAYMENT = "Выбери тип оплаты"

@@ -74,13 +74,18 @@ def clear_broadcast_messages(user_ids, message, reply_markup=None, tg_token=TELE
 def get_players_for_tr_day(tr_day):
     group_members = tr_day.group.users.all()
     visitors = tr_day.visitors.all()
-    pay_visitors = tr_day.visitors.all()
+    pay_visitors = tr_day.pay_visitors.all()
     pay_bonus_visitors = tr_day.pay_bonus_visitors.all()
-    return group_members.union(visitors, pay_visitors, pay_bonus_visitors)
+    return group_members.union(visitors, pay_visitors, pay_bonus_visitors).distinct()
 
 
 def get_actual_players_without_absent(tr_day):
-    return get_players_for_tr_day(tr_day).difference(tr_day.absent.all())
+    return get_players_for_tr_day(tr_day).difference(tr_day.absent.all()).distinct()
+
+
+def get_n_free_places(tr_day):
+    players = get_actual_players_without_absent(tr_day)
+    return tr_day.group.max_players - players.count()
 
 
 def send_alert_about_changing_tr_day_status(tr_day, new_is_available):

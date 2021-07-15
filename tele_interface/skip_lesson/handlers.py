@@ -4,7 +4,8 @@ from admin_bot.static_text import DATE_INFO
 from base.models import User, GroupTrainingDay
 from base.utils import construct_main_menu, bot_edit_message, get_time_info_from_tr_day, moscow_datetime, \
     clear_broadcast_messages
-from tele_interface.keyboard_utils import create_calendar, construct_detail_menu_for_skipping
+from tele_interface.keyboard_utils import create_calendar
+from tele_interface.skip_lesson.keyboard_utils import construct_detail_menu_for_skipping
 from tele_interface.manage_data import CLNDR_ACTION_SKIP, SELECT_SKIP_TIME_BUTTON, SHOW_INFO_ABOUT_SKIPPING_DAY
 from tele_interface.utils import check_status_decor
 from tele_interface.skip_lesson.utils import select_tr_days_for_skipping, \

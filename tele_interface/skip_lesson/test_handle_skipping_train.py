@@ -1,10 +1,10 @@
 from django.test import TestCase
 
-from base.models import User, TrainingGroup, GroupTrainingDay
+from base.models import TrainingGroup, GroupTrainingDay
 from admin_bot.static_text import USER_CANCELLED_IND_TRAIN, ATTENTION, USER_SKIPPED_TRAIN_FOR_BONUS, \
     USER_SKIPPED_TRAIN_FOR_MONEY, USER_SKIPPED_TRAIN_FOR_PAY_BONUS, USER_SKIPPED_TRAIN_IN_HIS_GROUP
-from tele_interface.static_text import CANT_CANCEL_LESSON_TO_LATE, OKAY_TRAIN_CANCELLED
-from tele_interface.take_lesson.test_get_potential_days_for_group_training import create_group_user, \
+from tele_interface.static_text import OKAY_TRAIN_CANCELLED
+from tele_interface.take_lesson.tests.test_get_potential_days_for_group_training import create_group_user, \
 create_group, create_tr_day_for_group
 from tele_interface.skip_lesson.utils import handle_skipping_train
 

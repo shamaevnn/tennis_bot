@@ -140,7 +140,7 @@ class TrainingGroup(ModelwithTime):
 
     @classmethod
     def get_or_create_ind_group_for_user(cls, user: User):
-        group, _ = cls.objects.create(
+        group, _ = cls.objects.get_or_create(
             name=user.first_name + user.last_name, status=TrainingGroup.STATUS_4IND, max_players=1
         )
         return group

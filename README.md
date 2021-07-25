@@ -1,44 +1,30 @@
-# TennisBot
+# Tennis Telegram Bot
 
-## Решаемая задача
+## Problem
+Tennis coach had several problems:
+ * All participants of training process had to inform coach that they will miss a coming training.
+ * If the student wanted to sign up for a training session, he had to ask the coach if this lesson was available and if it was possible to come. So, the coach had to look in his paper schedule and look for free places.
+ * All group students have `bonus lesson` — opportunity to visit a lesson for free. Coach had to track the number of these bonuses!!!
+ * These and other not described problems detracted coach from training process.
 
-Данный бот помогает тренеру автоматизировать рутинные задачи, которые отвлекают его от тренировочного процесса, а именно: 
- * позволяет ученикам записываться на доступные тренировки (за счет отыгрышей в случае групповых)
- * пропускать тренировку, учитывая время, за которое нужно предупредить тренера
- * посмотреть количество доступных отыгрышей, данные о группе игрока, данные об оплате за следующий месяц
+#### Actually, there are two bots: bot for coach and bot for players.
+Functional of coach bot:
+ * [Viewing schedule](https://github.com/shamaevnn/tennis_bot/blob/master/COACH_BOT.md#schedule)
+ * [Checking payments](https://github.com/shamaevnn/tennis_bot/blob/master/COACH_BOT.md#payment-info)
+ * [Sending message to players](https://github.com/shamaevnn/tennis_bot/blob/master/COACH_BOT.md#sending-message)
 
-Раньше нужно было беспокоить тренера по каждому этому вопросу в whatsapp (игроков +- 60)
-## Демонстрация работы
+Functional of players bot:
+ * [Checking my info](https://github.com/shamaevnn/tennis_bot/blob/master/PLAYER_BOT.md#my-info)
+ * [Taking a lesson](https://github.com/shamaevnn/tennis_bot/blob/master/PLAYER_BOT.md#taking-a-training-individual-or-group)
+ * [Skipping a lesson](https://github.com/shamaevnn/tennis_bot/blob/master/PLAYER_BOT.md#taking-a-training-individual-or-group)
 
-Функционал бота можно посмотреть <a href="https://drive.google.com/file/d/1goSCWcxSFsXwz8m4IWx9hJS_CmxgmqeP/view?usp=sharing"> на видео </a>. <br>
-Один бот пользовательский (для игроков), другой админский (для тренера).
 
-## Используемые технологии
+## Used technologies
+This bot was built based on [django-telegram-bot](https://github.com/ohld/django-telegram-bot)
+ * `Python` 🐍
+ * `Django` 🦾 for its admin panel
+ * `Dokku` + `GitHub Actions` 🧠 for auto-deploy
+ * `PostgreSql` 💾
 
-В качестве основного ЯП используется <b>Python 3.8.0</b>, фреймворк для back-end: <b> Django </b>, был выбран, т.к. имеет удобную админку для управления данными. 
-В качестве БД используется <b> PostgreSql </b>. Для разворачивания тестовой базы локально нужно создать базу данных "tennis" и внести туда тестовые данные. 
-Это можно сделать вручную на сайте админки, <br> либо <b> psql tennis  < ./tennis_example.sql </b>.
-
-## Первый запуск
-
-1. Установить необходимые пакеты: <b>pip install -r requirements.txt</b>
-2. Накатить миграции: <b> python manage.py makemigrations </b> -> <b> python manage.py migrate </b>
-3. Запустить админку: <b> python manage.py runserver </b>
-4. Запуск бота: <b>ipython tele_interface/main.py tennis</b>
-5. Запуск админского бота: <b>ipython tele_interface/main.py admin</b>
-
-P.s. после нажатия /start пользователь проходит регистрацию -- вводит имя, фамилию, номер телефона. По дефолту статус у user будет waiting, поэтому основной функционал будет недоступен, нужно поставить либо training, либо arbitrary.
-
-## Выкатывание обновлений
-
-1. Сделать обновление локально на тестовой базе
-2. Сделать push или pull request в master 
-3. Зайти на сервер, перейти в <i> /home/nikita/code/TennisBot/tennis_bot/tennis_bot </i>
-4. git pull
-5. sudo service supervisor restart (в дальнейшем можно будет настроить через webhook)
-
-Если нужно зайти в shell, то сначала необходимо активировать виртуальное окружение -- source /home/nikita/code/tennis_venv/bin/activate 
-
-## P.S.P.S.
-
-В данный момент этот проект дорабатывается и улучшается -- в основном запрос на то, чтобы перетащить весь функционал с сайта админки в админский бот.
+## Summary
+This bot helps to automate routine tasks of the coach. With this bot, he doesn't have to manually track a lot of information from about 100 people and spend his time on this during trainings. 

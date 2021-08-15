@@ -7,11 +7,10 @@ from django.db.models import Q, F, Case, When, Sum, IntegerField
 from django.utils import timezone
 from datetime import datetime, date, timedelta
 
-from base.utils import moscow_datetime, extract_user_data_from_update
+from base.common_for_bots.utils import moscow_datetime, extract_user_data_from_update
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 
-from tele_interface.static_text import *
 from tennis_bot.settings import TARIF_ARBITRARY, TARIF_GROUP, TARIF_IND, TARIF_SECTION, TARIF_FEW, TELEGRAM_TOKEN, DEBUG
 
 
@@ -60,8 +59,10 @@ class User(AbstractUser):
     is_blocked = models.BooleanField(default=False)
     status = models.CharField(max_length=1, choices=STATUSES, default=STATUS_WAITING, verbose_name='статус')
 
-    time_before_cancel = models.DurationField(null=True, help_text='ЧАСЫ:МИНУТЫ:СЕКУНДЫ',
-                                              verbose_name='Время, за которое нужно предупредить', default=timedelta(hours=6))
+    time_before_cancel = models.DurationField(
+        null=True, help_text='ЧАСЫ:МИНУТЫ:СЕКУНДЫ', verbose_name='Время, за которое нужно предупредить',
+        default=timedelta(hours=6)
+    )
     bonus_lesson = models.SmallIntegerField(null=True, blank=True, default=0, verbose_name='Количество отыгрышей')
 
     add_info = models.CharField(max_length=128, null=True, blank=True, verbose_name='Доп. информация')
@@ -115,9 +116,10 @@ class TrainingGroup(ModelwithTime):
 
     LEVEL_ORANGE = 'O'
     LEVEL_GREEN = 'G'
+    GROUP_LEVEL_DICT = {LEVEL_ORANGE: '🟠оранжевый мяч🟠', LEVEL_GREEN: '🟢зелёный мяч🟢'}
     GROUP_LEVELS = (
-        (LEVEL_GREEN, GREEN_BALL),
-        (LEVEL_ORANGE, ORANGE_BALL),
+        (LEVEL_GREEN, GROUP_LEVEL_DICT[LEVEL_GREEN]),
+        (LEVEL_ORANGE, GROUP_LEVEL_DICT[LEVEL_ORANGE]),
     )
 
     name = models.CharField(max_length=32, verbose_name='Название')
@@ -126,9 +128,10 @@ class TrainingGroup(ModelwithTime):
     status = models.CharField(max_length=1, choices=GROUP_STATUSES, verbose_name='Статус группы', default=STATUS_GROUP)
     level = models.CharField(max_length=1, choices=GROUP_LEVELS, verbose_name='Уровень группы', default=LEVEL_ORANGE)
     tarif_for_one_lesson = models.PositiveIntegerField(default=400, verbose_name='Тариф за одно занятие')
-    available_for_additional_lessons = models.BooleanField(default=False, verbose_name='Занятия за деньги',
-                                                           help_text='Можно ли прийти в эту группу на занятия за деньги,'
-                                                                     'если меньше, чем max_players')
+    available_for_additional_lessons = models.BooleanField(
+        default=False, verbose_name='Занятия за деньги',
+        help_text='Можно ли прийти в эту группу на занятия за деньги, если меньше, чем max_players'
+    )
     order = models.PositiveSmallIntegerField(default=0, blank=True)
 
     class Meta:
@@ -278,7 +281,9 @@ class AlertsLog(models.Model):
 
 class Photo(models.Model):
     url = models.TextField(null=True, blank=True, verbose_name='Ссылка на картинку')
-    telegram_id = models.CharField(max_length=256, null=True, blank=True, verbose_name='id картинки на сервере телеграма')
+    telegram_id = models.CharField(
+        max_length=256, null=True, blank=True, verbose_name='id картинки на сервере телеграма'
+    )
     text = models.TextField(null=True, blank=True, verbose_name='Текстовое описание')
 
     class Meta:

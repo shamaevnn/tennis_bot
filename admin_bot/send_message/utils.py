@@ -1,4 +1,4 @@
-from tele_interface.manage_data import SEND_MESSAGE
+from admin_bot.send_message.manage_data import SEND_MESSAGE
 
 
 def handle_selecting_groups_to_send_message_to(ids_counter, group_ids, group_id, button_data_text, button_text):

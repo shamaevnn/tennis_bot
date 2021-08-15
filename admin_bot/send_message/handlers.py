@@ -1,17 +1,17 @@
 from telegram.ext import ConversationHandler
 
-from admin_bot.handlers import GROUP_IDS, TEXT_TO_SEND
 from admin_bot.send_message.keyboard_utils import construct_menu_groups_for_send_message
-from admin_bot.static_text import WHOM_TO_SEND_TO, CHOOSE_GROUP_AFTER_THAT_CONFIRM, SENDING_TO_ALL_GROUPS_TYPE_TEXT, \
-    WILL_SEND_TO_ALL_TYPE_TEXT, WILL_SEND_TO_FREE_SCHEDULE, WILL_SEND_TO_THE_FOLLOWING_GROUPS, TYPE_TEXT_OF_MESSAGE, \
-    OR_PRESS_CANCEL, CANCEL_COMMAND, UP_TO_YOU, IS_SENT
+from admin_bot.send_message import static_text
+from base.common_for_bots.static_text import UP_TO_YOU
 from base.models import TrainingGroup, User, AlertsLog
-from base.utils import bot_edit_message, clear_broadcast_messages
-from tele_interface.manage_data import SEND_MESSAGE
+from base.common_for_bots.utils import clear_broadcast_messages, bot_edit_message
+from admin_bot.send_message.manage_data import SEND_MESSAGE
+
+GROUP_IDS, TEXT_TO_SEND = 2, 3
 
 
 def select_groups_where_should_send(update, context):
-    text = WHOM_TO_SEND_TO
+    text = static_text.WHOM_TO_SEND_TO
 
     banda_groups = TrainingGroup.objects.filter(
         status=TrainingGroup.STATUS_GROUP,
@@ -25,7 +25,7 @@ def select_groups_where_should_send(update, context):
 
         if len(group_ids) == 2 and group_ids[-1] == '-1':
             # ['', '-1'] -- just pressed confirm
-            text = CHOOSE_GROUP_AFTER_THAT_CONFIRM
+            text = static_text.CHOOSE_GROUP_AFTER_THAT_CONFIRM
         bot_edit_message(context.bot, text, update, markup)
         return GROUP_IDS
 
@@ -44,7 +44,7 @@ def text_to_send(update, context):
         list_of_group_ids = list(set([int(x) for x in group_ids if x]))
         if 0 in list_of_group_ids:
             # pressed 'send to all groups'
-            text = SENDING_TO_ALL_GROUPS_TYPE_TEXT
+            text = static_text.SENDING_TO_ALL_GROUPS_TYPE_TEXT
 
             banda_groups = TrainingGroup.objects.filter(status=TrainingGroup.STATUS_GROUP,
                                                         max_players__gt=1).distinct()
@@ -52,28 +52,28 @@ def text_to_send(update, context):
 
         elif -2 in list_of_group_ids:
             # pressed 'send to all'
-            text = WILL_SEND_TO_ALL_TYPE_TEXT
+            text = static_text.WILL_SEND_TO_ALL_TYPE_TEXT
             players = User.objects.filter(status__in=[User.STATUS_TRAINING,
                                                       User.STATUS_ARBITRARY,
                                                       User.STATUS_IND_TRAIN])
         elif -3 in list_of_group_ids:
-            # pressed 'send to free schedule'
-            text = WILL_SEND_TO_FREE_SCHEDULE
+            # pressed 'send to free view_schedule'
+            text = static_text.WILL_SEND_TO_FREE_SCHEDULE
             players = User.objects.filter(status=User.STATUS_ARBITRARY)
 
         else:
-            text = WILL_SEND_TO_THE_FOLLOWING_GROUPS
+            text = static_text.WILL_SEND_TO_THE_FOLLOWING_GROUPS
 
             group_names = "\n".join(list(TrainingGroup.objects.filter(id__in=list_of_group_ids).values_list('name', flat=True)))
             text += group_names
-            text += TYPE_TEXT_OF_MESSAGE
+            text += static_text.TYPE_TEXT_OF_MESSAGE
 
             players = User.objects.filter(traininggroup__in=list_of_group_ids).distinct()
 
         objs = [AlertsLog(player=player, alert_type=AlertsLog.CUSTOM_COACH_MESSAGE) for player in players]
         AlertsLog.objects.bulk_create(objs)
 
-        text += OR_PRESS_CANCEL
+        text += static_text.OR_PRESS_CANCEL
         bot_edit_message(context.bot, text, update)
 
         return TEXT_TO_SEND
@@ -85,7 +85,7 @@ def text_to_send(update, context):
 def receive_text_and_send(update, context):
     text = update.message.text
 
-    if text == CANCEL_COMMAND:
+    if text == static_text.CANCEL_COMMAND:
         update.message.reply_text(
             text=UP_TO_YOU
         )
@@ -108,7 +108,7 @@ def receive_text_and_send(update, context):
         alert_instances.update(is_sent=True, info=text)
 
         update.message.reply_text(
-            text=IS_SENT
+            text=static_text.IS_SENT
         )
 
         return ConversationHandler.END

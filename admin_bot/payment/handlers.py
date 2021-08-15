@@ -4,20 +4,17 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Sum, Count, Q, ExpressionWrapper, F, IntegerField
 from telegram.ext import ConversationHandler
 
-from admin_bot.keyboard_utils import construct_menu_months, construct_menu_groups
-from admin_bot.payment.keyboard_utils import choose_year_to_group_payment_keyboard, change_payment_info_keyboard, \
-    back_to_payment_groups_when_changing_payment_keyboard, cancel_confirm_changing_payment_info_keyboard
-from admin_bot.payment.utils import check_if_players_not_in_payments
-from admin_bot.static_text import CHOOSE_YEAR, CHOOSE_MONTH, TOTAL_PAID, MUST_PAY, CHOOSE_GROUP, HAVE_NOT_PAID, \
-    FIRST_LAST_NAME_NUMBER_OF_VISITS_GROUP, NO_SUCH, NUMBER_OF_TRAINS, TARIF, FIRST_LAST_NAME_FACT_NUMBER_OF_VISITS, \
-    MUST_PAY_FOR_TRAINS_AND_BALLS, TO_INSERT_PAYMENT_DATA_HELP_INFO, YEAR, MONTH, ERROR_INCORRECT_ID_OR_MONEY, \
-    NO_SUCH_OBJECT_IN_DATABASE, UP_TO_YOU, CHANGES_ARE_MADE
-from admin_bot.utils import have_not_paid_users_info
+import base.common_for_bots.static_text
+import base.common_for_bots.utils
+from admin_bot.payment.keyboard_utils import construct_menu_groups, construct_menu_months
+from admin_bot.payment import keyboard_utils
+from admin_bot.payment import manage_data
+from admin_bot.payment import static_text
+from admin_bot.payment.utils import check_if_players_not_in_payments, have_not_paid_users_info
 from base.models import Payment, TrainingGroup, User, GroupTrainingDay
-from base.utils import moscow_datetime, bot_edit_message, info_about_users
-from tele_interface.manage_data import PAYMENT_YEAR, PAYMENT_YEAR_MONTH, PAYMENT_YEAR_MONTH_GROUP, PAYMENT_START_CHANGE, \
-    PAYMENT_CONFIRM_OR_CANCEL
-from tele_interface.static_text import from_digit_to_month
+from base.common_for_bots.utils import moscow_datetime, bot_edit_message, info_about_users
+
+from base.common_for_bots.static_text import from_digit_to_month
 from tennis_bot.settings import TARIF_SECTION, TARIF_FEW
 
 
@@ -25,16 +22,15 @@ START_CHANGE_PAYMENT, CONFIRM_OR_CANCEL = range(2)
 
 
 def start_payment(update, context):
-    text = CHOOSE_YEAR
-    now_date = moscow_datetime(datetime.now()).date()
-    markup = choose_year_to_group_payment_keyboard(
+    text = static_text.CHOOSE_YEAR
+    now_date = moscow_datetime(datetime.datetime.now()).date()
+    markup = keyboard_utils.choose_year_to_group_payment_keyboard(
         year=now_date.year,
         month=now_date.month
     )
 
     if update.callback_query:
         bot_edit_message(context.bot, text, update, markup)
-
     else:
         update.message.reply_text(
             text=text,
@@ -43,14 +39,13 @@ def start_payment(update, context):
 
 
 def year_payment(update, context):
-    year = update.callback_query.data[len(PAYMENT_YEAR):]
-    text = CHOOSE_MONTH
-    markup = construct_menu_months(Payment.MONTHS, f'{PAYMENT_YEAR_MONTH}{year}|')
-    bot_edit_message(context.bot, text, update, markup)
+    year = update.callback_query.data[len(manage_data.PAYMENT_YEAR):]
+    markup = construct_menu_months(Payment.MONTHS, f'{manage_data.PAYMENT_YEAR_MONTH}{year}|')
+    bot_edit_message(context.bot, static_text.CHOOSE_MONTH, update, markup)
 
 
 def month_payment(update, context):
-    year, month = update.callback_query.data[len(PAYMENT_YEAR_MONTH):].split('|')
+    year, month = update.callback_query.data[len(manage_data.PAYMENT_YEAR_MONTH):].split('|')
 
     amount_for_this_month = Payment.objects.filter(year=year, month=month).aggregate(sigma=Sum('fact_amount'))
 
@@ -73,23 +68,23 @@ def month_payment(update, context):
     ).aggregate(sigma=Sum('should_pay'))
 
     text = f'{int(year) + 2020}--{from_digit_to_month[int(month)]}\n' \
-           f'<b>{TOTAL_PAID}: {amount_for_this_month["sigma"] if amount_for_this_month["sigma"] else 0}</b>\n' \
-           f'<b>{MUST_PAY}: {should_pay_this_month["sigma"]}</b>\n' \
-           f'{CHOOSE_GROUP}'
+           f'<b>{static_text.TOTAL_PAID}: {amount_for_this_month["sigma"] if amount_for_this_month["sigma"] else 0}</b>\n' \
+           f'<b>{static_text.MUST_PAY}: {should_pay_this_month["sigma"]}</b>\n' \
+           f'{static_text.CHOOSE_GROUP}'
 
     banda_groups = TrainingGroup.objects.filter(name__iregex=r'БАНДА').order_by('order')
-    markup = construct_menu_groups(banda_groups, f'{PAYMENT_YEAR_MONTH_GROUP}{year}|{month}|')
+    markup = construct_menu_groups(banda_groups, f'{manage_data.PAYMENT_YEAR_MONTH_GROUP}{year}|{month}|')
     bot_edit_message(context.bot, text, update, markup)
 
     return ConversationHandler.END
 
 
 def group_payment(update, context):
-    year, month, group_id = update.callback_query.data[len(PAYMENT_YEAR_MONTH_GROUP):].split('|')
+    year, month, group_id = update.callback_query.data[len(manage_data.PAYMENT_YEAR_MONTH_GROUP):].split('|')
 
     if int(group_id) == 0:
         # нажал на "не заплатили"
-        title = f'{HAVE_NOT_PAID}\n'
+        title = f'{static_text.HAVE_NOT_PAID}\n'
 
         payments = Payment.objects.filter(
             player__status=User.STATUS_TRAINING,
@@ -104,7 +99,7 @@ def group_payment(update, context):
             group_status=TrainingGroup.STATUS_GROUP
         )
 
-        help_info = FIRST_LAST_NAME_NUMBER_OF_VISITS_GROUP if payments.exists() else NO_SUCH
+        help_info = static_text.FIRST_LAST_NAME_NUMBER_OF_VISITS_GROUP if payments.exists() else static_text.NO_SUCH
         for payment in payments:
             payment.save()
 
@@ -132,13 +127,13 @@ def group_payment(update, context):
         check_if_players_not_in_payments(group_id, payments, year, month)
 
         paid_this_month = payments.aggregate(sigma=Sum('fact_amount'))
-        this_month_payment_info = f'{TOTAL_PAID}: {paid_this_month["sigma"]}\n\n'
+        this_month_payment_info = f'{static_text.TOTAL_PAID}: {paid_this_month["sigma"]}\n\n'
 
         group = TrainingGroup.objects.get(id=group_id)
         n_lessons = GroupTrainingDay.objects.filter(date__month=month, date__year=int(year)+2020, group=group,
                                                     is_available=True).count()
-        n_lessons_info = f'{NUMBER_OF_TRAINS}: {n_lessons}\n'
-        tarif_info = f'{TARIF}: {group.tarif_for_one_lesson}\n'
+        n_lessons_info = f'{static_text.NUMBER_OF_TRAINS}: {n_lessons}\n'
+        tarif_info = f'{static_text.TARIF}: {group.tarif_for_one_lesson}\n'
         if group.status == TrainingGroup.STATUS_GROUP:
             should_pay = n_lessons * group.tarif_for_one_lesson
         elif group.status == TrainingGroup.STATUS_SECTION:
@@ -148,9 +143,9 @@ def group_payment(update, context):
 
         should_pay_balls = 100 * round(n_lessons / 4)
         title = f'{group.name}\n'
-        help_info = FIRST_LAST_NAME_FACT_NUMBER_OF_VISITS
+        help_info = static_text.FIRST_LAST_NAME_FACT_NUMBER_OF_VISITS
 
-        payment_info = MUST_PAY_FOR_TRAINS_AND_BALLS.format(
+        payment_info = static_text.MUST_PAY_FOR_TRAINS_AND_BALLS.format(
             should_pay,
             should_pay_balls
         )
@@ -163,7 +158,7 @@ def group_payment(update, context):
            f"<b>id</b>. {help_info}\n\n" \
            f"{users_info}"
 
-    markup = change_payment_info_keyboard(
+    markup = keyboard_utils.change_payment_info_keyboard(
         year=year,
         month=month,
         group_id=group_id
@@ -173,19 +168,18 @@ def group_payment(update, context):
 
 
 def change_payment_data(update, context):
-    year, month, _ = update.callback_query.data[len(PAYMENT_START_CHANGE):].split('|')
-    text = TO_INSERT_PAYMENT_DATA_HELP_INFO
+    year, month, _ = update.callback_query.data[len(manage_data.PAYMENT_START_CHANGE):].split('|')
     user, _ = User.get_user_and_created(update, context)
 
-    markup = back_to_payment_groups_when_changing_payment_keyboard(
+    markup = keyboard_utils.back_to_payment_groups_when_changing_payment_keyboard(
         year=year,
         month=month,
         from_digit_to_month_dict=from_digit_to_month
     )
 
-    context.bot.send_message(
-        chat_id=user.id,
-        text=text,
+    base.common_for_bots.utils.send_message(
+        user_id=user.id,
+        text=static_text.TO_INSERT_PAYMENT_DATA_HELP_INFO,
         reply_markup=markup
     )
 
@@ -201,49 +195,44 @@ def get_id_amount(update, context):
         payment = Payment.objects.select_related('player').get(id=payment_id)
 
         text = f'{payment.player.first_name} {payment.player.last_name}\n' \
-               f'{YEAR}: {2020 + int(payment.year)}\n' \
-               f'{MONTH}: {from_digit_to_month[int(payment.month)]}\n' \
+               f'{static_text.YEAR}: {2020 + int(payment.year)}\n' \
+               f'{static_text.MONTH}: {from_digit_to_month[int(payment.month)]}\n' \
                f'<b>{payment.fact_amount}₽ ➡ {amount}₽</b>'
-        markup = cancel_confirm_changing_payment_info_keyboard(
+        markup = keyboard_utils.cancel_confirm_changing_payment_info_keyboard(
             payment_id=payment_id,
             amount=amount
         )
-        context.bot.send_message(
-            chat_id=user.id,
+        base.common_for_bots.utils.send_message(
+            user_id=user.id,
             text=text,
             reply_markup=markup,
             parse_mode='HTML'
         )
-
     except ValueError:
-        text = ERROR_INCORRECT_ID_OR_MONEY
-        context.bot.send_message(
-            chat_id=user.id,
-            text=text
+        base.common_for_bots.utils.send_message(
+            user_id=user.id,
+            text=static_text.ERROR_INCORRECT_ID_OR_MONEY
         )
-
     except ObjectDoesNotExist:
-        text = NO_SUCH_OBJECT_IN_DATABASE
-        context.bot.send_message(
-            chat_id=user.id,
-            text=text
+        base.common_for_bots.utils.send_message(
+            user_id=user.id,
+            text=static_text.NO_SUCH_OBJECT_IN_DATABASE
         )
 
     return CONFIRM_OR_CANCEL
 
 
 def confirm_or_cancel_changing_payment(update, context):
-    permission, payment_id, amount = update.callback_query.data[len(PAYMENT_CONFIRM_OR_CANCEL):].split('|')
+    permission, payment_id, amount = update.callback_query.data[len(manage_data.PAYMENT_CONFIRM_OR_CANCEL):].split('|')
     payment = Payment.objects.get(id=payment_id)
     if permission == 'NO':
-        text = UP_TO_YOU
+        text = base.common_for_bots.static_text.UP_TO_YOU
     else:
         payment.fact_amount = int(amount)
         payment.save()
+        text = static_text.CHANGES_ARE_MADE
 
-        text = CHANGES_ARE_MADE
-
-    markup = back_to_payment_groups_when_changing_payment_keyboard(
+    markup = keyboard_utils.back_to_payment_groups_when_changing_payment_keyboard(
         year=payment.year,
         month=payment.month,
         from_digit_to_month_dict=from_digit_to_month

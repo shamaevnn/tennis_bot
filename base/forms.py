@@ -7,10 +7,14 @@ from django.db.models import ExpressionWrapper, F, DateTimeField, Count
 from django.utils.safestring import mark_safe
 
 from base.models import User, TrainingGroup, GroupTrainingDay
-from base.utils import construct_main_menu, clear_broadcast_messages, moscow_datetime, TM_TIME_SCHEDULE_FORMAT, \
-    DT_BOT_FORMAT, send_alert_about_changing_tr_day_time, send_alert_about_changing_tr_day_status
-from tele_interface.static_text import NOW_YOU_HAVE_ACCESS_CONGRATS, ERROR_LIMIT_MAX_PLAYERS, \
-    ERROR_MAX_PLAYERS_IN_FUTURE, CANCEL_TRAIN_PLUS_BONUS_LESSON, ERROR_CANT_ADD_NEW_TRAIN, from_eng_to_rus_day_week
+from base.django_admin.utils import send_alert_about_changing_tr_day_status, send_alert_about_changing_tr_day_time
+from player_bot.menu_and_commands.keyboard_utils import construct_main_menu
+from base.common_for_bots.utils import DT_BOT_FORMAT, TM_TIME_SCHEDULE_FORMAT, clear_broadcast_messages, moscow_datetime
+from base.django_admin.static_text import ERROR_LIMIT_MAX_PLAYERS, ERROR_MAX_PLAYERS_IN_FUTURE, \
+    ERROR_CANT_ADD_NEW_TRAIN
+from player_bot.skip_lesson.static_text import CANCEL_TRAIN_PLUS_BONUS_LESSON
+from player_bot.registration.static_text import NOW_YOU_HAVE_ACCESS_CONGRATS
+from base.common_for_bots.static_text import from_eng_to_rus_day_week
 
 
 class UserForm(forms.ModelForm):

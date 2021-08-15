@@ -2,9 +2,10 @@ from collections import Counter
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
-from admin_bot.static_text import TO_ALL_GROUPS, TO_ALL, TO_FREE_SCHEDULE, CONFIRM
+from admin_bot.send_message.static_text import TO_ALL_GROUPS, TO_ALL, TO_FREE_SCHEDULE
+from base.common_for_bots.static_text import CONFIRM
 from admin_bot.send_message.utils import handle_selecting_groups_to_send_message_to
-from tele_interface.manage_data import SEND_MESSAGE
+from admin_bot.send_message.manage_data import SEND_MESSAGE
 
 
 def construct_menu_groups_for_send_message(groups, button_text):

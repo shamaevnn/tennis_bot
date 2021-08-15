@@ -35,7 +35,7 @@ services:
   bot:
     build: .
     container_name: tennis_bot
-    command: ipython tele_interface/main.py
+    command: ipython player_bot/main.py
     env_file:
       - ./.env
     depends_on:

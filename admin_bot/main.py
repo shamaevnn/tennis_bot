@@ -21,11 +21,12 @@ from admin_bot.handlers import (
     permission_for_ind_train,
     show_coach_schedule,
     show_traingroupday_info,
-    inline_calendar_handler, redirect_to_site, start_payment, year_payment,
-    month_payment, group_payment, change_payment_data, get_id_amount, START_CHANGE_PAYMENT, CONFIRM_OR_CANCEL,
-    confirm_or_cancel_changing_payment, save_many_ind_trains, select_groups_where_should_send, GROUP_IDS, TEXT_TO_SEND,
-    text_to_send, receive_text_and_send
+    inline_calendar_handler, redirect_to_site, START_CHANGE_PAYMENT, CONFIRM_OR_CANCEL,
+    save_many_ind_trains, GROUP_IDS, TEXT_TO_SEND
 )
+from admin_bot.send_message.handlers import select_groups_where_should_send, text_to_send, receive_text_and_send
+from admin_bot.payment.handlers import start_payment, year_payment, month_payment, group_payment, change_payment_data, \
+    get_id_amount, confirm_or_cancel_changing_payment
 from admin_bot.commands import start, cancel
 from tele_interface.manage_data import (
     PERMISSION_FOR_IND_TRAIN,

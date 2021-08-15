@@ -1,3 +1,5 @@
+from datetime import time, datetime, timedelta
+
 from django.test import TestCase
 
 from base.models import TrainingGroup, GroupTrainingDay
@@ -31,7 +33,11 @@ class HandleSkippingTrainTestCases(TestCase):
 		self.tr_day_visitor = create_tr_day_for_group(self.not_my_group_1)
 		self.tr_day_pay_visitor = create_tr_day_for_group(self.not_my_group_2)
 		self.tr_day_pay_bonus_visitor = create_tr_day_for_group(self.not_my_group_3)
-		self.tr_day_individual = create_tr_day_for_group(self.individual_group, is_individual=True)
+		self.tr_day_individual_1 = create_tr_day_for_group(self.individual_group, is_individual=True)
+		self.tr_day_individual_2 = GroupTrainingDay.objects.create(
+			group=self.individual_group, start_time=time(14, 30), date=(datetime.today() + timedelta(days=2)).date(),
+			is_individual=True
+		)
 
 		self.tr_day_visitor.visitors.add(self.me)
 		self.tr_day_pay_visitor.pay_visitors.add(self.me)
@@ -39,10 +45,12 @@ class HandleSkippingTrainTestCases(TestCase):
 
 	# todo: добавить тест для time_before_cancel
 	def test_ind_group(self):
-		# если тренировка индивидуальная. то запись удаляется
-		self.assertIn(self.tr_day_individual, GroupTrainingDay.objects.all())
-		text, admin_text = handle_skipping_train(self.tr_day_individual, self.me, self.date_info)
-		self.assertNotIn(self.tr_day_individual, GroupTrainingDay.objects.all())
+		# если тренировка индивидуальная, то запись удаляется
+		self.assertIn(self.tr_day_individual_1, GroupTrainingDay.objects.all())
+		text, admin_text = handle_skipping_train(self.tr_day_individual_1, self.me, self.date_info)
+		self.assertNotIn(self.tr_day_individual_1, GroupTrainingDay.objects.all())
+
+		# создались нужные тексты для тренера и игроков
 		self.assertEqual(text, self.success_cancel_text)
 		self.assertEqual(
 			admin_text,
@@ -50,6 +58,9 @@ class HandleSkippingTrainTestCases(TestCase):
 				ATTENTION, self.me.first_name, self.me.last_name, self.date_info
 			)
 		)
+
+		# другая индивидуальная тренировка не удаляется
+		self.assertIn(self.tr_day_individual_2, GroupTrainingDay.objects.all())
 
 	def test_my_group(self):
 		# прибавляется отыгрыш и игрок заносится в absent

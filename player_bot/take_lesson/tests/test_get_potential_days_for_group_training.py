@@ -28,7 +28,7 @@ def create_tr_day_for_group(group, **kwargs):
     today = datetime.today()
     date = (today + timedelta(days=2)).date()
     tr_day = GroupTrainingDay.objects.create(
-        group=group, date=date, start_time=time(9,30), **kwargs
+        group=group, date=date, start_time=time(9, 30), **kwargs
     )
     return tr_day
 

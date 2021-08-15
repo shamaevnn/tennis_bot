@@ -2,16 +2,16 @@ import datetime
 import re
 import calendar
 from datetime import timedelta, datetime, time
+from typing import List, Dict
 
-from django.db.models import Count, F, ExpressionWrapper, DurationField, Q, DateTimeField
-from django.db.models.functions import TruncDate
+from django.db.models import Count, F, ExpressionWrapper, DurationField, Q
 
 from base.common_for_bots.static_text import DATE_INFO, from_eng_to_rus_day_week
 from base.models import GroupTrainingDay, TrainingGroup, User
 from base.common_for_bots.utils import DT_BOT_FORMAT, get_n_free_places, moscow_datetime, get_time_info_from_tr_day, \
-    create_calendar
+    create_calendar, TM_TIME_SCHEDULE_FORMAT
 from player_bot.take_lesson.keyboard_utils import construct_time_menu_for_group_lesson, \
-    construct_time_menu_4ind_lesson, choose_type_of_payment_for_group_lesson_keyboard, \
+    construct_time_menu_4ind_and_rent_lesson, choose_type_of_payment_for_group_lesson_keyboard, \
     back_to_group_times_when_no_left_keyboard
 from player_bot.take_lesson.manage_data import SELECT_PRECISE_GROUP_TIME, SELECT_PRECISE_IND_TIME, \
     PAYMENT_MONEY_AND_BONUS_LESSONS, PAYMENT_MONEY
@@ -90,75 +90,60 @@ def generate_times_to_remove(start_time: time, end_time: time):
     return times_to_remove
 
 
-def get_available_dt_time4ind_train(duration: float, tr_day_date=moscow_datetime(datetime.now()).date()):
-    # todo: какой-то пиздец, без пол литра не разберешься, хз шо с этим делать
-    poss_date = moscow_datetime(datetime.now()).date()
-    start_time = time(8, 0, 0)
+def get_available_start_times_for_given_duration_and_date(
+        duration_in_hours: str, tr_day_date: datetime.date
+) -> List[time]:
+    # в первом цикле определяем те часы:минуты, в которые не может начаться занятие.
+    # если занятие идет с 13:30 до 15:30, то туда попадет 13:30, 14:00, 14:30, 15:00
+    # (делается это во внутреннем цикле)
 
-    exist_tr_days = GroupTrainingDay.objects.tr_day_is_my_available(
-        date=tr_day_date,
-        start_time__gte=start_time
-    ).annotate(
-        end_time=ExpressionWrapper(
-            F('start_time') + F('duration'), output_field=DateTimeField()
-        ),
-        date_tmp=TruncDate('date')
-    ).values('date_tmp', 'start_time', 'end_time').order_by('date', 'start_time')
+    # втором цикле идем по каждым 30 минутам, начиная с 8:00. если данное время уже в первом списке, то идем дальше.
+    # В ином случае нужно проверить (внутренний цикл), что для данного периода следующие несколько 30 минут
+    # не в первом списке. Если они все не попадают туда, то заносим в итоговый список с возможным стартовым временем.
+    start_hour = 8
+    end_hour = 20
 
-    possible_times = []
-    for i in range(8, 21):  # занятия могут идти с 8 до 20
-        for minute in [0, 30]:  # с интервалом 30 минут
-            possible_times.append(time(i, minute))
-    del possible_times[-1]
-    poss_date_time_dict = {day['date_tmp']: possible_times[:] for day in exist_tr_days}
+    exist_tr_days: Dict = GroupTrainingDay.objects.tr_day_is_my_available(
+        date=tr_day_date
+    ).values('start_time', 'duration').order_by('start_time')
 
-    if exist_tr_days.count():
-        for day in exist_tr_days:
-            times_to_remove = generate_times_to_remove(day['start_time'], day['end_time'])
-            for x in times_to_remove:
-                if x in poss_date_time_dict[day['date_tmp']]:
-                    poss_date_time_dict[day['date_tmp']].remove(x)
+    banned_start_time: List[str] = []
+    from_time_to_str_time = lambda time_instance: time_instance.strftime(TM_TIME_SCHEDULE_FORMAT)
+    # первый цикл
+    for x in exist_tr_days:
+        start_minutes = x['start_time'].hour * 60 + x['start_time'].minute
+        end_minutes = int(start_minutes + x['duration'].seconds / 60)
+        for minute in range(start_minutes, end_minutes, 30):
+            banned_start_time.append(from_time_to_str_time(time(minute // 60, minute % 60)))
 
-    else:
-        if not tr_day_date in poss_date_time_dict:
-            poss_date_time_dict[tr_day_date] = possible_times[:]
-            if tr_day_date == poss_date:
-                now_time = moscow_datetime(datetime.now()).time()
-                if now_time < start_time:
-                    times_to_remove = []
-                else:
-                    times_to_remove = generate_times_to_remove(time(8, 0, 0), now_time)
+    possible_start_times_for_given_period: List[time] = []
+    from_minutes_to_time = lambda minutes: time(hour=minutes // 60, minute=minutes % 60)
+    # второй цикл
+    for hour_minute in range(start_hour * 60, end_hour * 60 + 1, 30):  # занятия могут идти с 8 до 20 с интервалом 30 минут
+        time_ = from_minutes_to_time(hour_minute)
+        str_time = from_time_to_str_time(time_)
+        if time_ >= time(20, 0) and int(float(duration_in_hours) * 60) > 60:
+            continue
+        if str_time in banned_start_time:
+            continue
+        else:
+            # нет занятия, которое начинается в это время
+            for minute_duration in range(30, int(float(duration_in_hours) * 60) - 1, 30):
+                if from_time_to_str_time(from_minutes_to_time(hour_minute + minute_duration)) in banned_start_time:
+                    break
             else:
-                times_to_remove = []
-            for x in times_to_remove:
-                if x in poss_date_time_dict[tr_day_date]:
-                    poss_date_time_dict[tr_day_date].remove(x)
-
-    poss_date_for_train = []
-    for poss_date in poss_date_time_dict:
-        for i in range(len(poss_date_time_dict[poss_date]) - int(duration * 2)):
-            if datetime.combine(poss_date, poss_date_time_dict[poss_date][i + int(duration * 2)]) - datetime.combine(
-                    poss_date, poss_date_time_dict[poss_date][i]) == timedelta(hours=duration):
-                poss_date_for_train.append(poss_date)
-
-    return poss_date_time_dict
+                possible_start_times_for_given_period.append(time_)
+    return possible_start_times_for_given_period
 
 
-def calendar_taking_ind_lesson(user, purpose, date_my, date_comparison):
+def calendar_taking_ind_lesson(purpose, date_my, date_comparison):
     duration = re.findall(rf'({CLNDR_ACTION_TAKE_IND})(\d.\d)', purpose)[0][1]
-    date_time_dict = get_available_dt_time4ind_train(float(duration), date_comparison)
+    possible_start_time_for_period = get_available_start_times_for_given_duration_and_date(duration, date_comparison)
 
-    poss_time_for_train = []
-    if date_time_dict.get(date_comparison):
-        for i in range(len(date_time_dict[date_comparison]) - int(float(duration) * 2)):
-            if datetime.combine(date_comparison, date_time_dict[date_comparison][
-                i + int(float(duration) * 2)]) - datetime.combine(
-                date_comparison, date_time_dict[date_comparison][i]) == timedelta(hours=float(duration)):
-                poss_time_for_train.append(date_time_dict[date_comparison][i])
-
-        markup = construct_time_menu_4ind_lesson(SELECT_PRECISE_IND_TIME, poss_time_for_train,
-                                                 date_comparison,
-                                                 float(duration), user)
+    if len(possible_start_time_for_period):
+        markup = construct_time_menu_4ind_and_rent_lesson(
+            SELECT_PRECISE_IND_TIME, possible_start_time_for_period, date_comparison, float(duration)
+        )
         text = 'Выбери время'
     else:
         text = 'Нельзя записаться на этот день, выбери другой.'
@@ -222,7 +207,7 @@ def handle_taking_group_lesson(user: User, tr_day: GroupTrainingDay):
 
 def handle_choosing_type_of_payment_for_pay_visiting_when_have_bonus_lessons(
         user: User, tr_day: GroupTrainingDay, payment_choice: str
-    ):
+):
     # todo: tests on this function
     time_tlg, _, _, date_tlg, day_of_week, _, _ = get_time_info_from_tr_day(tr_day)
     date_info = DATE_INFO.format(date_tlg, day_of_week, time_tlg)
@@ -250,7 +235,7 @@ def handle_choosing_type_of_payment_for_pay_visiting_when_have_bonus_lessons(
                     f'Не забудь заплатить <b>{tarif}₽</b>\n{date_info}'
 
         admin_text = f'⚠️ATTENTION⚠️\n' \
-                     f'{user.first_name} {user.last_name} придёт '\
+                     f'{user.first_name} {user.last_name} придёт ' \
                      f'<b>в дополнительное время, не забудь взять {tarif}₽.</b>\n{date_info}'
 
     return user_text, admin_text

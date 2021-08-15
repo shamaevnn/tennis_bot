@@ -73,5 +73,5 @@ def inline_calendar_handler(update, context):
         elif purpose == CLNDR_ACTION_TAKE_GROUP:
             text, markup = calendar_taking_lesson(user, purpose, date_my, date_comparison)
         elif re.findall(rf'({CLNDR_ACTION_TAKE_IND})(\d.\d)', purpose):
-            text, markup = calendar_taking_ind_lesson(user, purpose, date_my, date_comparison)
+            text, markup = calendar_taking_ind_lesson(purpose, date_my, date_comparison)
         bot_edit_message(context.bot, text, update, markup)

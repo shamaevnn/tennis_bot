@@ -7,7 +7,6 @@ from django.db.models import Q, F, Case, When, Sum, IntegerField
 from django.utils import timezone
 from datetime import datetime, date, timedelta
 
-from base.common_for_bots.utils import moscow_datetime, extract_user_data_from_update
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 
@@ -77,6 +76,7 @@ class User(AbstractUser):
     @classmethod
     def get_user_and_created(cls, update, context):
         """ python-telegram-bot's Update, Context --> User instance """
+        from base.utils import extract_user_data_from_update
         data = extract_user_data_from_update(update)
         u, created = cls.objects.update_or_create(
             id=data["id"],
@@ -227,11 +227,16 @@ class Payment(models.Model):
         month = int(self.month)
         begin_day_month = date(year, month, 1)
 
-        base_query = GroupTrainingDay.objects.filter(Q(visitors__in=[self.player]) | Q(group__users__in=[self.player]),
-                                                     date__gte=begin_day_month,
-                                                     date__lte=moscow_datetime(datetime.now()).date(),
-                                                     is_available=True,
-                                                     date__month=month).exclude(absent__in=[self.player])
+        base_query = GroupTrainingDay.objects.filter(
+            Q(visitors__in=[self.player]) |
+            Q(group__users__in=[self.player]) |
+            Q(pay_visitors__in=[self.player]) |
+            Q(pay_bonus_visitors__in=[self.player]),
+            date__gte=begin_day_month,
+            date__lte=datetime.now().date(),
+            is_available=True,
+            date__month=month
+        ).exclude(absent__in=[self.player])
 
         self.n_fact_visiting = base_query.distinct().count()
 
@@ -241,12 +246,13 @@ class Payment(models.Model):
                 payment = TARIF_SECTION
         if not payment:
             payment = base_query.annotate(
-                gr_status=F('group__status')).annotate(
+                gr_status=F('group__status')
+            ).annotate(
                 tarif=Case(When(gr_status=TrainingGroup.STATUS_4IND, then=TARIF_IND),
                            When(gr_status=TrainingGroup.STATUS_GROUP, then=TARIF_GROUP),
                            When(gr_status=TrainingGroup.STATUS_FEW, then=TARIF_FEW),
-                           output_field=IntegerField())).distinct().aggregate(
-                sigma=Sum('tarif'))['sigma']
+                           output_field=IntegerField())
+            ).distinct().aggregate(sigma=Sum('tarif'))['sigma']
 
         self.theory_amount = payment
 

@@ -1,5 +1,6 @@
 import datetime
 from datetime import datetime, timedelta
+from typing import List
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton as inlinebutt, \
     InlineKeyboardMarkup as inlinemark
@@ -42,7 +43,7 @@ def take_lesson_back_keyboard(tr_day_id, year, month, day):
         InlineKeyboardButton('Записаться', callback_data=f"{CONFIRM_GROUP_LESSON}{tr_day_id}")
     ], [
         InlineKeyboardButton(f'{BACK_BUTTON}',
-                      callback_data=create_callback_data(CLNDR_ACTION_TAKE_GROUP, CLNDR_DAY, year, month, day))
+                             callback_data=create_callback_data(CLNDR_ACTION_TAKE_GROUP, CLNDR_DAY, year, month, day))
     ]]
 
     return InlineKeyboardMarkup(buttons)
@@ -54,10 +55,10 @@ def choose_type_of_payment_for_group_lesson_keyboard(payment_add_lesson, tr_day_
                              callback_data=f"{PAYMENT_VISITING}{PAYMENT_MONEY_AND_BONUS_LESSONS}|{tr_day_id}")
     ], [
         InlineKeyboardButton(f'За {tarif}₽',
-                      callback_data=f"{PAYMENT_VISITING}{PAYMENT_MONEY}|{tr_day_id}")
+                             callback_data=f"{PAYMENT_VISITING}{PAYMENT_MONEY}|{tr_day_id}")
     ], [
         InlineKeyboardButton(f'{BACK_BUTTON}',
-                      callback_data=f"{SELECT_PRECISE_GROUP_TIME}{tr_day_id}")
+                             callback_data=f"{SELECT_PRECISE_GROUP_TIME}{tr_day_id}")
     ]]
     return InlineKeyboardMarkup(buttons)
 
@@ -89,8 +90,7 @@ def construct_time_menu_for_group_lesson(button_text, tr_days, date, purpose):
     for day in tr_days:
         time_tlg, _, _, _, _, _, _ = get_time_info_from_tr_day(day)
         row.append(
-            InlineKeyboardButton(f'{time_tlg}',
-                                 callback_data=button_text + str(day.id))
+            InlineKeyboardButton(f'{time_tlg}', callback_data=button_text + str(day.id))
         )
         if len(row) >= 2:
             buttons.append(row)
@@ -106,15 +106,18 @@ def construct_time_menu_for_group_lesson(button_text, tr_days, date, purpose):
     return InlineKeyboardMarkup(buttons)
 
 
-def construct_time_menu_4ind_lesson(button_text, poss_training_times: list, day: datetime.date, duration: float, user):
+def construct_time_menu_4ind_and_rent_lesson(
+        button_text: str, poss_training_times: List[datetime.time], day_date: datetime.date, duration: float
+) -> inlinemark:
     buttons = []
     row = []
     for start_time in poss_training_times:
-
-        end_time = datetime.combine(day, start_time) + timedelta(hours=duration)
+        end_time = datetime.combine(day_date, start_time) + timedelta(hours=duration)
         row.append(
-            inlinebutt(f'{start_time.strftime(TM_TIME_SCHEDULE_FORMAT)} — {end_time.strftime(TM_TIME_SCHEDULE_FORMAT)}',
-                       callback_data=f"{button_text}{day.strftime(DT_BOT_FORMAT)}|{start_time}|{end_time.time()}")
+            inlinebutt(
+                text=f'{start_time.strftime(TM_TIME_SCHEDULE_FORMAT)} — {end_time.strftime(TM_TIME_SCHEDULE_FORMAT)}',
+                callback_data=f"{button_text}{day_date.strftime(DT_BOT_FORMAT)}|{start_time}|{end_time.time()}"
+            )
         )
         if len(row) >= 2:
             buttons.append(row)
@@ -123,9 +126,11 @@ def construct_time_menu_4ind_lesson(button_text, poss_training_times: list, day:
         buttons.append(row)
 
     buttons.append([
-        inlinebutt(f'{BACK_BUTTON}',
-                   callback_data=create_callback_data(f'{CLNDR_ACTION_TAKE_IND}{duration}', CLNDR_ACTION_BACK, day.year,
-                                                      day.month, 0))
+        inlinebutt(
+            text=f'{BACK_BUTTON}',
+            callback_data=create_callback_data(
+                f'{CLNDR_ACTION_TAKE_IND}{duration}', CLNDR_ACTION_BACK, day_date.year, day_date.month, 0
+            )
+        )
     ])
-
     return inlinemark(buttons)

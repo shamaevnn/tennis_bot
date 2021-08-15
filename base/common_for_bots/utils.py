@@ -7,6 +7,7 @@ from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 
 from base.common_for_bots.manage_data import CLNDR_IGNORE, CLNDR_DAY, CLNDR_PREV_MONTH, CLNDR_NEXT_MONTH
 from base.common_for_bots.static_text import from_digit_to_month, from_eng_to_rus_day_week
+from base.models import GroupTrainingDay
 from tennis_bot.settings import TELEGRAM_TOKEN, DEBUG
 
 DTTM_BOT_FORMAT = '%Y.%m.%d.%H.%M'
@@ -97,33 +98,7 @@ def bot_edit_message(bot, text, update, markup=None):
                           reply_markup=markup)
 
 
-def extract_user_data_from_update(update):
-    """ python-telegram-bot's Update instance --> User info """
-    if update.message is not None:
-        user = update.message.from_user.to_dict()
-    elif update.inline_query is not None:
-        user = update.inline_query.from_user.to_dict()
-    elif update.chosen_inline_result is not None:
-        user = update.chosen_inline_result.from_user.to_dict()
-    elif update.callback_query is not None and update.callback_query.from_user is not None:
-        user = update.callback_query.from_user.to_dict()
-    elif update.callback_query is not None and update.callback_query.message is not None:
-        user = update.callback_query.message.chat.to_dict()
-    else:
-        raise Exception(f"Can't extract user data from update: {update}")
-
-    return dict(
-        id=user["id"],
-        is_blocked=False,
-        **{
-            k: user[k]
-            for k in ["username", "first_name", "last_name"]
-            if k in user and user[k] is not None
-        },
-    )
-
-
-def get_time_info_from_tr_day(tr_day):
+def get_time_info_from_tr_day(tr_day: GroupTrainingDay):
     """
     :param tr_day: instance of GroupTrainingDay
     :return: end_time, start_time: datetime,

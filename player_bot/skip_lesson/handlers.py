@@ -1,11 +1,8 @@
-from datetime import datetime
-
-import base.common_for_bots.utils
 from base.common_for_bots.static_text import DATE_INFO
 from base.models import User, GroupTrainingDay
 from player_bot.menu_and_commands.keyboard_utils import construct_main_menu
-from base.common_for_bots.utils import clear_broadcast_messages, moscow_datetime, bot_edit_message, \
-    get_time_info_from_tr_day, create_calendar
+from base.common_for_bots.utils import clear_broadcast_messages, bot_edit_message, get_time_info_from_tr_day,\
+    create_calendar
 from player_bot.skip_lesson.keyboard_utils import construct_detail_menu_for_skipping
 from player_bot.skip_lesson.manage_data import SELECT_SKIP_TIME_BUTTON, SHOW_INFO_ABOUT_SKIPPING_DAY
 from player_bot.calendar.manage_data import CLNDR_ACTION_SKIP
@@ -20,7 +17,7 @@ def skip_lesson_main_menu_button(update, context):
     user, _ = User.get_user_and_created(update, context)
     available_grouptraining_dates = select_tr_days_for_skipping(user)
     if available_grouptraining_dates.exists():
-        base.common_for_bots.utils.send_message(
+        context.bot.send_message(
             user.id,
             'Выбери дату тренировки для отмены.\n'
             '✅ -- дни, доступные для отмены.',
@@ -30,10 +27,10 @@ def skip_lesson_main_menu_button(update, context):
                                          )
         )
     else:
-        base.common_for_bots.utils.send_message(
+        context.bot.send_message(
             user.id,
             'Пока что нечего пропускать.',
-            reply_markup=construct_main_menu(user, user.status)
+            reply_markup=construct_main_menu(user)
         )
 
 

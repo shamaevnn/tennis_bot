@@ -29,7 +29,7 @@ class UserForm(forms.ModelForm):
             if self.instance.status == User.STATUS_WAITING and (
                     new_status == User.STATUS_ARBITRARY or new_status == User.STATUS_TRAINING):
                 text = NOW_YOU_HAVE_ACCESS_CONGRATS
-                reply_markup = construct_main_menu(self.instance, self.instance.status)
+                reply_markup = construct_main_menu(self.instance)
 
                 clear_broadcast_messages(
                     user_ids=[self.instance.id],

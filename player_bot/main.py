@@ -1,8 +1,8 @@
 import django
 import os
 
-# os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'tennis_bot.settings')
-# django.setup()
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'tennis_bot.settings')
+django.setup()
 from telegram.ext import (
     Updater,
     CommandHandler,

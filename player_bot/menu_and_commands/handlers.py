@@ -45,5 +45,7 @@ def cancel(update, context):
 
 def get_help(update, context):
     user, _ = User.get_user_and_created(update, context)
-    update.message.reply_text(text=HELP_MESSAGE,
-                              reply_markup=construct_main_menu(user, user.status))
+    update.message.reply_text(
+        text=HELP_MESSAGE,
+        reply_markup=construct_main_menu(user)
+    )

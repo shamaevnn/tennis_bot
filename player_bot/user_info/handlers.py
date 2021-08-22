@@ -69,6 +69,6 @@ def user_main_info(update, context):
     update.message.reply_text(
         text=text,
         parse_mode='HTML',
-        reply_markup=construct_main_menu(user, user.status)
+        reply_markup=construct_main_menu(user)
     )
     return ConversationHandler.END

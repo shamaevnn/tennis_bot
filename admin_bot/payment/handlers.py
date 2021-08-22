@@ -4,8 +4,6 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Sum, Count, Q, ExpressionWrapper, F, IntegerField
 from telegram.ext import ConversationHandler
 
-import base.common_for_bots.static_text
-import base.common_for_bots.utils
 from admin_bot.payment.keyboard_utils import construct_menu_groups, construct_menu_months
 from admin_bot.payment import keyboard_utils
 from admin_bot.payment import manage_data
@@ -14,7 +12,7 @@ from admin_bot.payment.utils import check_if_players_not_in_payments, have_not_p
 from base.models import Payment, TrainingGroup, User, GroupTrainingDay
 from base.common_for_bots.utils import moscow_datetime, bot_edit_message, info_about_users
 
-from base.common_for_bots.static_text import from_digit_to_month
+from base.common_for_bots.static_text import from_digit_to_month, UP_TO_YOU
 from tennis_bot.settings import TARIF_SECTION, TARIF_FEW
 
 
@@ -177,7 +175,7 @@ def change_payment_data(update, context):
         from_digit_to_month_dict=from_digit_to_month
     )
 
-    base.common_for_bots.utils.send_message(
+    context.bot.send_message(
         user_id=user.id,
         text=static_text.TO_INSERT_PAYMENT_DATA_HELP_INFO,
         reply_markup=markup
@@ -202,19 +200,19 @@ def get_id_amount(update, context):
             payment_id=payment_id,
             amount=amount
         )
-        base.common_for_bots.utils.send_message(
+        context.bot.send_message(
             user_id=user.id,
             text=text,
             reply_markup=markup,
             parse_mode='HTML'
         )
     except ValueError:
-        base.common_for_bots.utils.send_message(
+        context.bot.send_message(
             user_id=user.id,
             text=static_text.ERROR_INCORRECT_ID_OR_MONEY
         )
     except ObjectDoesNotExist:
-        base.common_for_bots.utils.send_message(
+        context.bot.send_message(
             user_id=user.id,
             text=static_text.NO_SUCH_OBJECT_IN_DATABASE
         )
@@ -226,7 +224,7 @@ def confirm_or_cancel_changing_payment(update, context):
     permission, payment_id, amount = update.callback_query.data[len(manage_data.PAYMENT_CONFIRM_OR_CANCEL):].split('|')
     payment = Payment.objects.get(id=payment_id)
     if permission == 'NO':
-        text = base.common_for_bots.static_text.UP_TO_YOU
+        text = UP_TO_YOU
     else:
         payment.fact_amount = int(amount)
         payment.save()

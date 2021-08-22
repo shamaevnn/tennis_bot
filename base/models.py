@@ -229,9 +229,7 @@ class Payment(models.Model):
 
         base_query = GroupTrainingDay.objects.filter(
             Q(visitors__in=[self.player]) |
-            Q(group__users__in=[self.player]) |
-            Q(pay_visitors__in=[self.player]) |
-            Q(pay_bonus_visitors__in=[self.player]),
+            Q(group__users__in=[self.player]),
             date__gte=begin_day_month,
             date__lte=datetime.now().date(),
             is_available=True,

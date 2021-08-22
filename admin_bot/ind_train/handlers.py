@@ -3,6 +3,7 @@ import telegram
 from admin_bot.ind_train import static_text
 from admin_bot.ind_train.keyboard_utils import how_many_trains_to_save_keyboard
 from admin_bot.ind_train.manage_data import PERMISSION_FOR_IND_TRAIN, AMOUNT_OF_IND_TRAIN, PERMISSION_YES
+from base.common_for_bots.static_text import DATE_INFO, ATTENTION
 from base.models import User, GroupTrainingDay
 from base.utils import create_tr_days_for_future
 from base.common_for_bots.utils import bot_edit_message, get_time_info_from_tr_day
@@ -17,29 +18,25 @@ def permission_for_ind_train(update, context):
 
     if tr_day.exists():
         tr_day = tr_day.first()
-        time_tlg, _, _, date_tlg, _, _, _ = get_time_info_from_tr_day(tr_day)
+        time_tlg, _, _, date_tlg, day_of_week, _, _ = get_time_info_from_tr_day(tr_day)
+        date_info = DATE_INFO.format(date_tlg, day_of_week, time_tlg)
         markup = None
 
         if permission == PERMISSION_YES:
             markup = how_many_trains_to_save_keyboard(tr_day_id=tr_day_id)
             admin_text = static_text.HOW_MANY_TRAINS_TO_SAVE
 
-            user_text = f'Отлично, тренер подтвердил тренировку <b>{date_tlg}</b>\n' \
-                        f'Время: <b>{time_tlg}</b>\n' \
-                        f'Не забудь!'
-
+            user_text = f'Отлично, тренер подтвердил тренировку, не забудь!\n' \
+                        f'{date_info}'
         else:
             admin_text = static_text.WILL_SAY_THAT_TRAIN_IS_CANCELLED.format(
                 player.last_name,
                 player.first_name,
-                date_tlg,
-                time_tlg
+                date_info
             )
-
-            user_text = f'Внимание!!!\nИндивидуальная тренировка <b> {date_tlg}</b>\n' \
-                        f'в <b>{time_tlg}</b>\n' \
-                        f'<b>ОТМЕНЕНА</b>'
-
+            user_text = f'{ATTENTION}\n' \
+                        f'Индивидуальная тренировка <b>ОТМЕНЕНА</b>\n' \
+                        f'{date_info}'
             tr_day.delete()
 
         tennis_bot = telegram.Bot(TELEGRAM_TOKEN)
@@ -48,7 +45,6 @@ def permission_for_ind_train(update, context):
             user_text,
             parse_mode='HTML'
         )
-
     else:
         admin_text = static_text.TRAIN_IS_ALREADY_CANCELLED
         markup = None

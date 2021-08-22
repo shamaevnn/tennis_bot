@@ -7,7 +7,7 @@ from django.http import HttpResponseNotFound, HttpResponseServerError
 from sentry_sdk import capture_message
 
 from admin_bot.main import process_admin_telegram_event
-from tele_interface.main import process_telegram_event
+from player_bot.main import process_telegram_event
 from tennis_bot.settings import DEBUG
 
 

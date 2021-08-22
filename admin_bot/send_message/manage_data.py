@@ -1,0 +1,1 @@
+SEND_MESSAGE = 'SND_MSG'

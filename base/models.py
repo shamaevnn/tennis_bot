@@ -7,11 +7,9 @@ from django.db.models import Q, F, Case, When, Sum, IntegerField
 from django.utils import timezone
 from datetime import datetime, date, timedelta
 
-from base.utils import moscow_datetime, extract_user_data_from_update
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 
-from tele_interface.static_text import *
 from tennis_bot.settings import TARIF_ARBITRARY, TARIF_GROUP, TARIF_IND, TARIF_SECTION, TARIF_FEW, TELEGRAM_TOKEN, DEBUG
 
 
@@ -60,8 +58,10 @@ class User(AbstractUser):
     is_blocked = models.BooleanField(default=False)
     status = models.CharField(max_length=1, choices=STATUSES, default=STATUS_WAITING, verbose_name='статус')
 
-    time_before_cancel = models.DurationField(null=True, help_text='ЧАСЫ:МИНУТЫ:СЕКУНДЫ',
-                                              verbose_name='Время, за которое нужно предупредить', default=timedelta(hours=6))
+    time_before_cancel = models.DurationField(
+        null=True, help_text='ЧАСЫ:МИНУТЫ:СЕКУНДЫ', verbose_name='Время, за которое нужно предупредить',
+        default=timedelta(hours=6)
+    )
     bonus_lesson = models.SmallIntegerField(null=True, blank=True, default=0, verbose_name='Количество отыгрышей')
 
     add_info = models.CharField(max_length=128, null=True, blank=True, verbose_name='Доп. информация')
@@ -76,6 +76,7 @@ class User(AbstractUser):
     @classmethod
     def get_user_and_created(cls, update, context):
         """ python-telegram-bot's Update, Context --> User instance """
+        from base.utils import extract_user_data_from_update
         data = extract_user_data_from_update(update)
         u, created = cls.objects.update_or_create(
             id=data["id"],
@@ -115,9 +116,10 @@ class TrainingGroup(ModelwithTime):
 
     LEVEL_ORANGE = 'O'
     LEVEL_GREEN = 'G'
+    GROUP_LEVEL_DICT = {LEVEL_ORANGE: '🟠оранжевый мяч🟠', LEVEL_GREEN: '🟢зелёный мяч🟢'}
     GROUP_LEVELS = (
-        (LEVEL_GREEN, GREEN_BALL),
-        (LEVEL_ORANGE, ORANGE_BALL),
+        (LEVEL_GREEN, GROUP_LEVEL_DICT[LEVEL_GREEN]),
+        (LEVEL_ORANGE, GROUP_LEVEL_DICT[LEVEL_ORANGE]),
     )
 
     name = models.CharField(max_length=32, verbose_name='Название')
@@ -126,9 +128,10 @@ class TrainingGroup(ModelwithTime):
     status = models.CharField(max_length=1, choices=GROUP_STATUSES, verbose_name='Статус группы', default=STATUS_GROUP)
     level = models.CharField(max_length=1, choices=GROUP_LEVELS, verbose_name='Уровень группы', default=LEVEL_ORANGE)
     tarif_for_one_lesson = models.PositiveIntegerField(default=400, verbose_name='Тариф за одно занятие')
-    available_for_additional_lessons = models.BooleanField(default=False, verbose_name='Занятия за деньги',
-                                                           help_text='Можно ли прийти в эту группу на занятия за деньги,'
-                                                                     'если меньше, чем max_players')
+    available_for_additional_lessons = models.BooleanField(
+        default=False, verbose_name='Занятия за деньги',
+        help_text='Можно ли прийти в эту группу на занятия за деньги, если меньше, чем max_players'
+    )
     order = models.PositiveSmallIntegerField(default=0, blank=True)
 
     class Meta:
@@ -224,11 +227,16 @@ class Payment(models.Model):
         month = int(self.month)
         begin_day_month = date(year, month, 1)
 
-        base_query = GroupTrainingDay.objects.filter(Q(visitors__in=[self.player]) | Q(group__users__in=[self.player]),
-                                                     date__gte=begin_day_month,
-                                                     date__lte=moscow_datetime(datetime.now()).date(),
-                                                     is_available=True,
-                                                     date__month=month).exclude(absent__in=[self.player])
+        base_query = GroupTrainingDay.objects.filter(
+            Q(visitors__in=[self.player]) |
+            Q(group__users__in=[self.player]) |
+            Q(pay_visitors__in=[self.player]) |
+            Q(pay_bonus_visitors__in=[self.player]),
+            date__gte=begin_day_month,
+            date__lte=datetime.now().date(),
+            is_available=True,
+            date__month=month
+        ).exclude(absent__in=[self.player])
 
         self.n_fact_visiting = base_query.distinct().count()
 
@@ -238,12 +246,13 @@ class Payment(models.Model):
                 payment = TARIF_SECTION
         if not payment:
             payment = base_query.annotate(
-                gr_status=F('group__status')).annotate(
+                gr_status=F('group__status')
+            ).annotate(
                 tarif=Case(When(gr_status=TrainingGroup.STATUS_4IND, then=TARIF_IND),
                            When(gr_status=TrainingGroup.STATUS_GROUP, then=TARIF_GROUP),
                            When(gr_status=TrainingGroup.STATUS_FEW, then=TARIF_FEW),
-                           output_field=IntegerField())).distinct().aggregate(
-                sigma=Sum('tarif'))['sigma']
+                           output_field=IntegerField())
+            ).distinct().aggregate(sigma=Sum('tarif'))['sigma']
 
         self.theory_amount = payment
 
@@ -278,7 +287,9 @@ class AlertsLog(models.Model):
 
 class Photo(models.Model):
     url = models.TextField(null=True, blank=True, verbose_name='Ссылка на картинку')
-    telegram_id = models.CharField(max_length=256, null=True, blank=True, verbose_name='id картинки на сервере телеграма')
+    telegram_id = models.CharField(
+        max_length=256, null=True, blank=True, verbose_name='id картинки на сервере телеграма'
+    )
     text = models.TextField(null=True, blank=True, verbose_name='Текстовое описание')
 
     class Meta:

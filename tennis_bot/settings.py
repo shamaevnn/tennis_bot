@@ -53,7 +53,7 @@ INSTALLED_APPS = [
     'django_celery_beat',
 
     'base',
-    'tele_interface',
+    'player_bot',
     'tennis_bot',
     'admin_bot',
 ]

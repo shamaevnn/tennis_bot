@@ -2,7 +2,6 @@ from django.contrib import admin
 # Register your models here.
 from django.utils.http import urlencode
 
-from tele_interface.utils import create_tr_days_for_future
 from .forms import UserForm, TrainingGroupForm, GroupTrainingDayForm
 from .models import *
 from django.utils.translation import ugettext_lazy as _
@@ -12,7 +11,8 @@ from django import forms
 from django.shortcuts import redirect
 from django.utils.html import format_html
 
-from .utils import send_alert_about_changing_tr_day_status
+from .utils import create_tr_days_for_future
+from .django_admin.utils import send_alert_about_changing_tr_day_status
 
 
 class UserTabularForm(forms.ModelForm):

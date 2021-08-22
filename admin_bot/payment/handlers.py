@@ -176,7 +176,7 @@ def change_payment_data(update, context):
     )
 
     context.bot.send_message(
-        user_id=user.id,
+        chat_id=user.id,
         text=static_text.TO_INSERT_PAYMENT_DATA_HELP_INFO,
         reply_markup=markup
     )
@@ -201,19 +201,19 @@ def get_id_amount(update, context):
             amount=amount
         )
         context.bot.send_message(
-            user_id=user.id,
+            chat_id=user.id,
             text=text,
             reply_markup=markup,
             parse_mode='HTML'
         )
     except ValueError:
         context.bot.send_message(
-            user_id=user.id,
+            chat_id=user.id,
             text=static_text.ERROR_INCORRECT_ID_OR_MONEY
         )
     except ObjectDoesNotExist:
         context.bot.send_message(
-            user_id=user.id,
+            chat_id=user.id,
             text=static_text.NO_SUCH_OBJECT_IN_DATABASE
         )
 

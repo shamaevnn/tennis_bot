@@ -19,7 +19,7 @@ def skip_lesson_main_menu_button(update, context):
     user, _ = User.get_user_and_created(update, context)
     available_grouptraining_dates = select_tr_days_for_skipping(user)
     if available_grouptraining_dates.exists():
-        base.common_for_bots.tasks.send_message(
+        context.bot.send_message(
             user.id,
             'Выбери дату тренировки для отмены.\n'
             '✅ -- дни, доступные для отмены.',
@@ -29,7 +29,7 @@ def skip_lesson_main_menu_button(update, context):
                                          )
         )
     else:
-        base.common_for_bots.tasks.send_message(
+        context.bot.send_message(
             user.id,
             'Пока что нечего пропускать.',
             reply_markup=construct_main_menu(user)

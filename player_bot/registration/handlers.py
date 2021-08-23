@@ -4,7 +4,7 @@ from telegram.ext import ConversationHandler
 
 from admin_bot.go_to_site.keyboard_utils import go_to_site_set_up_personal_data
 from admin_bot.go_to_site.static_text import NEW_CLIENT_HAS_COME
-from base.common_for_bots.utils import clear_broadcast_messages
+from base.common_for_bots.tasks import clear_broadcast_messages
 from base.models import User
 from player_bot.menu_and_commands.keyboard_utils import construct_main_menu
 from player_bot.menu_and_commands.handlers import INSERT_PHONE_NUMBER

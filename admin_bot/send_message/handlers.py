@@ -4,7 +4,8 @@ from admin_bot.send_message.keyboard_utils import construct_menu_groups_for_send
 from admin_bot.send_message import static_text
 from base.common_for_bots.static_text import UP_TO_YOU
 from base.models import TrainingGroup, User, AlertsLog
-from base.common_for_bots.utils import clear_broadcast_messages, bot_edit_message
+from base.common_for_bots.utils import bot_edit_message
+from base.common_for_bots.tasks import clear_broadcast_messages
 from admin_bot.send_message.manage_data import SEND_MESSAGE
 
 GROUP_IDS, TEXT_TO_SEND = 2, 3

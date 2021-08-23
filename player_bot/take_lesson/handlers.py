@@ -4,8 +4,9 @@ from datetime import datetime
 from admin_bot.ind_train.keyboard_utils import yes_no_permission4ind_train_keyboard
 from base.common_for_bots.static_text import DATE_INFO, from_eng_to_rus_day_week
 from base.models import User, TrainingGroup, GroupTrainingDay
-from base.common_for_bots.utils import DT_BOT_FORMAT, clear_broadcast_messages, get_actual_players_without_absent, \
+from base.common_for_bots.utils import DT_BOT_FORMAT, get_actual_players_without_absent, \
     get_n_free_places, moscow_datetime, bot_edit_message, get_time_info_from_tr_day, create_calendar
+from base.common_for_bots.tasks import clear_broadcast_messages
 from player_bot.take_lesson.keyboard_utils import ind_group_type_training_keyboard, \
     ind_train_choose_duration_keyboard, take_lesson_back_keyboard, choose_type_of_payment_for_group_lesson_keyboard, \
     back_to_group_times_when_no_left_keyboard

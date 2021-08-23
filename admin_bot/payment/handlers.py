@@ -4,6 +4,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Sum, Count, Q, ExpressionWrapper, F, IntegerField
 from telegram.ext import ConversationHandler
 
+import base.common_for_bots.tasks
 from admin_bot.payment.keyboard_utils import construct_menu_groups, construct_menu_months
 from admin_bot.payment import keyboard_utils
 from admin_bot.payment import manage_data
@@ -175,7 +176,7 @@ def change_payment_data(update, context):
         from_digit_to_month_dict=from_digit_to_month
     )
 
-    context.bot.send_message(
+    base.common_for_bots.tasks.send_message(
         chat_id=user.id,
         text=static_text.TO_INSERT_PAYMENT_DATA_HELP_INFO,
         reply_markup=markup
@@ -200,19 +201,19 @@ def get_id_amount(update, context):
             payment_id=payment_id,
             amount=amount
         )
-        context.bot.send_message(
+        base.common_for_bots.tasks.send_message(
             chat_id=user.id,
             text=text,
             reply_markup=markup,
             parse_mode='HTML'
         )
     except ValueError:
-        context.bot.send_message(
+        base.common_for_bots.tasks.send_message(
             chat_id=user.id,
             text=static_text.ERROR_INCORRECT_ID_OR_MONEY
         )
     except ObjectDoesNotExist:
-        context.bot.send_message(
+        base.common_for_bots.tasks.send_message(
             chat_id=user.id,
             text=static_text.NO_SUCH_OBJECT_IN_DATABASE
         )

@@ -9,7 +9,8 @@ from django.utils.safestring import mark_safe
 from base.models import User, TrainingGroup, GroupTrainingDay
 from base.django_admin.utils import send_alert_about_changing_tr_day_status, send_alert_about_changing_tr_day_time
 from player_bot.menu_and_commands.keyboard_utils import construct_main_menu
-from base.common_for_bots.utils import DT_BOT_FORMAT, TM_TIME_SCHEDULE_FORMAT, clear_broadcast_messages, moscow_datetime
+from base.common_for_bots.utils import DT_BOT_FORMAT, TM_TIME_SCHEDULE_FORMAT, moscow_datetime
+from base.common_for_bots.tasks import clear_broadcast_messages
 from base.django_admin.static_text import ERROR_LIMIT_MAX_PLAYERS, ERROR_MAX_PLAYERS_IN_FUTURE, \
     ERROR_CANT_ADD_NEW_TRAIN
 from player_bot.skip_lesson.static_text import CANCEL_TRAIN_PLUS_BONUS_LESSON
@@ -41,8 +42,8 @@ class UserForm(forms.ModelForm):
 class TrainingGroupForm(forms.ModelForm):
     class Meta:
         model = TrainingGroup
-        fields = ['name', 'users', 'max_players', 'status', 'level',
-                  'tarif_for_one_lesson', 'available_for_additional_lessons']
+        fields = ['name', 'users', 'max_players', 'status', 'level', 'tarif_for_one_lesson',
+                  'available_for_additional_lessons']
 
     def clean(self):
         users = self.cleaned_data.get('users')

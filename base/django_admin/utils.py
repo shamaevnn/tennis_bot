@@ -1,7 +1,7 @@
 from django.db.models import F
 
-from base.common_for_bots.utils import get_actual_players_without_absent, clear_broadcast_messages, \
-    get_players_for_tr_day
+from base.common_for_bots.utils import get_actual_players_without_absent, get_players_for_tr_day
+from base.common_for_bots.tasks import clear_broadcast_messages
 from player_bot.menu_and_commands.keyboard_utils import construct_main_menu
 from base.django_admin.static_text import CANCEL_TRAIN_PLUS_BONUS_LESSON_2, TRAIN_IS_AVAILABLE_CONGRATS
 

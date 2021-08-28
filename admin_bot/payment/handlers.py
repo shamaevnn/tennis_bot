@@ -4,14 +4,14 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Sum, Count, Q, ExpressionWrapper, F, IntegerField
 from telegram.ext import ConversationHandler
 
-import base.common_for_bots.tasks
+
 from admin_bot.payment.keyboard_utils import construct_menu_groups, construct_menu_months
 from admin_bot.payment import keyboard_utils
 from admin_bot.payment import manage_data
 from admin_bot.payment import static_text
-from admin_bot.payment.utils import check_if_players_not_in_payments, have_not_paid_users_info
+from admin_bot.payment.utils import check_if_players_not_in_payments, have_not_paid_users_info, payment_users_info
 from base.models import Payment, TrainingGroup, User, GroupTrainingDay
-from base.common_for_bots.utils import moscow_datetime, bot_edit_message, info_about_users
+from base.common_for_bots.utils import moscow_datetime, bot_edit_message
 
 from base.common_for_bots.static_text import from_digit_to_month, UP_TO_YOU
 from tennis_bot.settings import TARIF_SECTION, TARIF_FEW
@@ -149,7 +149,7 @@ def group_payment(update, context):
             should_pay_balls
         )
 
-        users_info = info_about_users(payments, for_admin=True, payment=True)
+        users_info = payment_users_info(payments)
 
     date_info = f'{from_digit_to_month[int(month)]} {int(year) + 2020}\n'
 

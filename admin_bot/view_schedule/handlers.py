@@ -2,8 +2,9 @@ import base.common_for_bots.static_text
 from admin_bot.view_schedule.keyboard_utils import back_from_show_grouptrainingday_info_keyboard
 from admin_bot.view_schedule import static_text
 from admin_bot.view_schedule.manage_data import SHOW_GROUPDAY_INFO
+from admin_bot.view_schedule.utils import schedule_users_info
 from base.models import GroupTrainingDay, TrainingGroup
-from base.common_for_bots.utils import bot_edit_message, get_time_info_from_tr_day, info_about_users
+from base.common_for_bots.utils import bot_edit_message, get_time_info_from_tr_day
 
 
 def show_trainingroupday_info(update, context):
@@ -17,11 +18,11 @@ def show_trainingroupday_info(update, context):
     group_name = f"{tr_day.group.name}\n"
 
     if not tr_day.is_individual:
-        group_players = f'{static_text.PLAYERS_FROM_GROUP}:\n{info_about_users(tr_day.group.users.all().difference(tr_day.absent.all()), for_admin=True)}\n'
-        visitors = f'\n{static_text.HAVE_COME_FROM_OTHERS}:\n{info_about_users(tr_day.visitors, for_admin=True)}\n' if tr_day.visitors.exists() else ''
-        pay_visitors = f'\n{static_text.HAVE_COME_FOR_MONEY}:\n{info_about_users(tr_day.pay_visitors, for_admin=True)}\n' if tr_day.pay_visitors.exists() else ''
-        pay_bonus_visitors = f'\n{static_text.HAVE_COME_FOR_PAY_BONUS_LESSON}:\n{info_about_users(tr_day.pay_bonus_visitors, for_admin=True)}\n' if tr_day.pay_bonus_visitors.exists() else ''
-        absents = f'\n{static_text.ARE_ABSENT}:\n{info_about_users(tr_day.absent, for_admin=True)}\n' if tr_day.absent.exists() else ''
+        group_players = f'{static_text.PLAYERS_FROM_GROUP}:\n{schedule_users_info(tr_day.group.users.all().difference(tr_day.absent.all()))}\n'
+        visitors = f'\n{static_text.HAVE_COME_FROM_OTHERS}:\n{schedule_users_info(tr_day.visitors)}\n' if tr_day.visitors.exists() else ''
+        pay_visitors = f'\n{static_text.HAVE_COME_FOR_MONEY}:\n{schedule_users_info(tr_day.pay_visitors)}\n' if tr_day.pay_visitors.exists() else ''
+        pay_bonus_visitors = f'\n{static_text.HAVE_COME_FOR_PAY_BONUS_LESSON}:\n{schedule_users_info(tr_day.pay_bonus_visitors)}\n' if tr_day.pay_bonus_visitors.exists() else ''
+        absents = f'\n{static_text.ARE_ABSENT}:\n{schedule_users_info(tr_day.absent)}\n' if tr_day.absent.exists() else ''
         group_level = f"{TrainingGroup.GROUP_LEVEL_DICT[tr_day.group.level]}\n"
     else:
         group_players, visitors, pay_visitors, pay_bonus_visitors, absents, group_level = '', '', '', '', '', ''

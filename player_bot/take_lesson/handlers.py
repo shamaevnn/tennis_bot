@@ -8,16 +8,13 @@ from base.common_for_bots.utils import DT_BOT_FORMAT, get_actual_players_without
     get_n_free_places, moscow_datetime, bot_edit_message, get_time_info_from_tr_day, create_calendar
 from base.common_for_bots.tasks import clear_broadcast_messages
 from player_bot.take_lesson.keyboard_utils import ind_group_type_training_keyboard, \
-    ind_train_choose_duration_keyboard, take_lesson_back_keyboard, choose_type_of_payment_for_group_lesson_keyboard, \
-    back_to_group_times_when_no_left_keyboard
-from player_bot.take_lesson.manage_data import SELECT_TRAINING_TYPE, SELECT_PRECISE_GROUP_TIME, CONFIRM_GROUP_LESSON, \
-    SELECT_DURATION_FOR_IND_TRAIN, SELECT_PRECISE_IND_TIME, PAYMENT_VISITING, PAYMENT_MONEY_AND_BONUS_LESSONS, \
-    PAYMENT_MONEY
+    ind_train_choose_duration_keyboard, take_lesson_back_keyboard
+from player_bot.take_lesson import manage_data
 from player_bot.calendar.manage_data import CLNDR_ACTION_TAKE_GROUP, CLNDR_ACTION_TAKE_IND
 from player_bot.take_lesson.utils import get_potential_days_for_group_training, handle_taking_group_lesson, \
     handle_choosing_type_of_payment_for_pay_visiting_when_have_bonus_lessons
 from player_bot.registration.utils import check_status_decor
-from tennis_bot.settings import ADMIN_TELEGRAM_TOKEN, TARIF_ARBITRARY, TARIF_GROUP, TARIF_PAYMENT_ADD_LESSON
+from tennis_bot.settings import ADMIN_TELEGRAM_TOKEN, TARIF_ARBITRARY
 
 
 @check_status_decor
@@ -37,16 +34,16 @@ def choose_type_of_training(update, context):
 def take_lesson(update, context):
     """записаться на тренировку"""
     user, _ = User.get_user_and_created(update, context)
-    tr_type = update.callback_query.data[len(SELECT_TRAINING_TYPE):]
-    if tr_type == 'group':
+    tr_type = update.callback_query.data[len(manage_data.SELECT_TRAINING_TYPE):]
+    if tr_type == manage_data.TRAINING_GROUP:
         if user.bonus_lesson > 0:
             text = '<b>Пожертвуешь одним отыгрышем.</b>\n' \
                    '✅ -- дни, доступные для групповых тренировок.'
         else:
             text = f'⚠️ATTENTION⚠️\n' \
-                   'В данный момент у тебя нет отыгрышей.\n' \
-                   '<b> Занятие будет стоить 600₽ </b>\n' \
-                   '✅ -- дни, доступные для групповых тренировок.'
+                   f'В данный момент у тебя нет отыгрышей.\n' \
+                   f'<b> Занятие будет стоить {TARIF_ARBITRARY}₽ </b>\n' \
+                   f'✅ -- дни, доступные для групповых тренировок.'
         training_days = get_potential_days_for_group_training(user).filter(
             date__gte=moscow_datetime(datetime.now()).date())
         highlight_dates = list(training_days.values_list('date', flat=True))
@@ -60,14 +57,14 @@ def take_lesson(update, context):
 
 
 def select_dt_for_ind_lesson(update, context):
-    duration = float(update.callback_query.data[len(SELECT_DURATION_FOR_IND_TRAIN):])
+    duration = float(update.callback_query.data[len(manage_data.SELECT_DURATION_FOR_IND_TRAIN):])
     markup = create_calendar(f'{CLNDR_ACTION_TAKE_IND}{duration}')
     text = 'Выбери дату тренировки.'
     bot_edit_message(context.bot, text, update, markup)
 
 
 def select_precise_ind_lesson_time(update, context):
-    day_dt, start_time, end_time = update.callback_query.data[len(SELECT_PRECISE_IND_TIME):].split('|')
+    day_dt, start_time, end_time = update.callback_query.data[len(manage_data.SELECT_PRECISE_IND_TIME):].split('|')
     date_dt = datetime.strptime(day_dt, DT_BOT_FORMAT)
     st_time_obj = datetime.strptime(start_time, '%H:%M:%S')
     end_time_obj = datetime.strptime(end_time, '%H:%M:%S')
@@ -109,13 +106,9 @@ def select_precise_group_lesson_time(update, context):
     """
     после того, как выбрал точное время для групповой тренировки,
     показываем инфу об этом дне с кнопкой записаться и назад
-    :param bot:
-    :param update:
-    :param user:
-    :return:
     """
 
-    tr_day_id = update.callback_query.data[len(SELECT_PRECISE_GROUP_TIME):]
+    tr_day_id = update.callback_query.data[len(manage_data.SELECT_PRECISE_GROUP_TIME):]
     tr_day = GroupTrainingDay.objects.select_related('group').get(id=tr_day_id)
 
     time_tlg, _, _, date_tlg, day_of_week, _, _ = get_time_info_from_tr_day(tr_day)
@@ -145,7 +138,7 @@ def select_precise_group_lesson_time(update, context):
 
 
 def confirm_group_lesson(update, context):
-    tr_day_id = update.callback_query.data[len(CONFIRM_GROUP_LESSON):]
+    tr_day_id = update.callback_query.data[len(manage_data.CONFIRM_GROUP_LESSON):]
     tr_day = GroupTrainingDay.objects.select_related('group').get(id=tr_day_id)
     user, _ = User.get_user_and_created(update, context)
 
@@ -164,7 +157,7 @@ def confirm_group_lesson(update, context):
 
 
 def choose_type_of_payment_for_pay_visiting(update, context):
-    payment_choice, tr_day_id = update.callback_query.data[len(PAYMENT_VISITING):].split('|')
+    payment_choice, tr_day_id = update.callback_query.data[len(manage_data.PAYMENT_VISITING):].split('|')
     tr_day = GroupTrainingDay.objects.get(id=tr_day_id)
     user, _ = User.get_user_and_created(update, context)
 

@@ -1,3 +1,5 @@
+from django.db.models import QuerySet
+
 from base.models import User, Payment
 
 
@@ -15,4 +17,16 @@ def have_not_paid_users_info(payments_values):
             f"<b>{x['id']}</b>. {x['player__last_name']} {x['player__first_name']} -- {x['n_fact_visiting']} ({x['group_name']})"
             for x in payments_values
         )
+    )
+
+
+def payment_users_info(users: QuerySet[Payment]):
+    return '\n'.join((
+        f"<b>{x['id']}</b>. {x['player__last_name']} {x['player__first_name']} -- {x['fact_amount']}₽, {x['n_fact_visiting']}"
+        for x in users.values(
+            'player__first_name', 'player__last_name', 'fact_amount', 'n_fact_visiting', 'id'
+        ).order_by(
+                'player__last_name',
+                'player__first_name'
+        ))
     )

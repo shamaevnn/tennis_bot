@@ -38,11 +38,13 @@ def moscow_datetime(date_time):
 
 
 def bot_edit_message(bot, text, update, markup=None):
-    bot.edit_message_text(text=text,
-                          chat_id=update.callback_query.message.chat_id,
-                          message_id=update.callback_query.message.message_id,
-                          parse_mode='HTML',
-                          reply_markup=markup)
+    bot.edit_message_text(
+        text=text,
+        chat_id=update.callback_query.message.chat_id,
+        message_id=update.callback_query.message.message_id,
+        parse_mode='HTML',
+        reply_markup=markup
+    )
 
 
 def get_time_info_from_tr_day(tr_day: GroupTrainingDay):
@@ -61,39 +63,6 @@ def get_time_info_from_tr_day(tr_day: GroupTrainingDay):
     date_tlg = tr_day.date.strftime(DT_BOT_FORMAT)
 
     return time_tlg, start_time_tlg, end_time_tlg, date_tlg, day_of_week, start_time, end_time
-
-
-def info_about_users(users, for_admin=False, payment=False):
-    """
-    :param payment: info about payment or not
-    :param for_admin: show info for admin or not (number instead of smile)
-    :param users: User instance
-    :return: (first_name + last_name + \n){1,} -- str
-    """
-    if for_admin:
-        if payment:
-            return '\n'.join(
-                (f"<b>{x['id']}</b>. {x['player__last_name']} {x['player__first_name']} -- {x['fact_amount']}₽, {x['n_fact_visiting']}"
-                    for x in users.values(
-                        'player__first_name',
-                        'player__last_name',
-                        'fact_amount',
-                        'n_fact_visiting',
-                        'id'
-                    ).order_by(
-                        'player__last_name',
-                        'player__first_name'
-                    )
-                )
-            )
-        else:
-            return '\n'.join(
-                (f"{i + 1}. {x['last_name']} {x['first_name']}" for i, x in enumerate(users.values('first_name',
-                                                                                                   'last_name').order_by('last_name'))))
-    else:
-        return '\n'.join(
-            (f"👤{x['last_name']} {x['first_name']}" for x in
-             users.values('first_name', 'last_name').order_by('last_name')))
 
 
 def create_calendar(purpose_of_calendar, year=None, month=None, dates_to_highlight=None):
@@ -125,25 +94,32 @@ def create_calendar(purpose_of_calendar, year=None, month=None, dates_to_highlig
     for week in my_calendar:
         row = []
         for day in week:
-
             if day == 0:
                 row.append(InlineKeyboardButton(" ", callback_data=data_ignore))
             else:
                 day_info = str(day)
                 if dates_to_highlight and (date(year, month, day) in dates_to_highlight):
                     day_info = f'{str(day)}✅'
-                row.append(InlineKeyboardButton(day_info, callback_data=create_callback_data(purpose_of_calendar,
-                                                                                             CLNDR_DAY, year, month,
-                                                                                             day)))
+                row.append(
+                    InlineKeyboardButton(
+                        day_info,
+                        callback_data=create_callback_data(
+                            purpose_of_calendar, CLNDR_DAY, year, month, day
+                        )
+                    )
+                )
         keyboard.append(row)
     # Last row - Buttons
-    row = [InlineKeyboardButton("<", callback_data=create_callback_data(purpose_of_calendar, CLNDR_PREV_MONTH, year,
-                                                                        month, day)),
-           InlineKeyboardButton(" ", callback_data=data_ignore),
-           InlineKeyboardButton(">", callback_data=create_callback_data(purpose_of_calendar, CLNDR_NEXT_MONTH, year,
-                                                                        month, day))]
+    row = [
+        InlineKeyboardButton("<", callback_data=create_callback_data(
+            purpose_of_calendar, CLNDR_PREV_MONTH, year, month, day
+        )),
+        InlineKeyboardButton(" ", callback_data=data_ignore),
+        InlineKeyboardButton(">", callback_data=create_callback_data(
+            purpose_of_calendar, CLNDR_NEXT_MONTH, year, month, day
+        ))
+    ]
     keyboard.append(row)
-
     return InlineKeyboardMarkup(keyboard)
 
 

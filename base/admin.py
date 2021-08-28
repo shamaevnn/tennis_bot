@@ -148,7 +148,7 @@ class GroupTrainingDayAdmin(admin.ModelAdmin):
         if request.GET or '/tgadmin/base/grouptrainingday/?date__year' in request.META.get("HTTP_REFERER"):
             return super().changelist_view(request, extra_context=extra_context)
 
-        today_date = moscow_datetime(datetime.now()).date()
+        today_date = datetime.now().date()
         params = ['month', 'year']
         field_keys = ['{}__{}'.format(self.date_hierarchy, i) for i in params]
         field_values = [getattr(today_date, i) for i in params]

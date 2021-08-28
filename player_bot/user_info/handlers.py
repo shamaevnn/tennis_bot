@@ -5,11 +5,11 @@ from telegram.ext import ConversationHandler
 
 from base.models import User, Payment, TrainingGroup
 from player_bot.menu_and_commands.keyboard_utils import construct_main_menu
-from base.common_for_bots.utils import moscow_datetime, info_about_users
+from base.common_for_bots.utils import moscow_datetime
 from player_bot.user_info.static_text import NO_PAYMENT_BUTTON, SUCCESS_PAYMENT
 from base.common_for_bots.static_text import from_digit_to_month
 from player_bot.registration.utils import check_status_decor
-from player_bot.user_info.utils import balls_lessons_payment
+from player_bot.user_info.utils import balls_lessons_payment, group_users_info
 
 
 @check_status_decor
@@ -45,9 +45,9 @@ def user_main_info(update, context):
 
     group = TrainingGroup.objects.filter(users__in=[user]).exclude(max_players=1).first()
 
-    teammates = group.users.values('first_name', 'last_name') if group else []
+    teammates = group.users.all() if group else User.objects.none()
 
-    group_info = "Твоя группа -- {}:\n{}\n\n".format(group.name, info_about_users(teammates)) if teammates else ''
+    group_info = "Твоя группа -- {}:\n{}\n\n".format(group.name, group_users_info(teammates)) if teammates else ''
 
     number_of_add_games = 'Количество отыгрышей: <b>{}</b>\n\n'.format(user.bonus_lesson)
 
@@ -56,13 +56,14 @@ def user_main_info(update, context):
     last_day = date(today.year, today.month, number_of_days_in_month)
     next_month = last_day + timedelta(days=1)
 
-    should_pay_this_month, balls_this_month, _ = balls_lessons_payment(today.year, today.month, user)
-    should_pay_money_next, balls_next_month, _ = balls_lessons_payment(next_month.year, next_month.month, user)
+    should_pay_this_month, balls_this_month = balls_lessons_payment(today.year, today.month, user)
+    should_pay_money_next, balls_next_month = balls_lessons_payment(next_month.year, next_month.month, user)
 
     should_pay_info = 'В этом месяце ({}) <b>нужно заплатить {} ₽ + {} ₽ за мячи.</b>\n' \
                       'В следующем месяце ({}) <b>нужно заплатить {} ₽ + {} ₽ за мячи</b>.'.format(
         from_digit_to_month[today.month], should_pay_this_month, balls_this_month,
-        from_digit_to_month[next_month.month], should_pay_money_next, balls_next_month)
+        from_digit_to_month[next_month.month], should_pay_money_next, balls_next_month
+    )
 
     text = intro + group_info + number_of_add_games + payment_status + should_pay_info
 

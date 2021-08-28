@@ -32,7 +32,7 @@ class TestAllAvailablePeriods(TestCase):
         self.tr_day_1930__21 = create_tr_day_for_group(self.group, time(19, 30), timedelta(hours=1, minutes=30))
 
     def test_one_hour_period(self):
-        start_times = get_available_start_times_for_given_duration_and_date(duration_in_hours='1.0', tr_day_date=date)
+        start_times = list(get_available_start_times_for_given_duration_and_date(duration_in_hours='1.0', tr_day_date=date))
 
         self.assertIn(time(8, 0), start_times)
         self.assertIn(time(10, 0), start_times)
@@ -45,7 +45,7 @@ class TestAllAvailablePeriods(TestCase):
         self.assertEqual(7, len(start_times))
 
     def test_one_and_half_hour_period(self):
-        start_times = get_available_start_times_for_given_duration_and_date(duration_in_hours='1.5', tr_day_date=date)
+        start_times = list(get_available_start_times_for_given_duration_and_date(duration_in_hours='1.5', tr_day_date=date))
 
         self.assertIn(time(10, 0), start_times)
         self.assertIn(time(17, 30), start_times)
@@ -54,7 +54,7 @@ class TestAllAvailablePeriods(TestCase):
         self.assertEqual(3, len(start_times))
 
     def test_two_hours_period(self):
-        start_times = get_available_start_times_for_given_duration_and_date(duration_in_hours='2.0', tr_day_date=date)
+        start_times = list(get_available_start_times_for_given_duration_and_date(duration_in_hours='2.0', tr_day_date=date))
 
         self.assertIn(time(17, 30), start_times)
         self.assertEqual(1, len(start_times))
@@ -75,7 +75,7 @@ class TestOnlyOneHour(TestCase):
         self.tr_day_18__20 = create_tr_day_for_group(self.group, time(18, 0), timedelta(hours=2))
 
     def test_one_hour_period(self):
-        start_times = get_available_start_times_for_given_duration_and_date(duration_in_hours='1.0', tr_day_date=date)
+        start_times = list(get_available_start_times_for_given_duration_and_date(duration_in_hours='1.0', tr_day_date=date))
         print(f"period=1.0", start_times)
 
         self.assertIn(time(14, 0), start_times)
@@ -85,12 +85,12 @@ class TestOnlyOneHour(TestCase):
         self.assertEqual(3, len(start_times))
 
     def test_one_and_half_hour_period(self):
-        start_times = get_available_start_times_for_given_duration_and_date(duration_in_hours='1.5', tr_day_date=date)
+        start_times = list(get_available_start_times_for_given_duration_and_date(duration_in_hours='1.5', tr_day_date=date))
         print(f"period=1.5", start_times)
         self.assertEqual(0, len(start_times))
 
     def test_two_hours_period(self):
-        start_times = get_available_start_times_for_given_duration_and_date(duration_in_hours='2.0', tr_day_date=date)
+        start_times = list(get_available_start_times_for_given_duration_and_date(duration_in_hours='2.0', tr_day_date=date))
         print(f"period=2.0", start_times)
         self.assertEqual(0, len(start_times))
 

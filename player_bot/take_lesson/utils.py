@@ -2,9 +2,9 @@ import datetime
 import re
 import calendar
 from datetime import timedelta, datetime, time
-from typing import List, Dict
+from typing import List, Dict, Generator
 
-from django.db.models import Count, F, ExpressionWrapper, DurationField, Q
+from django.db.models import Count, F, ExpressionWrapper, DurationField, Q, QuerySet
 
 from base.common_for_bots.static_text import DATE_INFO, from_eng_to_rus_day_week
 from base.models import GroupTrainingDay, TrainingGroup, User
@@ -92,7 +92,7 @@ def generate_times_to_remove(start_time: time, end_time: time):
 
 def get_available_start_times_for_given_duration_and_date(
         duration_in_hours: str, tr_day_date: datetime.date
-) -> List[time]:
+) -> Generator[time, None, None]:
     # в первом цикле определяем те часы:минуты, в которые не может начаться занятие.
     # если занятие идет с 13:30 до 15:30, то туда попадет 13:30, 14:00, 14:30, 15:00
     # (делается это во внутреннем цикле)
@@ -103,9 +103,9 @@ def get_available_start_times_for_given_duration_and_date(
     start_hour = 8
     end_hour = 20
 
-    exist_tr_days: Dict = GroupTrainingDay.objects.tr_day_is_my_available(
+    exist_tr_days: QuerySet[Dict] = GroupTrainingDay.objects.tr_day_is_my_available(
         date=tr_day_date
-    ).values('start_time', 'duration').order_by('start_time')
+    ).values('start_time', 'duration').order_by('start_time').iterator()
 
     banned_start_time: List[str] = []
     from_time_to_str_time = lambda time_instance: time_instance.strftime(TM_TIME_SCHEDULE_FORMAT)
@@ -116,13 +116,15 @@ def get_available_start_times_for_given_duration_and_date(
         for minute in range(start_minutes, end_minutes, 30):
             banned_start_time.append(from_time_to_str_time(time(minute // 60, minute % 60)))
 
-    possible_start_times_for_given_period: List[time] = []
     from_minutes_to_time = lambda minutes: time(hour=minutes // 60, minute=minutes % 60)
     # второй цикл
-    for hour_minute in range(start_hour * 60, end_hour * 60 + 1, 30):  # занятия могут идти с 8 до 20 с интервалом 30 минут
+
+    for hour_minute in range(start_hour * 60, end_hour * 60 + 1, 30):
+        # занятия могут идти с 8 до 20 с интервалом 30 минут
         time_ = from_minutes_to_time(hour_minute)
         str_time = from_time_to_str_time(time_)
         if time_ >= time(20, 0) and int(float(duration_in_hours) * 60) > 60:
+            # нельзя, чтобы тренировка была после 21:00
             continue
         if str_time in banned_start_time:
             continue
@@ -132,13 +134,12 @@ def get_available_start_times_for_given_duration_and_date(
                 if from_time_to_str_time(from_minutes_to_time(hour_minute + minute_duration)) in banned_start_time:
                     break
             else:
-                possible_start_times_for_given_period.append(time_)
-    return possible_start_times_for_given_period
+                yield time_
 
 
 def calendar_taking_ind_lesson(purpose, date_my, date_comparison):
     duration = re.findall(rf'({CLNDR_ACTION_TAKE_IND})(\d.\d)', purpose)[0][1]
-    possible_start_time_for_period = get_available_start_times_for_given_duration_and_date(duration, date_comparison)
+    possible_start_time_for_period = list(get_available_start_times_for_given_duration_and_date(duration, date_comparison))
 
     if len(possible_start_time_for_period):
         markup = construct_time_menu_4ind_and_rent_lesson(

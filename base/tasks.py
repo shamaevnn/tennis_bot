@@ -1,4 +1,6 @@
 import os
+import traceback
+
 import django
 import random
 import pytz
@@ -25,52 +27,56 @@ logger = get_task_logger(__name__)
 
 @app.task(ignore_result=True)
 def send_alert_about_coming_train():
-    # смотрим на те тренировки, по которым уже отправили сообщение
-    alert_log_tr_days = list(AlertsLog.objects.filter(
-        is_sent=True, alert_type=AlertsLog.COMING_TRAIN).values_list("tr_day_id", flat=True).distinct())
-    # выбираем предстоящие тренировки, исключаем выше описанные
-    tr_days = GroupTrainingDay.objects.select_related('group').annotate(
-        diff=ExpressionWrapper(
-            F('start_time') + F('date') - moscow_datetime(datetime.now()), output_field=DurationField()
-        ),
-        train_dttm=ExpressionWrapper(
-            F('start_time') + F('date'), output_field=DurationField())
-    ).filter(
-        train_dttm__gte=moscow_datetime(datetime.now()),
-        diff__lte=timedelta(hours=5),
-        is_available=True
-    ).exclude(
-        id__in=alert_log_tr_days
-    ).distinct()
+    try:
+        # смотрим на те тренировки, по которым уже отправили сообщение
+        alert_log_tr_days = list(AlertsLog.objects.filter(
+            is_sent=True, alert_type=AlertsLog.COMING_TRAIN).values_list("tr_day_id", flat=True).distinct())
+        # выбираем предстоящие тренировки, исключаем выше описанные
+        tr_days = GroupTrainingDay.objects.select_related('group').annotate(
+            diff=ExpressionWrapper(
+                F('start_time') + F('date') - moscow_datetime(datetime.now()), output_field=DurationField()
+            ),
+            train_dttm=ExpressionWrapper(
+                F('start_time') + F('date'), output_field=DurationField())
+        ).filter(
+            train_dttm__gte=moscow_datetime(datetime.now()),
+            diff__lte=timedelta(hours=5),
+            is_available=True
+        ).exclude(
+            id__in=alert_log_tr_days
+        ).distinct()
 
-    photo_ids = list(Photo.objects.values_list('id', flat=True))
-
-    for tr_day in tr_days:
-        players = get_actual_players_without_absent(tr_day)
-
+        photo_ids = list(Photo.objects.values_list('id', flat=True))
         bot = telegram.Bot(TELEGRAM_TOKEN)
-        for player in players:
-            photo_id = random.choice(photo_ids)
-            photo = Photo.objects.get(id=photo_id)
-            telegram_id_exists = photo.check_if_telegram_id_is_present()
-            if not telegram_id_exists:
-                photo.save_telegram_id()
+        for tr_day in tr_days:
+            players = get_actual_players_without_absent(tr_day)
 
-            time_tlg, _, _, date_tlg, day_of_week, _, _ = get_time_info_from_tr_day(tr_day)
-            dttm_train_info = f'📅Дата: <b>{date_tlg} ({day_of_week})</b>\n' \
-                              f'⏰Время: <b>{time_tlg}</b>\n\n'
+            for player in players:
+                photo_id = random.choice(photo_ids)
+                photo = Photo.objects.get(id=photo_id)
+                telegram_id_exists = photo.check_if_telegram_id_is_present()
+                if not telegram_id_exists:
+                    photo.save_telegram_id()
 
-            text_alert = f'{photo.text}\n{dttm_train_info}'
+                time_tlg, _, _, date_tlg, day_of_week, _, _ = get_time_info_from_tr_day(tr_day)
+                dttm_train_info = f'📅Дата: <b>{date_tlg} ({day_of_week})</b>\n' \
+                                  f'⏰Время: <b>{time_tlg}</b>\n\n'
 
-            try:
-                bot.send_photo(player.id,
-                               photo=photo.telegram_id,
-                               caption=text_alert,
-                               parse_mode='HTML')
-                AlertsLog.objects.create(is_sent=True, player=player, tr_day=tr_day, alert_type=AlertsLog.COMING_TRAIN)
-            except (telegram.error.Unauthorized, telegram.error.BadRequest) as e:
-                AlertsLog.objects.create(is_sent=False, player=player, tr_day=tr_day, alert_type=AlertsLog.COMING_TRAIN,
-                                         info=str(e) + '\n\n' + photo.telegram_id)
+                text_alert = f'{photo.text}\n{dttm_train_info}'
+
+                try:
+                    bot.send_photo(player.id,
+                                   photo=photo.telegram_id,
+                                   caption=text_alert,
+                                   parse_mode='HTML')
+                    AlertsLog.objects.create(is_sent=True, player=player, tr_day=tr_day, alert_type=AlertsLog.COMING_TRAIN)
+                except (telegram.error.Unauthorized, telegram.error.BadRequest) as e:
+                    AlertsLog.objects.create(is_sent=False, player=player, tr_day=tr_day, alert_type=AlertsLog.COMING_TRAIN,
+                                             info=str(e) + '\n\n' + photo.telegram_id)
+    except Exception as e:
+        text = f"Exception while sending alert about training: {e} \n {traceback.format_exc()}"
+        bot = telegram.Bot(TELEGRAM_TOKEN)
+        bot.send_message(text=text, chat_id=350490234)
 
 
 @app.task(ignore_result=True)

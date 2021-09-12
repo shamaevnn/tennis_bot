@@ -2,9 +2,10 @@ import datetime
 import re
 import calendar
 from datetime import timedelta, datetime, time
-from typing import List, Dict, Generator
+from typing import List, Dict, Generator, Tuple
 
 from django.db.models import Count, F, ExpressionWrapper, DurationField, Q, QuerySet
+from telegram import InlineKeyboardMarkup
 
 from base.common_for_bots.static_text import DATE_INFO, from_eng_to_rus_day_week
 from base.models import GroupTrainingDay, TrainingGroup, User
@@ -137,7 +138,7 @@ def get_available_start_times_for_given_duration_and_date(
                 yield time_
 
 
-def calendar_taking_ind_lesson(purpose, date_my, date_comparison):
+def calendar_taking_ind_lesson(purpose, date_my, date_comparison) -> Tuple[str, InlineKeyboardMarkup]:
     duration = re.findall(rf'({CLNDR_ACTION_TAKE_IND})(\d.\d)', purpose)[0][1]
     possible_start_time_for_period = list(get_available_start_times_for_given_duration_and_date(duration, date_comparison))
 
@@ -152,7 +153,10 @@ def calendar_taking_ind_lesson(purpose, date_my, date_comparison):
     return text, markup
 
 
-def handle_taking_group_lesson(user: User, tr_day: GroupTrainingDay):
+def handle_taking_group_lesson(
+        user: User,
+        tr_day: GroupTrainingDay
+) -> Tuple[str, InlineKeyboardMarkup, str, InlineKeyboardMarkup]:
     time_tlg, _, _, date_tlg, day_of_week, _, end_time = get_time_info_from_tr_day(tr_day)
     date_info = DATE_INFO.format(date_tlg, day_of_week, time_tlg)
 
@@ -175,7 +179,7 @@ def handle_taking_group_lesson(user: User, tr_day: GroupTrainingDay):
                          f'<b>не за счет отыгрышей, не забудь взять {TARIF_ARBITRARY}₽.</b>\n' \
                          f'{date_info}'
     else:
-        if tr_day.group.available_for_additional_lessons and tr_day.group.max_players < 6:
+        if tr_day.group.max_players - n_free_places < 6 and tr_day.group.available_for_additional_lessons:
             tarif = TARIF_ARBITRARY if user.status == User.STATUS_ARBITRARY else TARIF_GROUP
             if user.bonus_lesson == 0:
                 tr_day.pay_visitors.add(user)

@@ -1,14 +1,14 @@
-import base.common_for_bots.tasks
 from base.common_for_bots.static_text import DATE_INFO
 from base.models import User, GroupTrainingDay
 from player_bot.menu_and_commands.keyboard_utils import construct_main_menu
-from base.common_for_bots.utils import bot_edit_message, get_time_info_from_tr_day,\
-    create_calendar
+from base.common_for_bots.utils import bot_edit_message, get_time_info_from_tr_day, \
+    create_calendar, get_actual_players_without_absent
 from base.common_for_bots.tasks import clear_broadcast_messages
 from player_bot.skip_lesson.keyboard_utils import construct_detail_menu_for_skipping
 from player_bot.skip_lesson.manage_data import SELECT_SKIP_TIME_BUTTON, SHOW_INFO_ABOUT_SKIPPING_DAY
 from player_bot.calendar.manage_data import CLNDR_ACTION_SKIP
 from player_bot.registration.utils import check_status_decor
+from player_bot.skip_lesson.static_text import ONLY_ONE_LEFT
 from player_bot.skip_lesson.utils import select_tr_days_for_skipping, \
     make_group_name_group_players_info_for_skipping, handle_skipping_train
 from tennis_bot.settings import ADMIN_TELEGRAM_TOKEN
@@ -70,5 +70,12 @@ def skip_lesson(update, context):
             message=admin_text,
             tg_token=ADMIN_TELEGRAM_TOKEN,
         )
+        n_players_left_for_this_lesson = get_actual_players_without_absent(training_day).count()
+        if n_players_left_for_this_lesson == 1:
+            clear_broadcast_messages(
+                user_ids=list(admins.values_list('id', flat=True)),
+                message=ONLY_ONE_LEFT.format(training_day.group.name, date_info),
+                tg_token=ADMIN_TELEGRAM_TOKEN,
+            )
 
         bot_edit_message(context.bot, text, update)

@@ -9,6 +9,7 @@ UP_TO_YOU = 'Ну как хочешь'
 CONFIRM = 'Подтвердить'
 THIS_WAY_YEAH = 'Вот так вот значит, да?'
 ATTENTION = '⚠️ATTENTION⚠️'
+ATTENTION_2 = '❌ATTENTION❌'
 from_eng_to_rus_day_week = {
     'Sunday': 'воскресенье', 'Monday': 'понедельник', 'Tuesday': 'вторник', 'Wednesday': 'среда',
     'Thursday': 'четверг', 'Friday': 'пятница', 'Saturday': 'суббота'

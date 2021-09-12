@@ -1,4 +1,4 @@
-from base.common_for_bots.static_text import ATTENTION
+from base.common_for_bots.static_text import ATTENTION, ATTENTION_2
 
 USER_CANCELLED_IND_TRAIN = '{}\n{} {} отменил индивидуальную тренировку\n{}'
 USER_SKIPPED_TRAIN_FOR_BONUS = '{} {} пропускает тренировку за <b>отыгрыш</b>\n{}'
@@ -11,3 +11,7 @@ OKAY_TRAIN_CANCELLED = 'Окей, занятие отменено.\n{}'
 CANCEL_TRAIN_PLUS_BONUS_LESSON = f'{ATTENTION}\n' \
                        'У тебя есть запись на тренировку на <b> {}.</b>\n' \
                        '<b>Тренер ее отменил.</b> Но не отчаивайся, я добавлю тебе отыгрыш 🎾'
+
+ONLY_ONE_LEFT = f'{ATTENTION_2}\n' \
+                'На тренировке в группе {} остался только один игрок\n' \
+                '{}'

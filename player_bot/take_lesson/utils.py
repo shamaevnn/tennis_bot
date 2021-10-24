@@ -2,9 +2,9 @@ import datetime
 import re
 import calendar
 from datetime import timedelta, datetime, time
-from typing import List, Dict, Generator, Tuple
+from typing import List, Dict, Generator, Tuple, Optional
 
-from django.db.models import Count, F, ExpressionWrapper, DurationField, Q, QuerySet
+from django.db.models import Count, F, ExpressionWrapper, DurationField, Q, QuerySet, Case, When
 from telegram import InlineKeyboardMarkup
 
 from base.common_for_bots.static_text import DATE_INFO, from_eng_to_rus_day_week
@@ -17,7 +17,7 @@ from player_bot.take_lesson.keyboard_utils import construct_time_menu_for_group_
 from player_bot.take_lesson.manage_data import SELECT_PRECISE_GROUP_TIME, SELECT_PRECISE_IND_TIME, \
     PAYMENT_MONEY_AND_BONUS_LESSONS, PAYMENT_MONEY
 from player_bot.calendar.manage_data import CLNDR_ACTION_TAKE_IND
-from player_bot.take_lesson.static_text import NO_PLACES_FOR_THIS_TIME_CHOOSE_ANOTHER, CHOOSE_TYPE_OF_PAYMENT
+from player_bot.take_lesson import static_text
 from tennis_bot.settings import TARIF_ARBITRARY, TARIF_GROUP, TARIF_PAYMENT_ADD_LESSON
 
 
@@ -39,6 +39,12 @@ def get_potential_days_for_group_training(user, **filters):
     ).annotate(
         all_users=F('pay_visitors__count') + F('visitors__count') + F('pay_bonus_visitors__count') +
                   F('group__users__count') - F('absent__count')
+    ).annotate(
+        user_is_absent=Count(
+            'absent', filter=Q(absent__in=[user], group__users__in=[user])
+        )
+    ).filter(
+        user_is_absent=1  # игрок может записаться в свою группу еще раз, если пропустил занятие заранее
     ).filter(
         Q(max_players__gt=F('all_users')) |
         (
@@ -52,7 +58,6 @@ def get_potential_days_for_group_training(user, **filters):
         **filters
     ).exclude(
         Q(visitors__in=[user]) |
-        Q(group__users__in=[user]) |
         Q(pay_visitors__in=[user]) |
         Q(pay_bonus_visitors__in=[user])
     ).order_by('start_time')
@@ -75,20 +80,6 @@ def calendar_taking_lesson(user, purpose, date_my, date_comparison):
                '✅ -- дни, доступные для групповых тренировок'
         markup = create_calendar(purpose, date_my.year, date_my.month, highlight_dates)
     return text, markup
-
-
-def generate_times_to_remove(start_time: time, end_time: time):
-    times_to_remove = []
-    start = start_time
-    while start < end_time:
-        if start.minute == 0:
-            start = time(start.hour, 30)
-        elif start.minute == 30:
-            hour = start.hour + 1
-            start = time(hour, 0)
-        times_to_remove.append(start)
-    del times_to_remove[-1]
-    return times_to_remove
 
 
 def get_available_start_times_for_given_duration_and_date(
@@ -156,7 +147,7 @@ def calendar_taking_ind_lesson(purpose, date_my, date_comparison) -> Tuple[str, 
 def handle_taking_group_lesson(
         user: User,
         tr_day: GroupTrainingDay
-) -> Tuple[str, InlineKeyboardMarkup, str, InlineKeyboardMarkup]:
+) -> Tuple[str, Optional[InlineKeyboardMarkup], str, Optional[InlineKeyboardMarkup]]:
     time_tlg, _, _, date_tlg, day_of_week, _, end_time = get_time_info_from_tr_day(tr_day)
     date_info = DATE_INFO.format(date_tlg, day_of_week, time_tlg)
 
@@ -164,43 +155,48 @@ def handle_taking_group_lesson(
 
     admin_text = ''
     admin_markup = None
+    user_markup = None
+
+    if user in tr_day.absent.all():
+        user_text = static_text.take_lesson_after_skipping.format(date_info=date_info)
+        admin_text = static_text.admin_take_lesson_after_skipping.format(
+            first_name=user.first_name, last_name=user.last_name, date_info=date_info
+        )
+        tr_day.absent.remove(user)
+        User.objects.filter(id=user.id).update(bonus_lesson=F('bonus_lesson') + 1)
+        return user_text, user_markup, admin_text, admin_markup
+
     if n_free_places > 0:
         tr_day.visitors.add(user)
-        user_text = f'Записал тебя на тренировку.\n{date_info}'
-        user_markup = None
+        user_text = static_text.signed_up_you_on_train.format(date_info=date_info)
 
         if user.bonus_lesson > 0 and user.status == User.STATUS_TRAINING:
-            admin_text = f'{user.first_name} {user.last_name} придёт на гр. тренировку за отыгрыш.\n{date_info}'
-            user.bonus_lesson -= 1
-            user.save()
+            admin_text = static_text.admin_player_will_come_for_bonus_lesson.format(
+                first_name=user.first_name, last_name=user.last_name, date_info=date_info
+            )
+            User.objects.filter(id=user.id).update(bonus_lesson=F('bonus_lesson') - 1)
         else:
-            admin_text = f'⚠️ATTENTION⚠️\n' \
-                         f'{user.first_name} {user.last_name} придёт на гр. тренировку ' \
-                         f'<b>не за счет отыгрышей, не забудь взять {TARIF_ARBITRARY}₽.</b>\n' \
-                         f'{date_info}'
+            admin_text = static_text.admin_player_will_come_not_for_bonus_lesson.format(
+                first_name=user.first_name, last_name=user.last_name, tarif=TARIF_ARBITRARY, date_info=date_info
+            )
     else:
         if tr_day.group.max_players - n_free_places < 6 and tr_day.group.available_for_additional_lessons:
             tarif = TARIF_ARBITRARY if user.status == User.STATUS_ARBITRARY else TARIF_GROUP
             if user.bonus_lesson == 0:
                 tr_day.pay_visitors.add(user)
-                user_text = f'Записал тебя на тренировку' \
-                            f'⚠️ATTENTION⚠️\n' \
-                            f'Не забудь заплатить <b>{tarif}₽</b>\n' \
-                            f'{date_info}'
-                admin_text = f'⚠️ATTENTION⚠️\n' \
-                             f'{user.first_name} {user.last_name} придёт на гр. тренировку ' \
-                             f'<b>не за счет отыгрышей, не забудь взять {tarif}₽.</b>\n' \
-                             f'{date_info}'
-                user_markup = None
+                user_text = static_text.signed_up_dont_forget_to_pay.format(tarif=tarif, date_info=date_info)
+                admin_text = static_text.admin_player_will_come_not_for_bonus_lesson.format(
+                    first_name=user.first_name, last_name=user.last_name, tarif=tarif, date_info=date_info
+                )
             else:
-                user_text = CHOOSE_TYPE_OF_PAYMENT
+                user_text = static_text.CHOOSE_TYPE_OF_PAYMENT
                 user_markup = choose_type_of_payment_for_group_lesson_keyboard(
                     payment_add_lesson=TARIF_PAYMENT_ADD_LESSON,
                     tr_day_id=tr_day.id,
                     tarif=tarif,
                 )
         else:
-            user_text = NO_PLACES_FOR_THIS_TIME_CHOOSE_ANOTHER
+            user_text = static_text.NO_PLACES_FOR_THIS_TIME_CHOOSE_ANOTHER
             user_markup = back_to_group_times_when_no_left_keyboard(
                 year=tr_day.date.year,
                 month=tr_day.date.month,

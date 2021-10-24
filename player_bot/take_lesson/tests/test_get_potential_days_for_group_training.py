@@ -75,6 +75,11 @@ class BaseTestCases(TestCase):
         days = get_potential_days_for_group_training(user=self.me_training_in_group)
         self.assertNotIn(tr_day, days)
 
+        # но можно записаться, если игрок в отсутствующих (игрок передумал пропускать занятие)
+        tr_day.absent.add(self.me_training_in_group)
+        days = get_potential_days_for_group_training(user=self.me_training_in_group)
+        self.assertIn(tr_day, days)
+
     def test_not_visitors(self):
         # нельзя записаться в группу, если пользователь уже в visitors
         group = create_group()

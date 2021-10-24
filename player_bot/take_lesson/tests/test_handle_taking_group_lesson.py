@@ -199,3 +199,20 @@ class NoFreePlacesTests(TestCase):
 
         user_text, user_markup, admin_text, admin_markup = handle_taking_group_lesson(self.gr_u_w_bl, tr_day_5)
         self.assert_no_places_choose_another(user_text, user_markup, admin_text, admin_markup, tr_day_5)
+
+    def test_take_lesson_in_my_group(self):
+        # если игрок в отсутствующих, то он может опять записаться.
+        # ему добавиться отыгрыш + уберется из absent
+        tr_day_4 = create_tr_day_for_group(self.gr_4_mp_al)
+        tr_day_4.absent.add(self.user_1)
+
+        bonus_lesson_before = self.user_1.bonus_lesson
+        user_text, user_markup, admin_text, admin_markup = handle_taking_group_lesson(self.user_1, tr_day_4)
+
+        self.assertIsNone(user_markup)
+        self.assertIsNone(admin_markup)
+
+        self.user_1.refresh_from_db()
+        self.assertEqual(self.user_1.bonus_lesson, bonus_lesson_before + 1)
+
+        self.assertNotIn(self.user_1, tr_day_4.absent.all())

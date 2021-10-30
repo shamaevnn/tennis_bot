@@ -2,7 +2,7 @@ from datetime import datetime, timedelta, time
 
 from django.test import TestCase
 from base.models import User, TrainingGroup, GroupTrainingDay
-from player_bot.take_lesson.utils import get_potential_days_for_group_training
+from player_bot.take_lesson.group.query import get_potential_days_for_group_training
 
 
 def create_group_user(id: int, first_name: str):

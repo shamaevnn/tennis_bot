@@ -2,8 +2,8 @@ from datetime import datetime, timedelta, time
 
 from django.test import TestCase
 from base.models import User, TrainingGroup, GroupTrainingDay
-from player_bot.take_lesson.manage_data import PAYMENT_MONEY_AND_BONUS_LESSONS
-from player_bot.take_lesson.utils import handle_choosing_type_of_payment_for_pay_visiting_when_have_bonus_lessons
+from player_bot.take_lesson.group.manage_data import PAYMENT_MONEY_AND_BONUS_LESSONS
+from player_bot.take_lesson.group.utils import handle_choosing_type_of_payment_for_pay_visiting_when_have_bonus_lessons
 from tennis_bot.settings import TARIF_PAYMENT_ADD_LESSON
 
 

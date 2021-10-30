@@ -175,11 +175,11 @@ class TrainingGroup(ModelwithTime):
 
 class GroupTrainingDay(ModelwithTime):
     MY_TRAIN_STATUS = 'M'
-    RENT_KORT_STATUS = 'R'
+    RENT_COURT_STATUS = 'R'
 
     TR_DAY_STATUSES = (
         (MY_TRAIN_STATUS, 'моя тренировка'),
-        (RENT_KORT_STATUS, 'аренда')
+        (RENT_COURT_STATUS, 'аренда')
     )
 
     group = models.ForeignKey(TrainingGroup, on_delete=models.PROTECT, verbose_name='Группа')

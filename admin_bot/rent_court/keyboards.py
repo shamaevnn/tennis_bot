@@ -10,11 +10,11 @@ def permission4rent_keyboard(user_id: Union[str, int], tr_day_id: Union[str, int
     buttons = [[
         InlineKeyboardButton(
             text=YES,
-            callback_data=f"{manage_data.PERMISSION_FOR_RENT_KORT}{manage_data.PERMISSION_YES}|{user_id}|{tr_day_id}"
+            callback_data=f"{manage_data.PERMISSION_FOR_RENT_COURT}{manage_data.PERMISSION_YES}|{user_id}|{tr_day_id}"
         ),
         InlineKeyboardButton(
             text=NO,
-            callback_data=f"{manage_data.PERMISSION_FOR_RENT_KORT}{manage_data.PERMISSION_NO}|{user_id}|{tr_day_id}"
+            callback_data=f"{manage_data.PERMISSION_FOR_RENT_COURT}{manage_data.PERMISSION_NO}|{user_id}|{tr_day_id}"
         )
     ]]
 

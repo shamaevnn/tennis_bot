@@ -6,7 +6,7 @@ TRAIN_RENT_INFO = """
 ⏰Время: <b>{start_time} — {end_time}</b>
 """
 
-RENT_KORT = 'Арендовать корт'
+RENT_COURT = 'Арендовать корт'
 
 WILL_SAY_TO_COACH_ABOUT_RENTING = """
 Сообщу тренеру, что ты хочешь арендовать корт за <b>{price}₽</b> на {n_players} игроков
@@ -15,11 +15,11 @@ WILL_SAY_TO_COACH_ABOUT_RENTING = """
 ⏰Время: <b>{start_time} — {end_time}</b>
 """
 
-COACH_ACCEPTED_RENT_KORT = """
+COACH_ACCEPTED_RENT_COURT = """
 Отлично, тренер подтвердил, что можно арендовать корт, не забудь!
 {date_info}
 """
-COACH_CANCELLED_RENT_CORT = """
+COACH_CANCELLED_RENT_COURT = """
 {attention}
 Аренда корта <b>ОТМЕНЕНА</b>
 {date_info}

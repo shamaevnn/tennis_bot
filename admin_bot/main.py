@@ -26,8 +26,8 @@ from admin_bot.payment import handlers as payment_handlers
 from admin_bot.menu_and_commands.handlers import start, cancel
 from admin_bot.send_message.manage_data import SEND_MESSAGE
 from admin_bot.view_schedule.manage_data import SHOW_GROUPDAY_INFO, CLNDR_ADMIN_VIEW_SCHEDULE
-from admin_bot.rent_kort.handlers import permission_for_rent_kort
-from admin_bot.rent_kort.manage_data import PERMISSION_FOR_RENT_KORT
+from admin_bot.rent_court.handlers import permission_for_rent_court
+from admin_bot.rent_court.manage_data import PERMISSION_FOR_RENT_COURT
 from admin_bot.ind_train.manage_data import PERMISSION_FOR_IND_TRAIN, AMOUNT_OF_IND_TRAIN
 from admin_bot.payment.manage_data import PAYMENT_YEAR, PAYMENT_YEAR_MONTH, PAYMENT_YEAR_MONTH_GROUP, \
     PAYMENT_START_CHANGE, PAYMENT_CONFIRM_OR_CANCEL
@@ -86,8 +86,8 @@ def setup_dispatcher(dp):
     dp.add_handler(CallbackQueryHandler(permission_for_ind_train, pattern='^{}'.format(PERMISSION_FOR_IND_TRAIN)))
     dp.add_handler(CallbackQueryHandler(save_many_ind_trains, pattern='^{}'.format(AMOUNT_OF_IND_TRAIN)))
 
-    # rent kort
-    dp.add_handler(CallbackQueryHandler(permission_for_rent_kort, pattern=f'^{PERMISSION_FOR_RENT_KORT}'))
+    # rent court
+    dp.add_handler(CallbackQueryHandler(permission_for_rent_court, pattern=f'^{PERMISSION_FOR_RENT_COURT}'))
 
     # payment
     dp.add_handler(CallbackQueryHandler(show_trainingroupday_info, pattern='^{}'.format(SHOW_GROUPDAY_INFO)))

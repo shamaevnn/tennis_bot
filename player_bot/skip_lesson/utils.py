@@ -5,7 +5,7 @@ from django.db.models import ExpressionWrapper, F, DurationField, Q
 
 from player_bot.skip_lesson.static_text import USER_CANCELLED_IND_TRAIN, USER_SKIPPED_TRAIN_FOR_BONUS, \
     USER_SKIPPED_TRAIN_FOR_MONEY, USER_SKIPPED_TRAIN_FOR_PAY_BONUS, USER_SKIPPED_TRAIN_IN_HIS_GROUP, \
-    CANT_CANCEL_LESSON_TOO_LATE, OKAY_TRAIN_CANCELLED, USER_CANCELLED_RENT_KORT
+    CANT_CANCEL_LESSON_TOO_LATE, OKAY_TRAIN_CANCELLED, USER_CANCELLED_RENT_COURT
 from base.common_for_bots.static_text import ATTENTION
 from base.models import GroupTrainingDay
 from base.common_for_bots.utils import get_actual_players_without_absent, moscow_datetime, create_calendar
@@ -71,9 +71,9 @@ def calendar_skipping(user, purpose, date_my):
 def handle_skipping_train(training_day: GroupTrainingDay, user, date_info):
     text = OKAY_TRAIN_CANCELLED.format(date_info)
 
-    if training_day.tr_day_status == GroupTrainingDay.RENT_KORT_STATUS:
+    if training_day.tr_day_status == GroupTrainingDay.RENT_COURT_STATUS:
         training_day.delete()
-        admin_text = USER_CANCELLED_RENT_KORT.format(ATTENTION, user.first_name, user.last_name, date_info)
+        admin_text = USER_CANCELLED_RENT_COURT.format(ATTENTION, user.first_name, user.last_name, date_info)
         return text, admin_text
 
     if datetime.combine(training_day.date, training_day.start_time) - moscow_datetime(

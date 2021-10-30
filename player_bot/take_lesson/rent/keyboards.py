@@ -9,7 +9,7 @@ from base.common_for_bots.utils import create_callback_data
 from player_bot.calendar.manage_data import CLNDR_ACTION_TAKE_RENT
 from player_bot.take_lesson.rent import manage_data
 from player_bot.take_lesson.rent.manage_data import SELECT_PRECISE_RENT_TIME
-from player_bot.take_lesson.rent.static_text import RENT_KORT
+from player_bot.take_lesson.rent.static_text import RENT_COURT
 from player_bot.take_lesson.static_text import TAKE_LESSON_BUTTON
 
 
@@ -62,7 +62,7 @@ def take_rent_lesson_or_back(
 ) -> InlineKeyboardMarkup:
     data = manage_data.TAKE_RENT_LESSON
     buttons = [[
-        InlineKeyboardButton(RENT_KORT, callback_data=f'{data}{number_of_players}|{training_time_data}')
+        InlineKeyboardButton(RENT_COURT, callback_data=f'{data}{number_of_players}|{training_time_data}')
     ], [
         InlineKeyboardButton(BACK_BUTTON, callback_data=f'{SELECT_PRECISE_RENT_TIME}{training_time_data}'),
     ]]

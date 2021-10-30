@@ -1,8 +1,8 @@
 import calendar
 from datetime import datetime, timedelta
 
-from admin_bot.rent_kort.keyboards import permission4rent_keyboard
-from admin_bot.rent_kort.static_text import PLAYER_WANTS_TO_RENT_KORT
+from admin_bot.rent_court.keyboards import permission4rent_keyboard
+from admin_bot.rent_court.static_text import PLAYER_WANTS_TO_RENT_COURT
 from base.common_for_bots.static_text import from_eng_to_rus_day_week, DATE_INFO
 from base.common_for_bots.tasks import clear_broadcast_messages
 from base.common_for_bots.utils import create_calendar, bot_edit_message, DT_BOT_FORMAT, get_time_info_from_tr_day
@@ -95,7 +95,7 @@ def take_rent(update, context):
     group = TrainingGroup.get_or_create_rent_group(user)
     tr_day = GroupTrainingDay.objects.create(
         group=group, date=date_dt, start_time=st_time_obj.time(), duration=duration,
-        tr_day_status=GroupTrainingDay.RENT_KORT_STATUS
+        tr_day_status=GroupTrainingDay.RENT_COURT_STATUS
     )
     time_tlg, _, _, date_tlg, day_of_week, _, _ = get_time_info_from_tr_day(tr_day)
     date_info = DATE_INFO.format(date_tlg, day_of_week, time_tlg)
@@ -116,7 +116,7 @@ def take_rent(update, context):
         tr_day_id=tr_day.id,
     )
 
-    admin_text = PLAYER_WANTS_TO_RENT_KORT.format(
+    admin_text = PLAYER_WANTS_TO_RENT_COURT.format(
         first_name=user.first_name,
         last_name=user.last_name,
         phone_number=user.phone_number,

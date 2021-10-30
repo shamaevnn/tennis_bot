@@ -1,0 +1,133 @@
+import calendar
+from datetime import datetime, timedelta
+
+from admin_bot.rent_kort.keyboards import permission4rent_keyboard
+from admin_bot.rent_kort.static_text import PLAYER_WANTS_TO_RENT_KORT
+from base.common_for_bots.static_text import from_eng_to_rus_day_week, DATE_INFO
+from base.common_for_bots.tasks import clear_broadcast_messages
+from base.common_for_bots.utils import create_calendar, bot_edit_message, DT_BOT_FORMAT, get_time_info_from_tr_day
+from base.models import User, TrainingGroup, GroupTrainingDay
+from tennis_bot.settings import ADMIN_TELEGRAM_TOKEN
+from . import manage_data
+from .keyboard_utils import number_of_people_to_rent_cort_keyboard, take_rent_lesson_or_back
+from .manage_data import NUMBER_OF_PEOPLE_TO_RENT_CORT, TAKE_RENT_LESSON
+from .static_text import HOW_MANY_PEOPLE_WILL_COME, TRAIN_RENT_INFO, WILL_SAY_TO_COACH_ABOUT_RENTING
+from .utils import _get_price_for_renting
+from ..static_text import CHOOSE_DATE_OF_TRAIN
+from ...calendar.manage_data import CLNDR_ACTION_TAKE_RENT
+
+
+def select_dt_for_rent_lesson(update, context):
+    duration = float(update.callback_query.data[len(manage_data.SELECT_DURATION_FOR_RENT):])
+    markup = create_calendar(f'{CLNDR_ACTION_TAKE_RENT}{duration}')
+    bot_edit_message(context.bot, CHOOSE_DATE_OF_TRAIN, update, markup)
+
+
+def select_rent_time(update, context):
+    """
+    После того, как выбрал точное время, дату и продолжительность, спрашиваем, сколько придет человек.
+    """
+
+    # day_dt, start_time, end_time = update.callback_query.data[len(manage_data.SELECT_PRECISE_RENT_TIME):].split('|')
+    training_time_data: str = update.callback_query.data[len(manage_data.SELECT_PRECISE_RENT_TIME):]
+    day_dt, start_time, end_time = training_time_data.split('|')
+
+    date_dt: datetime = datetime.strptime(day_dt, DT_BOT_FORMAT)
+    st_time_obj: datetime = datetime.strptime(start_time, '%H:%M:%S')
+    end_time_obj: datetime = datetime.strptime(end_time, '%H:%M:%S')
+    duration: timedelta = end_time_obj - st_time_obj
+    duration_hours: float = duration.seconds / 3600
+
+    markup = number_of_people_to_rent_cort_keyboard(training_time_data, duration_hours, date_dt)
+    bot_edit_message(context.bot, HOW_MANY_PEOPLE_WILL_COME, update, markup)
+
+
+def take_rent_info_train(update, context):
+    """
+    После выбора всех параметров аренды, показываем краткую инфу + кнопку записаться
+    """
+
+    player_number_training_time_data: str = update.callback_query.data[len(NUMBER_OF_PEOPLE_TO_RENT_CORT):]
+
+    # 6 2021.10.31 18:30:00 20:00:00
+    number_of_players, day_dt, start_time, end_time = player_number_training_time_data.split('|')
+
+    date_dt: datetime = datetime.strptime(day_dt, DT_BOT_FORMAT)
+    day_of_week: str = from_eng_to_rus_day_week[calendar.day_name[date_dt.date().weekday()]]
+    st_time_obj: datetime = datetime.strptime(start_time, '%H:%M:%S')
+    end_time_obj: datetime = datetime.strptime(end_time, '%H:%M:%S')
+    duration: timedelta = end_time_obj - st_time_obj
+    duration_hours: float = duration.seconds / 3600
+
+    price_for_renting = _get_price_for_renting(number_of_players, duration_hours)
+
+    text = TRAIN_RENT_INFO.format(
+        n_players=number_of_players,
+        price=price_for_renting,
+        date=day_dt,
+        day_of_week=day_of_week,
+        start_time=start_time,
+        end_time=end_time,
+    )
+    markup = take_rent_lesson_or_back(
+        number_of_players=number_of_players,
+        training_time_data='|'.join((day_dt, start_time, end_time))
+    )
+    bot_edit_message(context.bot, text, update, markup)
+
+
+def take_rent(update, context):
+    """
+    Игрок окончательно подтвердил, что хочет арендовать корт.
+    """
+    player_number_training_time_data: str = update.callback_query.data[len(TAKE_RENT_LESSON):]
+    number_of_players, day_dt, start_time, end_time = player_number_training_time_data.split('|')
+
+    date_dt: datetime = datetime.strptime(day_dt, DT_BOT_FORMAT)
+    st_time_obj: datetime = datetime.strptime(start_time, '%H:%M:%S')
+    end_time_obj: datetime = datetime.strptime(end_time, '%H:%M:%S')
+    duration: timedelta = end_time_obj - st_time_obj
+    duration_hours: float = duration.seconds / 3600
+
+    price_for_renting = _get_price_for_renting(number_of_players, duration_hours)
+
+    user = User.get_user(update, context)
+    group = TrainingGroup.get_or_create_rent_group(user)
+    tr_day = GroupTrainingDay.objects.create(
+        group=group, date=date_dt, start_time=st_time_obj.time(), duration=duration,
+        tr_day_status=GroupTrainingDay.RENT_TRAIN_STATUS
+    )
+    time_tlg, _, _, date_tlg, day_of_week, _, _ = get_time_info_from_tr_day(tr_day)
+    date_info = DATE_INFO.format(date_tlg, day_of_week, time_tlg)
+
+    text = WILL_SAY_TO_COACH_ABOUT_RENTING.format(
+        price=price_for_renting,
+        n_players=number_of_players,
+        date=day_dt,
+        day_of_week=day_of_week,
+        start_time=start_time,
+        end_time=end_time,
+    )
+    bot_edit_message(context.bot, text, update)
+
+    admins = User.objects.filter(is_staff=True, is_blocked=False)
+    markup = permission4rent_keyboard(
+        user_id=user.id,
+        tr_day_id=tr_day.id,
+    )
+
+    admin_text = PLAYER_WANTS_TO_RENT_KORT.format(
+        first_name=user.first_name,
+        last_name=user.last_name,
+        phone_number=user.phone_number,
+        n_players=number_of_players,
+        price=price_for_renting,
+        date_info=date_info,
+    )
+
+    clear_broadcast_messages(
+        user_ids=list(admins.values_list('id', flat=True)),
+        message=admin_text,
+        reply_markup=markup,
+        tg_token=ADMIN_TELEGRAM_TOKEN
+    )

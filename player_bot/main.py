@@ -21,17 +21,20 @@ from player_bot.skip_lesson.handlers import skip_lesson_main_menu_button, skip_l
 from player_bot.take_lesson.handlers import (
     choose_type_of_training,
     take_lesson,
-    select_dt_for_ind_lesson,
-    select_precise_ind_lesson_time,
-    select_precise_group_lesson_time,
-    confirm_group_lesson,
-    choose_type_of_payment_for_pay_visiting,
 )
+from player_bot.take_lesson.rent.handlers import select_dt_for_rent_lesson, select_rent_time, take_rent_info_train, \
+    take_rent
+from player_bot.take_lesson.rent.manage_data import SELECT_DURATION_FOR_RENT, SELECT_PRECISE_RENT_TIME, \
+    NUMBER_OF_PEOPLE_TO_RENT_CORT, TAKE_RENT_LESSON
+from player_bot.take_lesson.group.handlers import select_group_time, confirm_group_lesson, \
+    choose_type_of_payment_for_pay_visiting
+from player_bot.take_lesson.individual.handlers import select_dt_for_ind_lesson, select_ind_time
 from player_bot.menu_and_commands.handlers import start, cancel, get_help, INSERT_FIO, INSERT_PHONE_NUMBER
 from tennis_bot.celery import app
 from player_bot.skip_lesson.manage_data import SELECT_SKIP_TIME_BUTTON, SHOW_INFO_ABOUT_SKIPPING_DAY
-from player_bot.take_lesson.manage_data import SELECT_TRAINING_TYPE, SELECT_PRECISE_GROUP_TIME, CONFIRM_GROUP_LESSON, \
-    SELECT_DURATION_FOR_IND_TRAIN, SELECT_PRECISE_IND_TIME, PAYMENT_VISITING
+from player_bot.take_lesson.manage_data import SELECT_TRAINING_TYPE
+from player_bot.take_lesson.group.manage_data import SELECT_PRECISE_GROUP_TIME, CONFIRM_GROUP_LESSON, PAYMENT_VISITING
+from player_bot.take_lesson.individual.manage_data import SELECT_DURATION_FOR_IND_TRAIN, SELECT_PRECISE_IND_TIME
 from player_bot.take_lesson.static_text import TAKE_LESSON_BUTTON
 from player_bot.skip_lesson.static_text import SKIP_LESSON_BUTTON
 from player_bot.menu_and_commands.static_text import HELP_BUTTON
@@ -52,32 +55,37 @@ registration_handler = ConversationHandler(
 
 
 def setup_dispatcher(dp):
-
     dp.add_handler(registration_handler)
 
+    # главное меню
     dp.add_handler(MessageHandler(Filters.regex(SKIP_LESSON_BUTTON), skip_lesson_main_menu_button))
     dp.add_handler(MessageHandler(Filters.regex(TAKE_LESSON_BUTTON), choose_type_of_training))
     dp.add_handler(MessageHandler(Filters.regex(MY_DATA_BUTTON), user_main_info))
     dp.add_handler(MessageHandler(Filters.regex(HELP_BUTTON), get_help))
 
-    dp.add_handler(CallbackQueryHandler(select_precise_group_lesson_time,
-                                        pattern='^{}'.format(SELECT_PRECISE_GROUP_TIME)))
-    dp.add_handler(CallbackQueryHandler(take_lesson,
-                                        pattern='^{}'.format(SELECT_TRAINING_TYPE)))
-    dp.add_handler(CallbackQueryHandler(select_dt_for_ind_lesson,
-                                        pattern='^{}'.format(SELECT_DURATION_FOR_IND_TRAIN)))
-    dp.add_handler(CallbackQueryHandler(select_precise_ind_lesson_time,
-                                        pattern='^{}'.format(SELECT_PRECISE_IND_TIME)))
-    dp.add_handler(CallbackQueryHandler(choose_type_of_training,
-                                        pattern='^{}'.format(TAKE_LESSON_BUTTON)))
-    dp.add_handler(CallbackQueryHandler(confirm_group_lesson,
-                                        pattern='^{}'.format(CONFIRM_GROUP_LESSON)))
-    dp.add_handler(CallbackQueryHandler(skip_lesson,
-                                        pattern='^{}'.format(SHOW_INFO_ABOUT_SKIPPING_DAY)))
-    dp.add_handler(CallbackQueryHandler(skip_lesson_when_geq_2,
-                                        pattern='^{}'.format(SELECT_SKIP_TIME_BUTTON)))
-    dp.add_handler(CallbackQueryHandler(choose_type_of_payment_for_pay_visiting,
-                                        pattern='^{}'.format(PAYMENT_VISITING)))
+    dp.add_handler(CallbackQueryHandler(choose_type_of_training, pattern=f'^{TAKE_LESSON_BUTTON}'))
+
+    # групповые тренировки
+    dp.add_handler(CallbackQueryHandler(confirm_group_lesson, pattern=f'^{CONFIRM_GROUP_LESSON}'))
+    dp.add_handler(CallbackQueryHandler(take_lesson, pattern=f'^{SELECT_TRAINING_TYPE}'))
+    dp.add_handler(CallbackQueryHandler(select_group_time, pattern=f'^{SELECT_PRECISE_GROUP_TIME}'))
+    dp.add_handler(CallbackQueryHandler(choose_type_of_payment_for_pay_visiting, pattern=f'^{PAYMENT_VISITING}'))
+
+    # индивидуальные тренировки
+    dp.add_handler(CallbackQueryHandler(select_dt_for_ind_lesson, pattern=f'^{SELECT_DURATION_FOR_IND_TRAIN}'))
+    dp.add_handler(CallbackQueryHandler(select_ind_time, pattern=f'^{SELECT_PRECISE_IND_TIME}'))
+
+    # арендовать корт
+    dp.add_handler(CallbackQueryHandler(select_dt_for_rent_lesson, pattern=f'^{SELECT_DURATION_FOR_RENT}'))
+    dp.add_handler(CallbackQueryHandler(select_rent_time, pattern=f'^{SELECT_PRECISE_RENT_TIME}'))
+    dp.add_handler(CallbackQueryHandler(take_rent_info_train, pattern=f'^{NUMBER_OF_PEOPLE_TO_RENT_CORT}'))
+    dp.add_handler(CallbackQueryHandler(take_rent, pattern=f"^{TAKE_RENT_LESSON}"))
+
+    # пропустить тренировку
+    dp.add_handler(CallbackQueryHandler(skip_lesson, pattern=f'^{SHOW_INFO_ABOUT_SKIPPING_DAY}'))
+    dp.add_handler(CallbackQueryHandler(skip_lesson_when_geq_2, pattern=f'^{SELECT_SKIP_TIME_BUTTON}'))
+
+    # календарь
     dp.add_handler(CallbackQueryHandler(inline_calendar_handler))
 
     return dp

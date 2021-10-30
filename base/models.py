@@ -103,12 +103,14 @@ class User(AbstractUser):
 
 
 class TrainingGroup(ModelwithTime):
+    STATUS_RENT = 'R'
     STATUS_4IND = 'I'
     STATUS_GROUP = 'G'
     STATUS_FEW = 'F'
     STATUS_SECTION = 'S'
     GROUP_STATUSES = (
         (STATUS_4IND, 'для индивидуальных тренировок'),
+        (STATUS_RENT, 'для аренды корта'),
         (STATUS_GROUP, 'взрослые групповые тренировки'),
         (STATUS_FEW, 'детская группа малой численности'),
         (STATUS_SECTION, 'детская секция'),
@@ -142,7 +144,14 @@ class TrainingGroup(ModelwithTime):
         return '{}, max_players: {}'.format(self.name, self.max_players)
 
     @classmethod
-    def get_or_create_ind_group_for_user(cls, user: User):
+    def get_or_create_ind_group(cls, user: User):
+        group, _ = cls.objects.get_or_create(
+            name=user.first_name + user.last_name, status=TrainingGroup.STATUS_4IND, max_players=1
+        )
+        return group
+
+    @classmethod
+    def get_or_create_rent_group(cls, user: User):
         group, _ = cls.objects.get_or_create(
             name=user.first_name + user.last_name, status=TrainingGroup.STATUS_4IND, max_players=1
         )

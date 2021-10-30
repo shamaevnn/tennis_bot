@@ -2,6 +2,7 @@ from telegram import InlineKeyboardButton as inlinebutt, InlineKeyboardMarkup as
     InlineKeyboardMarkup
 
 from base.common_for_bots.utils import get_time_info_from_tr_day, create_callback_data
+from base.models import GroupTrainingDay
 from player_bot.skip_lesson.manage_data import SELECT_SKIP_TIME_BUTTON, SHOW_INFO_ABOUT_SKIPPING_DAY
 from player_bot.calendar.manage_data import CLNDR_ACTION_SKIP
 from base.common_for_bots.manage_data import CLNDR_ACTION_BACK
@@ -36,7 +37,9 @@ def construct_menu_skipping_much_lesson(tr_days):
     return inlinemark(buttons)
 
 
-def construct_detail_menu_for_skipping(training_day, purpose, group_name, group_players):
+def construct_detail_menu_for_skipping(
+        training_day: GroupTrainingDay, purpose: str, group_name: str, group_players: str
+):
     time_tlg, _, _, date_tlg, day_of_week, _, _ = get_time_info_from_tr_day(training_day)
     text = f'<b>{date_tlg} ({day_of_week})\n{time_tlg}\n</b>' + group_name + '\n' + group_players
 

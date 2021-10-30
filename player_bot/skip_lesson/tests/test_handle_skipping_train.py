@@ -5,7 +5,7 @@ from django.test import TestCase
 from base.models import TrainingGroup, GroupTrainingDay
 from player_bot.skip_lesson.static_text import USER_CANCELLED_IND_TRAIN, USER_SKIPPED_TRAIN_FOR_BONUS, \
 	USER_SKIPPED_TRAIN_FOR_MONEY, USER_SKIPPED_TRAIN_FOR_PAY_BONUS, USER_SKIPPED_TRAIN_IN_HIS_GROUP, \
-	OKAY_TRAIN_CANCELLED
+	OKAY_TRAIN_CANCELLED, USER_CANCELLED_RENT_KORT
 from base.common_for_bots.static_text import ATTENTION
 from player_bot.take_lesson.tests.test_get_potential_days_for_group_training import create_group_user, \
 create_group, create_tr_day_for_group
@@ -20,9 +20,10 @@ class HandleSkippingTrainTestCases(TestCase):
 		self.me = create_group_user(id=1, first_name='Nikita')
 		self.my_group = create_group()
 		self.my_group.users.add(self.me)
-		self.individual_group = create_group(
-			name='Nikita', status=TrainingGroup.STATUS_4IND, max_players=1
-		)
+		self.individual_group = TrainingGroup.get_or_create_ind_group(self.me)
+		self.renting_group = TrainingGroup.get_or_create_rent_group(self.me)
+
+		self.renting_group.users.add(self.me)
 		self.individual_group.users.add(self.me)
 
 		self.not_my_group_1 = create_group()
@@ -37,6 +38,13 @@ class HandleSkippingTrainTestCases(TestCase):
 		self.tr_day_individual_2 = GroupTrainingDay.objects.create(
 			group=self.individual_group, start_time=time(14, 30), date=(datetime.today() + timedelta(days=2)).date(),
 			is_individual=True
+		)
+		self.tr_day_rent_kort = create_tr_day_for_group(
+			self.renting_group, tr_day_status=GroupTrainingDay.RENT_KORT_STATUS
+		)
+		self.tr_day_rent_kort_2 = GroupTrainingDay.objects.create(
+			group=self.renting_group, start_time=time(14, 30), date=(datetime.today() + timedelta(days=2)).date(),
+			tr_day_status=GroupTrainingDay.RENT_KORT_STATUS,
 		)
 
 		self.tr_day_visitor.visitors.add(self.me)
@@ -61,6 +69,24 @@ class HandleSkippingTrainTestCases(TestCase):
 
 		# другая индивидуальная тренировка не удаляется
 		self.assertIn(self.tr_day_individual_2, GroupTrainingDay.objects.all())
+
+	def test_rent_group(self):
+		# если это аренда, то запись удаляется
+		self.assertIn(self.tr_day_rent_kort, GroupTrainingDay.objects.all())
+		text, admin_text = handle_skipping_train(self.tr_day_rent_kort, self.me, self.date_info)
+		self.assertNotIn(self.tr_day_rent_kort, GroupTrainingDay.objects.all())
+
+		# создались нужные тексты для тренера и игроков
+		self.assertEqual(text, self.success_cancel_text)
+		self.assertEqual(
+			admin_text,
+			USER_CANCELLED_RENT_KORT.format(
+				ATTENTION, self.me.first_name, self.me.last_name, self.date_info
+			)
+		)
+
+		# другая аренда не удаляется
+		self.assertIn(self.tr_day_rent_kort_2, GroupTrainingDay.objects.all())
 
 	def test_my_group(self):
 		# прибавляется отыгрыш и игрок заносится в absent

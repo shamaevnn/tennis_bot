@@ -95,7 +95,7 @@ def take_rent(update, context):
     group = TrainingGroup.get_or_create_rent_group(user)
     tr_day = GroupTrainingDay.objects.create(
         group=group, date=date_dt, start_time=st_time_obj.time(), duration=duration,
-        tr_day_status=GroupTrainingDay.RENT_TRAIN_STATUS
+        tr_day_status=GroupTrainingDay.RENT_KORT_STATUS
     )
     time_tlg, _, _, date_tlg, day_of_week, _, _ = get_time_info_from_tr_day(tr_day)
     date_info = DATE_INFO.format(date_tlg, day_of_week, time_tlg)

@@ -161,7 +161,7 @@ class TrainingGroup(ModelwithTime):
     @classmethod
     def get_or_create_rent_group(cls, user: User):
         group, _ = cls.objects.get_or_create(
-            name=user.first_name + user.last_name, status=TrainingGroup.STATUS_4IND, max_players=1
+            name=user.first_name + user.last_name, status=TrainingGroup.STATUS_RENT, max_players=1
         )
         return group
 
@@ -175,11 +175,11 @@ class TrainingGroup(ModelwithTime):
 
 class GroupTrainingDay(ModelwithTime):
     MY_TRAIN_STATUS = 'M'
-    RENT_TRAIN_STATUS = 'R'
+    RENT_KORT_STATUS = 'R'
 
     TR_DAY_STATUSES = (
         (MY_TRAIN_STATUS, 'моя тренировка'),
-        (RENT_TRAIN_STATUS, 'аренда')
+        (RENT_KORT_STATUS, 'аренда')
     )
 
     group = models.ForeignKey(TrainingGroup, on_delete=models.PROTECT, verbose_name='Группа')

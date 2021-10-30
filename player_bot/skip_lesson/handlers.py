@@ -1,3 +1,5 @@
+from telegram import Update
+
 from base.common_for_bots.static_text import DATE_INFO
 from base.models import User, GroupTrainingDay
 from player_bot.menu_and_commands.keyboards import construct_main_menu
@@ -15,7 +17,7 @@ from tennis_bot.settings import ADMIN_TELEGRAM_TOKEN
 
 
 @check_status_decor
-def skip_lesson_main_menu_button(update, context):
+def skip_lesson_main_menu_button(update: Update, context):
     user, _ = User.get_user_and_created(update, context)
     available_grouptraining_dates = select_tr_days_for_skipping(user)
     if available_grouptraining_dates.exists():
@@ -23,21 +25,20 @@ def skip_lesson_main_menu_button(update, context):
             user.id,
             'Выбери дату тренировки для отмены.\n'
             '✅ -- дни, доступные для отмены.',
-            reply_markup=create_calendar(CLNDR_ACTION_SKIP,
-                                         dates_to_highlight=list(
-                                             available_grouptraining_dates.values_list('date', flat=True))
-                                         )
+            reply_markup=create_calendar(
+                CLNDR_ACTION_SKIP,
+                dates_to_highlight=list(available_grouptraining_dates.values_list('date', flat=True)),
+            )
         )
     else:
         context.bot.send_message(
-            user.id,
-            'Пока что нечего пропускать.',
-            reply_markup=construct_main_menu(user)
+            chat_id=user.id,
+            text='Пока что нечего пропускать.',
+            reply_markup=construct_main_menu(user),
         )
 
 
-@check_status_decor
-def skip_lesson_when_geq_2(update, context):
+def skip_lesson_when_geq_2(update: Update, context):
     tr_day_id = update.callback_query.data[len(SELECT_SKIP_TIME_BUTTON):]
     training_day = GroupTrainingDay.objects.get(id=tr_day_id)
 
@@ -46,9 +47,8 @@ def skip_lesson_when_geq_2(update, context):
     bot_edit_message(context.bot, text, update, markup)
 
 
-@check_status_decor
-def skip_lesson(update, context):
-    user, _ = User.get_user_and_created(update, context)
+def skip_lesson(update: Update, context):
+    user = User.get_user(update, context)
 
     tr_day_id = update.callback_query.data[len(SHOW_INFO_ABOUT_SKIPPING_DAY):]
     training_day = GroupTrainingDay.objects.get(id=tr_day_id)
@@ -56,7 +56,6 @@ def skip_lesson(update, context):
     time_tlg, _, _, date_tlg, day_of_week, _, _ = get_time_info_from_tr_day(training_day)
     date_info = DATE_INFO.format(date_tlg, day_of_week, time_tlg)
 
-    admins = User.objects.filter(is_superuser=True, is_blocked=False)
     if not training_day.is_available:
         text = "{} в {} ❌нет тренировки❌, т.к. она отменена тренером, поэтому ее нельзя пропустить.".format(date_tlg, time_tlg)
         bot_edit_message(context.bot, text, update)
@@ -65,6 +64,7 @@ def skip_lesson(update, context):
     else:
         text, admin_text = handle_skipping_train(training_day, user, date_info)
 
+        admins = User.objects.filter(is_superuser=True, is_blocked=False)
         clear_broadcast_messages(
             user_ids=list(admins.values_list('id', flat=True)),
             message=admin_text,

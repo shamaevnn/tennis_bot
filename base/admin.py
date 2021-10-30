@@ -110,8 +110,8 @@ make_trday_available.short_description = 'Сделать выбранные дн
 @admin.register(GroupTrainingDay)
 class GroupTrainingDayAdmin(admin.ModelAdmin):
     form = GroupTrainingDayForm
-    list_display = ('group', 'date', 'is_available', 'is_individual', 'start_time', 'duration',)
-    list_filter = ('group', 'date', 'tr_day_status')
+    list_display = ('group', 'date', 'is_available', 'is_individual', 'start_time', 'duration', 'tr_day_status')
+    list_filter = ('group', 'date', 'tr_day_status', 'is_individual', 'is_available')
     filter_horizontal = ('visitors', 'pay_visitors', 'pay_bonus_visitors', 'absent')
     date_hierarchy = 'date'
     actions = [make_trday_unavailable, make_trday_available]

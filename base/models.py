@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import re
 
 import telegram
@@ -9,6 +11,7 @@ from datetime import datetime, date, timedelta
 
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
+from telegram import Update
 
 from tennis_bot.settings import TARIF_ARBITRARY, TARIF_GROUP, TARIF_IND, TARIF_SECTION, TARIF_FEW, TELEGRAM_TOKEN, DEBUG
 
@@ -74,7 +77,12 @@ class User(AbstractUser):
         return '{} {} -- {}'.format(self.first_name, self.last_name, self.phone_number)
 
     @classmethod
-    def get_user_and_created(cls, update, context):
+    def get_user(cls, update: Update, context) -> User:
+        u, _ = cls.get_user_and_created(update, context)
+        return u
+
+    @classmethod
+    def get_user_and_created(cls, update: Update, context):
         """ python-telegram-bot's Update, Context --> User instance """
         from base.utils import extract_user_data_from_update
         data = extract_user_data_from_update(update)

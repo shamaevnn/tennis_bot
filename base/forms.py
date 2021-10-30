@@ -84,8 +84,19 @@ class TrainingGroupForm(forms.ModelForm):
 class GroupTrainingDayForm(forms.ModelForm):
     class Meta:
         model = GroupTrainingDay
-        fields = ['group', 'absent', 'visitors', 'pay_visitors', 'pay_bonus_visitors', 'date', 'is_available', 'is_individual', 'tr_day_status', 'start_time',
-                  'duration']
+        fields = [
+            'group',
+            'absent',
+            'visitors',
+            'pay_visitors',
+            'pay_bonus_visitors',
+            'date',
+            'is_available',
+            'is_individual',
+            'tr_day_status',
+            'start_time',
+            'duration'
+        ]
 
     def clean(self):
         def send_alert_about_cancel_in_visitors(self, type_of_visitors='visitors'):

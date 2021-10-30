@@ -8,14 +8,15 @@ Tennis coach had several problems:
  * These and other not described problems detracted coach from training process.
 
 #### Actually, there are two bots: bot for coach and bot for players.
-Functional of coach bot:
+Functionality of coach bot:
  * [Viewing schedule](https://github.com/shamaevnn/tennis_bot/blob/master/COACH_BOT.md#schedule)
  * [Checking payments](https://github.com/shamaevnn/tennis_bot/blob/master/COACH_BOT.md#payment-info)
  * [Sending message to players](https://github.com/shamaevnn/tennis_bot/blob/master/COACH_BOT.md#sending-message)
 
-Functional of players bot:
+Functionality of player's bot:
  * [Checking my info](https://github.com/shamaevnn/tennis_bot/blob/master/PLAYER_BOT.md#my-info)
  * [Taking a lesson](https://github.com/shamaevnn/tennis_bot/blob/master/PLAYER_BOT.md#taking-a-training-individual-or-group)
+ * Rent court
  * [Skipping a lesson](https://github.com/shamaevnn/tennis_bot/blob/master/PLAYER_BOT.md#taking-a-training-individual-or-group)
 
 

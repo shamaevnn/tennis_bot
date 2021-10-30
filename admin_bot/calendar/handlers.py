@@ -1,5 +1,7 @@
 from datetime import date, timedelta
 
+from telegram import Update, Bot
+
 from admin_bot.calendar.keyboards import day_buttons_coach_info
 from admin_bot.calendar.static_text import TRAIN_DAYS, NO_TRAINS_THIS_DAY
 from base.models import GroupTrainingDay
@@ -9,7 +11,7 @@ from base.common_for_bots import manage_data
 from admin_bot.view_schedule.manage_data import SHOW_GROUPDAY_INFO, CLNDR_ADMIN_VIEW_SCHEDULE
 
 
-def admin_calendar_selection(bot, update):
+def admin_calendar_selection(bot: Bot, update: Update):
     """
     Process the callback_query. This method generates a new calendar if forward or
     backward is pressed. This method should be called inside a CallbackQueryHandler.
@@ -25,10 +27,12 @@ def admin_calendar_selection(bot, update):
         return True, purpose, date(int(year), int(month), int(day))
     elif action == manage_data.CLNDR_PREV_MONTH:
         pre = curr - timedelta(days=1)
-        bot_edit_message(bot, query.message.text, update, create_calendar(purpose, int(pre.year), int(pre.month)))
+        markup = create_calendar(purpose, int(pre.year), int(pre.month))
+        bot_edit_message(bot, query.message.text, update, markup)
     elif action == manage_data.CLNDR_NEXT_MONTH:
         ne = curr + timedelta(days=31)
-        bot_edit_message(bot, query.message.text, update, create_calendar(purpose, int(ne.year), int(ne.month)))
+        markup = create_calendar(purpose, int(ne.year), int(ne.month))
+        bot_edit_message(bot, query.message.text, update, markup)
     elif action == manage_data.CLNDR_ACTION_BACK:
         if purpose == CLNDR_ADMIN_VIEW_SCHEDULE:
             text = TRAIN_DAYS
@@ -40,7 +44,7 @@ def admin_calendar_selection(bot, update):
     return False, purpose, []
 
 
-def inline_calendar_handler(update, context):
+def inline_calendar_handler(update: Update, context):
     selected, purpose, date_my = admin_calendar_selection(context.bot, update)
     if selected:
         if purpose == CLNDR_ADMIN_VIEW_SCHEDULE:
@@ -55,7 +59,7 @@ def inline_calendar_handler(update, context):
             bot_edit_message(context.bot, text, update, markup)
 
 
-def show_coach_schedule(update, context):
+def show_coach_schedule(update: Update, context):
     update.message.reply_text(
         text=TRAIN_DAYS,
         reply_markup=create_calendar(CLNDR_ADMIN_VIEW_SCHEDULE)

@@ -1,3 +1,5 @@
+from typing import Dict
+
 from django.db.models import QuerySet
 
 from base.models import User, Payment
@@ -11,7 +13,7 @@ def check_if_players_not_in_payments(group_id, payments, year, month):
             Payment.objects.create(player=player, month=month, year=year)
 
 
-def have_not_paid_users_info(payments_values):
+def have_not_paid_users_info(payments_values: QuerySet[Dict]):
     return '\n'.join(
         (
             f"<b>{x['id']}</b>. {x['player__last_name']} {x['player__first_name']} -- {x['n_fact_visiting']} ({x['group_name']})"

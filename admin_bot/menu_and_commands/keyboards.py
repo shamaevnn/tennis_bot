@@ -7,7 +7,10 @@ from admin_bot.view_schedule.static_text import ADMIN_TIME_SCHEDULE_BUTTON
 
 
 def construct_admin_main_menu():
-    return ReplyKeyboardMarkup([
-        [ADMIN_PAYMENT, ADMIN_TIME_SCHEDULE_BUTTON],
-        [ADMIN_SITE, ADMIN_SEND_MESSAGE]],
-        resize_keyboard=True)
+    return ReplyKeyboardMarkup(
+        keyboard=[
+            [ADMIN_PAYMENT, ADMIN_TIME_SCHEDULE_BUTTON],
+            [ADMIN_SITE, ADMIN_SEND_MESSAGE]
+        ],
+        resize_keyboard=True
+    )

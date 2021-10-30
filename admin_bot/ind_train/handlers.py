@@ -1,12 +1,14 @@
 import telegram
+from telegram import ParseMode
 
 from admin_bot.ind_train import static_text
 from admin_bot.ind_train.keyboards import how_many_trains_to_save_keyboard
-from admin_bot.ind_train.manage_data import PERMISSION_FOR_IND_TRAIN, AMOUNT_OF_IND_TRAIN, PERMISSION_YES
+from admin_bot.ind_train.manage_data import PERMISSION_FOR_IND_TRAIN, AMOUNT_OF_IND_TRAIN, PERMISSION_YES, AMOUNT_ONE
 from base.common_for_bots.static_text import DATE_INFO, ATTENTION
 from base.models import User, GroupTrainingDay
 from base.utils import create_tr_days_for_future
 from base.common_for_bots.utils import bot_edit_message, get_time_info_from_tr_day
+from player_bot.take_lesson.individual.static_text import COACH_CONFIRMED_TRAIN, COACH_CANCELLED_TRAIN
 from tennis_bot.settings import TELEGRAM_TOKEN
 
 
@@ -25,25 +27,21 @@ def permission_for_ind_train(update, context):
         if permission == PERMISSION_YES:
             markup = how_many_trains_to_save_keyboard(tr_day_id=tr_day_id)
             admin_text = static_text.HOW_MANY_TRAINS_TO_SAVE
-
-            user_text = f'Отлично, тренер подтвердил тренировку, не забудь!\n' \
-                        f'{date_info}'
+            user_text = COACH_CONFIRMED_TRAIN.format(date_info=date_info)
         else:
             admin_text = static_text.WILL_SAY_THAT_TRAIN_IS_CANCELLED.format(
                 player.last_name,
                 player.first_name,
                 date_info
             )
-            user_text = f'{ATTENTION}\n' \
-                        f'Индивидуальная тренировка <b>ОТМЕНЕНА</b>\n' \
-                        f'{date_info}'
+            user_text = COACH_CANCELLED_TRAIN.format(attention=ATTENTION, date_info=date_info)
             tr_day.delete()
 
         tennis_bot = telegram.Bot(TELEGRAM_TOKEN)
         tennis_bot.send_message(
-            player.id,
-            user_text,
-            parse_mode='HTML'
+            chat_id=player.id,
+            text=user_text,
+            parse_mode=ParseMode.HTML
         )
     else:
         admin_text = static_text.TRAIN_IS_ALREADY_CANCELLED
@@ -62,7 +60,7 @@ def save_many_ind_trains(update, context):
         day_of_week,
         time_tlg
     )
-    if num_lessons == 'one':
+    if num_lessons == AMOUNT_ONE:
         text += static_text.SAVED_ONCE
     else:
         create_tr_days_for_future(tr_day)

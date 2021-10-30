@@ -24,7 +24,7 @@ def calendar_taking_rent_and_ind_lesson(
     )
 
     if date_comparison < date.today():
-        text = 'Нельзя записаться на этот день, выбери другой.'
+        text = CANT_TAKE_TRAIN_CHOOSE_ANOTHER_DAY
         markup = create_calendar(purpose, date_time.year, date_time.month)
         return text, markup
 
@@ -32,9 +32,9 @@ def calendar_taking_rent_and_ind_lesson(
         markup = construct_time_menu_4ind_and_rent_lesson(
             button_data, possible_start_time_for_period, date_comparison, float(duration), calendar_action
         )
-        text = 'Выбери время'
+        text = CHOOSE_TIME
     else:
-        text = 'Нельзя записаться на этот день, выбери другой.'
+        text = CANT_TAKE_TRAIN_CHOOSE_ANOTHER_DAY
         markup = create_calendar(purpose, date_time.year, date_time.month)
     return text, markup
 

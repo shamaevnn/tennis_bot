@@ -1,10 +1,11 @@
 import calendar
 
 from datetime import date, datetime
+from typing import Optional
 
 from django.db.models import QuerySet
 from pytz import timezone
-from telegram import InlineKeyboardMarkup, InlineKeyboardButton
+from telegram import InlineKeyboardMarkup, InlineKeyboardButton, Bot, Update
 
 from base.common_for_bots.manage_data import CLNDR_IGNORE, CLNDR_DAY, CLNDR_PREV_MONTH, CLNDR_NEXT_MONTH
 from base.common_for_bots.static_text import from_digit_to_month, from_eng_to_rus_day_week
@@ -38,7 +39,7 @@ def moscow_datetime(date_time):
     return date_time.astimezone(timezone('Europe/Moscow')).replace(tzinfo=None)
 
 
-def bot_edit_message(bot, text, update, markup=None):
+def bot_edit_message(bot: Bot, text: str, update: Update, markup: Optional[InlineKeyboardMarkup] = None):
     bot.edit_message_text(
         text=text,
         chat_id=update.callback_query.message.chat_id,
@@ -66,7 +67,7 @@ def get_time_info_from_tr_day(tr_day: GroupTrainingDay):
     return time_tlg, start_time_tlg, end_time_tlg, date_tlg, day_of_week, start_time, end_time
 
 
-def create_calendar(purpose_of_calendar, year=None, month=None, dates_to_highlight=None):
+def create_calendar(purpose_of_calendar: str, year=None, month=None, dates_to_highlight=None):
     """
     Create an inline keyboard with the provided year and month
     :param list of dates dates_to_highlight : date we should highlight, e.g. days available for skipping

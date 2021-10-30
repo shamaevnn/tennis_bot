@@ -1,6 +1,6 @@
 from telegram.ext import ConversationHandler
 
-from admin_bot.send_message.keyboard_utils import construct_menu_groups_for_send_message
+from admin_bot.send_message.keyboards import construct_menu_groups_for_send_message
 from admin_bot.send_message import static_text
 from base.common_for_bots.static_text import UP_TO_YOU
 from base.models import TrainingGroup, User, AlertsLog

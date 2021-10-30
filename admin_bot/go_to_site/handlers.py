@@ -1,4 +1,4 @@
-from admin_bot.go_to_site.keyboard_utils import go_to_site_keyboard
+from admin_bot.go_to_site.keyboards import go_to_site_keyboard
 from admin_bot.go_to_site.static_text import ADMIN_SITE
 
 

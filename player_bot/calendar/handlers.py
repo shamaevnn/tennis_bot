@@ -5,11 +5,16 @@ from base.common_for_bots.manage_data import CLNDR_IGNORE, CLNDR_DAY, CLNDR_PREV
     CLNDR_ACTION_BACK
 from base.common_for_bots.utils import separate_callback_data, bot_edit_message, create_calendar
 from base.models import User
-from player_bot.calendar.manage_data import CLNDR_ACTION_SKIP, CLNDR_ACTION_TAKE_GROUP, CLNDR_ACTION_TAKE_IND
+from player_bot.calendar.manage_data import CLNDR_ACTION_SKIP, CLNDR_ACTION_TAKE_GROUP, CLNDR_ACTION_TAKE_IND, \
+    CLNDR_ACTION_TAKE_RENT
 from player_bot.skip_lesson.utils import select_tr_days_for_skipping, calendar_skipping
-from player_bot.take_lesson.utils import get_potential_days_for_group_training, calendar_taking_lesson, \
-    calendar_taking_ind_lesson
+from player_bot.take_lesson.group.calendar import calendar_taking_group_lesson
+from player_bot.take_lesson.group.query import get_potential_days_for_group_training
 from player_bot.registration.utils import check_status_decor
+from player_bot.take_lesson.individual.manage_data import SELECT_PRECISE_IND_TIME
+from player_bot.take_lesson.rent.manage_data import SELECT_PRECISE_RENT_TIME
+from player_bot.take_lesson.static_text import CHOOSE_DATE_OF_TRAIN
+from player_bot.take_lesson.utils import calendar_taking_rent_and_ind_lesson
 
 
 def process_calendar_selection(update, context):
@@ -28,7 +33,7 @@ def process_calendar_selection(update, context):
     elif purpose == CLNDR_ACTION_TAKE_GROUP:
         training_days = get_potential_days_for_group_training(user)
         highlight_dates = list(training_days.values_list('date', flat=True))
-    elif re.findall(rf'({CLNDR_ACTION_TAKE_IND})(\d.\d)', purpose):
+    else:
         highlight_dates = None
 
     if action == CLNDR_IGNORE:
@@ -51,10 +56,12 @@ def process_calendar_selection(update, context):
             text = 'Выбери дату тренировки для отмены.\n' \
                    '✅ -- дни, доступные для отмены.'
         elif purpose == CLNDR_ACTION_TAKE_GROUP:
-            text = 'Выбери дату тренировки\n' \
-                   '✅ -- дни, доступные для групповых тренировок'
+            text = f'{CHOOSE_DATE_OF_TRAIN}\n' \
+                   f'✅ -- дни, доступные для групповых тренировок'
         elif re.findall(rf'({CLNDR_ACTION_TAKE_IND})(\d.\d)', purpose):
             text = 'Выбери дату индивидуальной тренировки'
+        elif re.findall(rf'({CLNDR_ACTION_TAKE_RENT})(\d.\d)', purpose):
+            text = 'Выбери дату аренды корта'
         bot_edit_message(context.bot, text, update, create_calendar(purpose, int(year), int(month), highlight_dates))
 
     else:
@@ -65,13 +72,15 @@ def process_calendar_selection(update, context):
 @check_status_decor
 def inline_calendar_handler(update, context):
     user, _ = User.get_user_and_created(update, context)
-    selected, purpose, date_my = process_calendar_selection(update, context)
+    selected, purpose, date_time = process_calendar_selection(update, context)
     if selected:
-        date_comparison = date(date_my.year, date_my.month, date_my.day)
+
         if purpose == CLNDR_ACTION_SKIP:
-            text, markup = calendar_skipping(user, purpose, date_my)
+            text, markup = calendar_skipping(user, purpose, date_time)
         elif purpose == CLNDR_ACTION_TAKE_GROUP:
-            text, markup = calendar_taking_lesson(user, purpose, date_my, date_comparison)
+            text, markup = calendar_taking_group_lesson(user, purpose, date_time)
         elif re.findall(rf'({CLNDR_ACTION_TAKE_IND})(\d.\d)', purpose):
-            text, markup = calendar_taking_ind_lesson(purpose, date_my, date_comparison)
+            text, markup = calendar_taking_rent_and_ind_lesson(CLNDR_ACTION_TAKE_IND, SELECT_PRECISE_IND_TIME, purpose, date_time)
+        elif re.findall(rf'({CLNDR_ACTION_TAKE_RENT})(\d.\d)', purpose):
+            text, markup = calendar_taking_rent_and_ind_lesson(CLNDR_ACTION_TAKE_RENT, SELECT_PRECISE_RENT_TIME, purpose, date_time)
         bot_edit_message(context.bot, text, update, markup)

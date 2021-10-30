@@ -7,3 +7,5 @@ tennis_bot/static
 .env
 
 sql/
+
+.DS_Store

@@ -8,7 +8,7 @@ from django.utils.safestring import mark_safe
 
 from base.models import User, TrainingGroup, GroupTrainingDay
 from base.django_admin.utils import send_alert_about_changing_tr_day_status, send_alert_about_changing_tr_day_time
-from player_bot.menu_and_commands.keyboard_utils import construct_main_menu
+from player_bot.menu_and_commands.keyboards import construct_main_menu
 from base.common_for_bots.utils import DT_BOT_FORMAT, TM_TIME_SCHEDULE_FORMAT, moscow_datetime
 from base.common_for_bots.tasks import clear_broadcast_messages
 from base.django_admin.static_text import ERROR_LIMIT_MAX_PLAYERS, ERROR_MAX_PLAYERS_IN_FUTURE, \
@@ -84,8 +84,19 @@ class TrainingGroupForm(forms.ModelForm):
 class GroupTrainingDayForm(forms.ModelForm):
     class Meta:
         model = GroupTrainingDay
-        fields = ['group', 'absent', 'visitors', 'pay_visitors', 'pay_bonus_visitors', 'date', 'is_available', 'is_individual', 'tr_day_status', 'start_time',
-                  'duration']
+        fields = [
+            'group',
+            'absent',
+            'visitors',
+            'pay_visitors',
+            'pay_bonus_visitors',
+            'date',
+            'is_available',
+            'is_individual',
+            'tr_day_status',
+            'start_time',
+            'duration'
+        ]
 
     def clean(self):
         def send_alert_about_cancel_in_visitors(self, type_of_visitors='visitors'):

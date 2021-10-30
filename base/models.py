@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import re
 
 import telegram
@@ -9,6 +11,7 @@ from datetime import datetime, date, timedelta
 
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
+from telegram import Update
 
 from tennis_bot.settings import TARIF_ARBITRARY, TARIF_GROUP, TARIF_IND, TARIF_SECTION, TARIF_FEW, TELEGRAM_TOKEN, DEBUG
 
@@ -74,7 +77,12 @@ class User(AbstractUser):
         return '{} {} -- {}'.format(self.first_name, self.last_name, self.phone_number)
 
     @classmethod
-    def get_user_and_created(cls, update, context):
+    def get_user(cls, update: Update, context) -> User:
+        u, _ = cls.get_user_and_created(update, context)
+        return u
+
+    @classmethod
+    def get_user_and_created(cls, update: Update, context):
         """ python-telegram-bot's Update, Context --> User instance """
         from base.utils import extract_user_data_from_update
         data = extract_user_data_from_update(update)
@@ -103,12 +111,14 @@ class User(AbstractUser):
 
 
 class TrainingGroup(ModelwithTime):
+    STATUS_RENT = 'R'
     STATUS_4IND = 'I'
     STATUS_GROUP = 'G'
     STATUS_FEW = 'F'
     STATUS_SECTION = 'S'
     GROUP_STATUSES = (
         (STATUS_4IND, 'для индивидуальных тренировок'),
+        (STATUS_RENT, 'для аренды корта'),
         (STATUS_GROUP, 'взрослые групповые тренировки'),
         (STATUS_FEW, 'детская группа малой численности'),
         (STATUS_SECTION, 'детская секция'),
@@ -142,7 +152,14 @@ class TrainingGroup(ModelwithTime):
         return '{}, max_players: {}'.format(self.name, self.max_players)
 
     @classmethod
-    def get_or_create_ind_group_for_user(cls, user: User):
+    def get_or_create_ind_group(cls, user: User):
+        group, _ = cls.objects.get_or_create(
+            name=user.first_name + user.last_name, status=TrainingGroup.STATUS_4IND, max_players=1
+        )
+        return group
+
+    @classmethod
+    def get_or_create_rent_group(cls, user: User):
         group, _ = cls.objects.get_or_create(
             name=user.first_name + user.last_name, status=TrainingGroup.STATUS_4IND, max_players=1
         )

@@ -1,5 +1,5 @@
 import base.common_for_bots.static_text
-from admin_bot.view_schedule.keyboard_utils import back_from_show_grouptrainingday_info_keyboard
+from admin_bot.view_schedule.keyboards import back_from_show_grouptrainingday_info_keyboard
 from admin_bot.view_schedule import static_text
 from admin_bot.view_schedule.manage_data import SHOW_GROUPDAY_INFO
 from admin_bot.view_schedule.utils import schedule_users_info

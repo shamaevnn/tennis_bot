@@ -1,10 +1,10 @@
 from base.common_for_bots.static_text import DATE_INFO
 from base.models import User, GroupTrainingDay
-from player_bot.menu_and_commands.keyboard_utils import construct_main_menu
+from player_bot.menu_and_commands.keyboards import construct_main_menu
 from base.common_for_bots.utils import bot_edit_message, get_time_info_from_tr_day, \
     create_calendar, get_actual_players_without_absent
 from base.common_for_bots.tasks import clear_broadcast_messages
-from player_bot.skip_lesson.keyboard_utils import construct_detail_menu_for_skipping
+from player_bot.skip_lesson.keyboards import construct_detail_menu_for_skipping
 from player_bot.skip_lesson.manage_data import SELECT_SKIP_TIME_BUTTON, SHOW_INFO_ABOUT_SKIPPING_DAY
 from player_bot.calendar.manage_data import CLNDR_ACTION_SKIP
 from player_bot.registration.utils import check_status_decor

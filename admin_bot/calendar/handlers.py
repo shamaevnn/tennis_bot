@@ -1,6 +1,6 @@
 from datetime import date, timedelta
 
-from admin_bot.calendar.keyboard_utils import day_buttons_coach_info
+from admin_bot.calendar.keyboards import day_buttons_coach_info
 from admin_bot.calendar.static_text import TRAIN_DAYS, NO_TRAINS_THIS_DAY
 from base.models import GroupTrainingDay
 from base.common_for_bots.utils import bot_edit_message, get_time_info_from_tr_day, create_calendar, \

@@ -27,7 +27,7 @@ def day_buttons_coach_info(tr_days, button_text):
 
     buttons.append([
         InlineKeyboardButton(
-            f'{BACK_BUTTON}',
+            BACK_BUTTON,
             callback_data=create_callback_data(
                 purpose=CLNDR_ADMIN_VIEW_SCHEDULE,
                 action=CLNDR_ACTION_BACK,

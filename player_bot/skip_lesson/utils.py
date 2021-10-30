@@ -8,7 +8,7 @@ from player_bot.skip_lesson.static_text import USER_CANCELLED_IND_TRAIN, USER_SK
 from base.common_for_bots.static_text import ATTENTION
 from base.models import GroupTrainingDay
 from base.common_for_bots.utils import get_actual_players_without_absent, moscow_datetime, create_calendar
-from player_bot.skip_lesson.keyboard_utils import construct_menu_skipping_much_lesson, \
+from player_bot.skip_lesson.keyboards import construct_menu_skipping_much_lesson, \
     construct_detail_menu_for_skipping
 
 

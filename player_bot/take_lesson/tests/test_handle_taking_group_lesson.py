@@ -5,9 +5,9 @@ from django.test import TestCase
 from base.common_for_bots.utils import get_n_free_places
 from base.models import User, TrainingGroup, GroupTrainingDay
 from player_bot.take_lesson.static_text import NO_PLACES_FOR_THIS_TIME_CHOOSE_ANOTHER, CHOOSE_TYPE_OF_PAYMENT
-from player_bot.take_lesson.keyboard_utils import back_to_group_times_when_no_left_keyboard, \
-    choose_type_of_payment_for_group_lesson_keyboard
-from player_bot.take_lesson.utils import handle_taking_group_lesson
+from player_bot.take_lesson.group.keyboards import choose_type_of_payment_for_group_lesson_keyboard, \
+    back_to_group_times_when_no_left_keyboard
+from player_bot.take_lesson.group.utils import handle_taking_group_lesson
 from tennis_bot.settings import TARIF_PAYMENT_ADD_LESSON, TARIF_GROUP, TARIF_ARBITRARY
 
 

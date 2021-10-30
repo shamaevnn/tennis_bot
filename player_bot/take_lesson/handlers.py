@@ -2,11 +2,11 @@ from datetime import datetime
 
 from base.models import User
 from base.common_for_bots.utils import moscow_datetime, bot_edit_message, create_calendar
-from player_bot.take_lesson.keyboard_utils import choose_type_of_training_keyboard
-from player_bot.take_lesson.individual.keyboard_utils import ind_train_choose_duration_keyboard
+from player_bot.take_lesson.keyboards import choose_type_of_training_keyboard
+from player_bot.take_lesson.individual.keyboards import ind_train_choose_duration_keyboard
 from player_bot.take_lesson import manage_data
 from player_bot.calendar.manage_data import CLNDR_ACTION_TAKE_GROUP
-from player_bot.take_lesson.rent.keyboard_utils import rent_choose_duration_keyboard
+from player_bot.take_lesson.rent.keyboards import rent_choose_duration_keyboard
 from player_bot.take_lesson.static_text import CHOOSE_TYPE_OF_TRAIN, CHOOSE_DURATION_OF_TRAIN
 from player_bot.take_lesson.group.query import get_potential_days_for_group_training
 from player_bot.registration.utils import check_status_decor

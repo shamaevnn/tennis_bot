@@ -2,7 +2,7 @@ from telegram.ext import ConversationHandler
 
 from base.common_for_bots.static_text import THIS_WAY_YEAH
 from base.models import User
-from player_bot.menu_and_commands.keyboard_utils import construct_main_menu
+from player_bot.menu_and_commands.keyboards import construct_main_menu
 from player_bot.menu_and_commands.static_text import HELP_MESSAGE
 from player_bot.registration.static_text import FIRST_TIME_GREETING, FIRST_TIME_INSERT_FIRST_LAST_MAME, \
     FIRST_TIME_INSERT_PHONE_NUMBER

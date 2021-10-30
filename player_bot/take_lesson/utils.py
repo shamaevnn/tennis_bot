@@ -7,7 +7,8 @@ from telegram import InlineKeyboardMarkup
 
 from base.models import GroupTrainingDay
 from base.common_for_bots.utils import TM_TIME_SCHEDULE_FORMAT, create_calendar
-from player_bot.take_lesson.keyboard_utils import construct_time_menu_4ind_and_rent_lesson
+from player_bot.take_lesson.keyboards import construct_time_menu_4ind_and_rent_lesson
+from player_bot.take_lesson.static_text import CANT_TAKE_TRAIN_CHOOSE_ANOTHER_DAY, CHOOSE_TIME
 
 
 def calendar_taking_rent_and_ind_lesson(

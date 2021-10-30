@@ -1,6 +1,6 @@
 from telegram.ext import ConversationHandler
 
-from admin_bot.menu_and_commands.keyboard_utils import construct_admin_main_menu
+from admin_bot.menu_and_commands.keyboards import construct_admin_main_menu
 from admin_bot.menu_and_commands.static_text import HEY_I_MOVED_TO
 from base.common_for_bots.static_text import THIS_WAY_YEAH
 

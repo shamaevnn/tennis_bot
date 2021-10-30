@@ -1,7 +1,7 @@
 import telegram
 
 from admin_bot.ind_train import static_text
-from admin_bot.ind_train.keyboard_utils import how_many_trains_to_save_keyboard
+from admin_bot.ind_train.keyboards import how_many_trains_to_save_keyboard
 from admin_bot.ind_train.manage_data import PERMISSION_FOR_IND_TRAIN, AMOUNT_OF_IND_TRAIN, PERMISSION_YES
 from base.common_for_bots.static_text import DATE_INFO, ATTENTION
 from base.models import User, GroupTrainingDay

@@ -5,8 +5,8 @@ from django.db.models import Sum, Count, Q, ExpressionWrapper, F, IntegerField
 from telegram.ext import ConversationHandler
 
 
-from admin_bot.payment.keyboard_utils import construct_menu_groups, construct_menu_months
-from admin_bot.payment import keyboard_utils
+from admin_bot.payment.keyboards import construct_menu_groups, construct_menu_months
+from admin_bot.payment import keyboards
 from admin_bot.payment import manage_data
 from admin_bot.payment import static_text
 from admin_bot.payment.utils import check_if_players_not_in_payments, have_not_paid_users_info, payment_users_info
@@ -23,7 +23,7 @@ START_CHANGE_PAYMENT, CONFIRM_OR_CANCEL = range(2)
 def start_payment(update, context):
     text = static_text.CHOOSE_YEAR
     now_date = moscow_datetime(datetime.datetime.now()).date()
-    markup = keyboard_utils.choose_year_to_group_payment_keyboard(
+    markup = keyboards.choose_year_to_group_payment_keyboard(
         year=now_date.year,
         month=now_date.month
     )
@@ -157,7 +157,7 @@ def group_payment(update, context):
            f"<b>id</b>. {help_info}\n\n" \
            f"{users_info}"
 
-    markup = keyboard_utils.change_payment_info_keyboard(
+    markup = keyboards.change_payment_info_keyboard(
         year=year,
         month=month,
         group_id=group_id
@@ -170,7 +170,7 @@ def change_payment_data(update, context):
     year, month, _ = update.callback_query.data[len(manage_data.PAYMENT_START_CHANGE):].split('|')
     user, _ = User.get_user_and_created(update, context)
 
-    markup = keyboard_utils.back_to_payment_groups_when_changing_payment_keyboard(
+    markup = keyboards.back_to_payment_groups_when_changing_payment_keyboard(
         year=year,
         month=month,
         from_digit_to_month_dict=from_digit_to_month
@@ -197,7 +197,7 @@ def get_id_amount(update, context):
                f'{static_text.YEAR}: {2020 + int(payment.year)}\n' \
                f'{static_text.MONTH}: {from_digit_to_month[int(payment.month)]}\n' \
                f'<b>{payment.fact_amount}₽ ➡ {amount}₽</b>'
-        markup = keyboard_utils.cancel_confirm_changing_payment_info_keyboard(
+        markup = keyboards.cancel_confirm_changing_payment_info_keyboard(
             payment_id=payment_id,
             amount=amount
         )
@@ -231,7 +231,7 @@ def confirm_or_cancel_changing_payment(update, context):
         payment.save()
         text = static_text.CHANGES_ARE_MADE
 
-    markup = keyboard_utils.back_to_payment_groups_when_changing_payment_keyboard(
+    markup = keyboards.back_to_payment_groups_when_changing_payment_keyboard(
         year=payment.year,
         month=payment.month,
         from_digit_to_month_dict=from_digit_to_month

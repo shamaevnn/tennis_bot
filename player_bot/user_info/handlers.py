@@ -4,7 +4,7 @@ from datetime import date, datetime, timedelta
 from telegram.ext import ConversationHandler
 
 from base.models import User, Payment, TrainingGroup
-from player_bot.menu_and_commands.keyboard_utils import construct_main_menu
+from player_bot.menu_and_commands.keyboards import construct_main_menu
 from base.common_for_bots.utils import moscow_datetime
 from player_bot.user_info.static_text import NO_PAYMENT_BUTTON, SUCCESS_PAYMENT
 from base.common_for_bots.static_text import from_digit_to_month

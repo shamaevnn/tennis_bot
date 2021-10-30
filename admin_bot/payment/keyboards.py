@@ -34,7 +34,7 @@ def change_payment_info_keyboard(year, month, group_id):
             static_text.CHANGE_DATA, callback_data=f'{manage_data.PAYMENT_START_CHANGE}{year}|{month}|{group_id}'
         )
     ], [
-        InlineKeyboardButton(f'{BACK_BUTTON}', callback_data=f'{manage_data.PAYMENT_YEAR_MONTH}{year}|{month}')
+        InlineKeyboardButton(BACK_BUTTON, callback_data=f'{manage_data.PAYMENT_YEAR_MONTH}{year}|{month}')
     ]]
 
     return InlineKeyboardMarkup(buttons)
@@ -71,8 +71,7 @@ def construct_menu_groups(groups, button_text):
 
     year, month, _ = button_text[len(manage_data.PAYMENT_YEAR_MONTH_GROUP):].split('|')
     buttons.append([
-        InlineKeyboardButton(f'{BACK_BUTTON}',
-                             callback_data=f'{manage_data.PAYMENT_YEAR}{year}'),
+        InlineKeyboardButton(BACK_BUTTON, callback_data=f'{manage_data.PAYMENT_YEAR}{year}'),
     ])
 
     return InlineKeyboardMarkup(buttons)
@@ -92,8 +91,7 @@ def construct_menu_months(months, button_text):
         buttons.append(row)
 
     buttons.append([
-        InlineKeyboardButton(f'{BACK_BUTTON}',
-                             callback_data=f'{static_text.ADMIN_PAYMENT}'),
+        InlineKeyboardButton(BACK_BUTTON, callback_data=f'{static_text.ADMIN_PAYMENT}'),
     ])
 
     return InlineKeyboardMarkup(buttons)

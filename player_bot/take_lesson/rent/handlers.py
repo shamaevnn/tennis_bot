@@ -9,7 +9,7 @@ from base.common_for_bots.utils import create_calendar, bot_edit_message, DT_BOT
 from base.models import User, TrainingGroup, GroupTrainingDay
 from tennis_bot.settings import ADMIN_TELEGRAM_TOKEN
 from . import manage_data
-from .keyboard_utils import number_of_people_to_rent_cort_keyboard, take_rent_lesson_or_back
+from .keyboards import number_of_people_to_rent_cort_keyboard, take_rent_lesson_or_back
 from .manage_data import NUMBER_OF_PEOPLE_TO_RENT_CORT, TAKE_RENT_LESSON
 from .static_text import HOW_MANY_PEOPLE_WILL_COME, TRAIN_RENT_INFO, WILL_SAY_TO_COACH_ABOUT_RENTING
 from .utils import _get_price_for_renting

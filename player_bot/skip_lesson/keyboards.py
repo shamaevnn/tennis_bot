@@ -28,7 +28,7 @@ def construct_menu_skipping_much_lesson(tr_days):
         buttons.append(row)
 
     buttons.append([
-        inlinebutt(f'{BACK_BUTTON}',
+        inlinebutt(BACK_BUTTON,
                    callback_data=create_callback_data(CLNDR_ACTION_SKIP, CLNDR_ACTION_BACK, date_info.year,
                                                       date_info.month, 0))
     ])
@@ -43,7 +43,7 @@ def construct_detail_menu_for_skipping(training_day, purpose, group_name, group_
     buttons = [[
         InlineKeyboardButton('Пропустить', callback_data=SHOW_INFO_ABOUT_SKIPPING_DAY + f'{training_day.id}')
     ], [
-        InlineKeyboardButton(f'{BACK_BUTTON}',
+        InlineKeyboardButton(BACK_BUTTON,
                              callback_data=create_callback_data(purpose, CLNDR_ACTION_BACK, training_day.date.year,
                                                                 training_day.date.month, 0))
     ]]

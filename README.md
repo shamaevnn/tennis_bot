@@ -7,7 +7,10 @@ Tennis coach had several problems:
  * All group students have `bonus lesson` — opportunity to visit a lesson for free. Coach had to track the number of these bonuses!!!
  * These and other not described problems detracted coach from training process.
 
-#### Actually, there are two bots: bot for coach and bot for players.
+## Solution
+For solving these and others not stated problems, *tennis bot* was created.
+**Actually, there are two bots: bot for coach and bot for players.**
+
 Functionality of coach bot:
  * [Viewing schedule](https://github.com/shamaevnn/tennis_bot/blob/master/COACH_BOT.md#schedule)
  * [Checking payments](https://github.com/shamaevnn/tennis_bot/blob/master/COACH_BOT.md#payment-info)

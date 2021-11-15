@@ -5,7 +5,7 @@ from admin_bot.ind_train import static_text
 from admin_bot.ind_train.keyboards import how_many_trains_to_save_keyboard
 from admin_bot.ind_train.manage_data import PERMISSION_FOR_IND_TRAIN, AMOUNT_OF_IND_TRAIN, PERMISSION_YES, AMOUNT_ONE
 from base.common_for_bots.static_text import DATE_INFO, ATTENTION
-from base.models import User, GroupTrainingDay
+from base.models import GroupTrainingDay, Player
 from base.utils import create_tr_days_for_future
 from base.common_for_bots.utils import bot_edit_message, get_time_info_from_tr_day
 from player_bot.take_lesson.individual.static_text import COACH_CONFIRMED_TRAIN, COACH_CANCELLED_TRAIN
@@ -13,9 +13,9 @@ from tennis_bot.settings import TELEGRAM_TOKEN
 
 
 def permission_for_ind_train(update, context):
-    permission, user_id, tr_day_id = update.callback_query.data[len(PERMISSION_FOR_IND_TRAIN):].split('|')
+    permission, tg_id, tr_day_id = update.callback_query.data[len(PERMISSION_FOR_IND_TRAIN):].split('|')
 
-    player = User.objects.get(id=user_id)
+    player = Player.objects.get(id=tg_id)
     tr_day = GroupTrainingDay.objects.filter(id=tr_day_id)
 
     if tr_day.exists():
@@ -27,20 +27,20 @@ def permission_for_ind_train(update, context):
         if permission == PERMISSION_YES:
             markup = how_many_trains_to_save_keyboard(tr_day_id=tr_day_id)
             admin_text = static_text.HOW_MANY_TRAINS_TO_SAVE
-            user_text = COACH_CONFIRMED_TRAIN.format(date_info=date_info)
+            player_text = COACH_CONFIRMED_TRAIN.format(date_info=date_info)
         else:
             admin_text = static_text.WILL_SAY_THAT_TRAIN_IS_CANCELLED.format(
                 player.last_name,
                 player.first_name,
                 date_info
             )
-            user_text = COACH_CANCELLED_TRAIN.format(attention=ATTENTION, date_info=date_info)
+            player_text = COACH_CANCELLED_TRAIN.format(attention=ATTENTION, date_info=date_info)
             tr_day.delete()
 
         tennis_bot = telegram.Bot(TELEGRAM_TOKEN)
         tennis_bot.send_message(
             chat_id=player.id,
-            text=user_text,
+            text=player_text,
             parse_mode=ParseMode.HTML
         )
     else:

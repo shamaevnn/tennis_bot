@@ -1,7 +1,7 @@
 import datetime
 
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import Sum, Count, Q, ExpressionWrapper, F, IntegerField
+from django.db.models import Sum
 from telegram import Update, ParseMode
 from telegram.ext import ConversationHandler
 
@@ -13,8 +13,8 @@ from admin_bot.payment import static_text
 from admin_bot.payment.manage_data import PAYMENT_CHANGE_NO
 from admin_bot.payment.queries import get_total_paid_amount_for_month, get_total_should_pay_amount, \
     get_not_paid_payments
-from admin_bot.payment.utils import check_if_players_not_in_payments, have_not_paid_users_info, payment_users_info
-from base.models import Payment, TrainingGroup, User, GroupTrainingDay
+from admin_bot.payment.utils import check_if_players_not_in_payments, have_not_paid_players_info, payment_players_info
+from base.models import Payment, TrainingGroup, Player, GroupTrainingDay
 from base.common_for_bots.utils import moscow_datetime, bot_edit_message
 
 from base.common_for_bots.static_text import from_digit_to_month, UP_TO_YOU
@@ -95,7 +95,7 @@ def group_payment(update: Update, context):
             'player__first_name'
         )
 
-        users_info = have_not_paid_users_info(payments_values)
+        users_info = have_not_paid_players_info(payments_values)
         n_lessons_info, should_pay, should_pay_balls, tarif_info, this_month_payment_info, payment_info = '', '', '',\
                                                                                                    '', '', ''
     else:
@@ -130,7 +130,7 @@ def group_payment(update: Update, context):
             should_pay_balls
         )
 
-        users_info = payment_users_info(payments)
+        users_info = payment_players_info(payments)
 
     date_info = f'{from_digit_to_month[int(month)]} {int(year) + 2020}\n'
 
@@ -149,7 +149,7 @@ def group_payment(update: Update, context):
 
 def change_payment_data(update: Update, context):
     year, month, _ = update.callback_query.data[len(manage_data.PAYMENT_START_CHANGE):].split('|')
-    user = User.get_user(update, context)
+    player = Player.get_by_update(update)
 
     markup = keyboards.back_to_payment_groups_when_changing_payment_keyboard(
         year=year,
@@ -157,7 +157,7 @@ def change_payment_data(update: Update, context):
     )
 
     context.bot.send_message(
-        chat_id=user.id,
+        chat_id=player.tg_id,
         text=static_text.TO_INSERT_PAYMENT_DATA_HELP_INFO,
         reply_markup=markup
     )
@@ -166,7 +166,7 @@ def change_payment_data(update: Update, context):
 
 
 def get_id_amount(update: Update, context):
-    user = User.get_user(update, context)
+    coach = Player.get_by_update(update)
     try:
         payment_id, amount = update.message.text.split(' ')
         payment_id = int(payment_id)
@@ -182,19 +182,19 @@ def get_id_amount(update: Update, context):
             amount=amount
         )
         context.bot.send_message(
-            chat_id=user.id,
+            chat_id=coach.tg_id,
             text=text,
             reply_markup=markup,
             parse_mode=ParseMode.HTML,
         )
     except ValueError:
         context.bot.send_message(
-            chat_id=user.id,
+            chat_id=coach.tg_id,
             text=static_text.ERROR_INCORRECT_ID_OR_MONEY,
         )
     except ObjectDoesNotExist:
         context.bot.send_message(
-            chat_id=user.id,
+            chat_id=coach.tg_id,
             text=static_text.NO_SUCH_OBJECT_IN_DATABASE,
         )
     return CONFIRM_OR_CANCEL

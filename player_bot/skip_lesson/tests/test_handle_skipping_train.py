@@ -7,7 +7,7 @@ from player_bot.skip_lesson.static_text import USER_CANCELLED_IND_TRAIN, USER_SK
 	USER_SKIPPED_TRAIN_FOR_MONEY, USER_SKIPPED_TRAIN_FOR_PAY_BONUS, USER_SKIPPED_TRAIN_IN_HIS_GROUP, \
 	OKAY_TRAIN_CANCELLED, USER_CANCELLED_RENT_COURT
 from base.common_for_bots.static_text import ATTENTION
-from player_bot.take_lesson.tests.test_get_potential_days_for_group_training import create_group_user, \
+from player_bot.take_lesson.tests.test_get_potential_days_for_group_training import create_group_player, \
 create_group, create_tr_day_for_group
 from player_bot.skip_lesson.utils import handle_skipping_train
 
@@ -17,7 +17,7 @@ class HandleSkippingTrainTestCases(TestCase):
 		self.date_info = ""
 		self.success_cancel_text = OKAY_TRAIN_CANCELLED.format(self.date_info)
 
-		self.me = create_group_user(id=1, first_name='Nikita')
+		self.me = create_group_player(id=1, first_name='Nikita')
 		self.my_group = create_group()
 		self.my_group.users.add(self.me)
 		self.individual_group = TrainingGroup.get_or_create_ind_group(self.me)

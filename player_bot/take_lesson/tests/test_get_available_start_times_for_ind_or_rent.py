@@ -1,14 +1,14 @@
 from datetime import datetime, timedelta, time
 
 from django.test import TestCase
-from base.models import User, TrainingGroup, GroupTrainingDay
+from base.models import Player, TrainingGroup, GroupTrainingDay
 from player_bot.take_lesson.utils import get_available_start_times_for_given_duration_and_date
 
 today = datetime.today()
 date = (today + timedelta(days=2)).date()
 
 
-def create_tr_day_for_group(group, start_time: time, duration: timedelta, **kwargs):
+def create_tr_day_for_group(group: TrainingGroup, start_time: time, duration: timedelta, **kwargs):
     tr_day = GroupTrainingDay.objects.create(
         group=group, date=date, start_time=start_time, duration=duration, **kwargs
     )
@@ -18,8 +18,8 @@ def create_tr_day_for_group(group, start_time: time, duration: timedelta, **kwar
 class TestAllAvailablePeriods(TestCase):
     @classmethod
     def setUpTestData(self):
-        self.user = User.objects.create(
-            id=1, username='Nikita', first_name='Nikita', status=User.STATUS_TRAINING, password='123'
+        self.player = Player.objects.create(
+            tg_id=1, first_name='Nikita', status=Player.STATUS_TRAINING
         )
         self.group = TrainingGroup.objects.create(name='Nikita_group', max_players=1, status=TrainingGroup.STATUS_4IND)
 
@@ -63,8 +63,8 @@ class TestAllAvailablePeriods(TestCase):
 class TestOnlyOneHour(TestCase):
     @classmethod
     def setUpTestData(self):
-        self.user = User.objects.create(
-            id=1, username='Nikita', first_name='Nikita', status=User.STATUS_TRAINING, password='123'
+        self.player = Player.objects.create(
+            tg_id=1, first_name='Nikita', status=Player.STATUS_TRAINING, password='123'
         )
         self.group = TrainingGroup.objects.create(name='Nikita_group', max_players=1, status=TrainingGroup.STATUS_4IND)
 

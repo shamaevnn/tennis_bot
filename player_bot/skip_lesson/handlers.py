@@ -1,7 +1,7 @@
 from telegram import Update
 
 from base.common_for_bots.static_text import DATE_INFO
-from base.models import User, GroupTrainingDay
+from base.models import Player, GroupTrainingDay
 from player_bot.menu_and_commands.keyboards import construct_main_menu
 from base.common_for_bots.utils import bot_edit_message, get_time_info_from_tr_day, \
     create_calendar, get_actual_players_without_absent
@@ -18,11 +18,11 @@ from tennis_bot.settings import ADMIN_TELEGRAM_TOKEN
 
 @check_status_decor
 def skip_lesson_main_menu_button(update: Update, context):
-    user, _ = User.get_user_and_created(update, context)
-    available_grouptraining_dates = select_tr_days_for_skipping(user)
+    player, _ = Player.get_player_and_created(update, context)
+    available_grouptraining_dates = select_tr_days_for_skipping(player)
     if available_grouptraining_dates.exists():
         context.bot.send_message(
-            user.id,
+            player.id,
             'Выбери дату тренировки для отмены.\n'
             '✅ -- дни, доступные для отмены.',
             reply_markup=create_calendar(
@@ -32,9 +32,9 @@ def skip_lesson_main_menu_button(update: Update, context):
         )
     else:
         context.bot.send_message(
-            chat_id=user.id,
+            chat_id=player.id,
             text='Пока что нечего пропускать.',
-            reply_markup=construct_main_menu(user),
+            reply_markup=construct_main_menu(player),
         )
 
 
@@ -66,14 +66,14 @@ def skip_lesson(update: Update, context):
 
         admins = User.objects.filter(is_superuser=True, is_blocked=False)
         clear_broadcast_messages(
-            user_ids=list(admins.values_list('id', flat=True)),
+            chat_ids=list(admins.values_list('id', flat=True)),
             message=admin_text,
             tg_token=ADMIN_TELEGRAM_TOKEN,
         )
         n_players_left_for_this_lesson = get_actual_players_without_absent(training_day).count()
         if n_players_left_for_this_lesson == 1:
             clear_broadcast_messages(
-                user_ids=list(admins.values_list('id', flat=True)),
+                chat_ids=list(admins.values_list('id', flat=True)),
                 message=ONLY_ONE_LEFT.format(training_day.group.name, date_info),
                 tg_token=ADMIN_TELEGRAM_TOKEN,
             )

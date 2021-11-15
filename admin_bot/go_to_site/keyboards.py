@@ -13,9 +13,9 @@ def go_to_site_keyboard():
     return InlineKeyboardMarkup(buttons)
 
 
-def go_to_site_set_up_personal_data(user_id):
+def go_to_site_set_up_personal_data(player_id: str):
     buttons = [[
-        InlineKeyboardButton(SET_UP_DATA, url=f'{HOST}user/{user_id}/change/'),
+        InlineKeyboardButton(SET_UP_DATA, url=f'{HOST}player/{player_id}/change/'),
     ]]
 
     return InlineKeyboardMarkup(buttons)

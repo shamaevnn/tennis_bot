@@ -2,7 +2,7 @@ from typing import Union
 
 from django.db.models import Sum, Count, Q, ExpressionWrapper, F, IntegerField, QuerySet
 
-from base.models import Payment, TrainingGroup, User
+from base.models import Payment, TrainingGroup, Player
 
 
 def get_total_paid_amount_for_month(year: int, month: int) -> int:
@@ -24,15 +24,15 @@ def get_total_should_pay_amount(year: Union[str, int], month: Union[str, int]) -
             ),
             distinct=True
         ),
-        count_users=Count(
-            'users',
+        count_players=Count(
+            'players',
             distinct=True
         )
     ).filter(
         max_players__gt=1
     ).annotate(
         should_pay=ExpressionWrapper(
-            F('count_users') * F('tarif_for_one_lesson') * F('count_tr_days'),
+            F('count_players') * F('tarif_for_one_lesson') * F('count_tr_days'),
             output_field=IntegerField(),
         )
     ).aggregate(
@@ -43,7 +43,7 @@ def get_total_should_pay_amount(year: Union[str, int], month: Union[str, int]) -
 
 def get_not_paid_payments(year: Union[str, int], month: Union[str, int]) -> QuerySet[Payment]:
     payments = Payment.objects.filter(
-        player__status=User.STATUS_TRAINING,
+        player__status=Player.STATUS_TRAINING,
         fact_amount=0,
         month=month,
         year=year

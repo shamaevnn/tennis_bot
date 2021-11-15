@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from base.models import User
+from base.models import Player
 from base.common_for_bots.utils import moscow_datetime, bot_edit_message, create_calendar
 from player_bot.take_lesson.keyboards import choose_type_of_training_keyboard
 from player_bot.take_lesson.individual.keyboards import ind_train_choose_duration_keyboard
@@ -29,10 +29,10 @@ def choose_type_of_training(update, context):
 @check_status_decor
 def take_lesson(update, context):
     """записаться на тренировку"""
-    user, _ = User.get_user_and_created(update, context)
+    player, _ = Player.get_player_and_created(update, context)
     tr_type = update.callback_query.data[len(manage_data.SELECT_TRAINING_TYPE):]
     if tr_type == manage_data.TRAINING_GROUP:
-        if user.bonus_lesson > 0:
+        if player.bonus_lesson > 0:
             text = '<b>Пожертвуешь одним отыгрышем.</b>\n' \
                    '✅ -- дни, доступные для групповых тренировок.'
         else:
@@ -40,7 +40,7 @@ def take_lesson(update, context):
                    f'В данный момент у тебя нет отыгрышей.\n' \
                    f'<b> Занятие будет стоить {TARIF_ARBITRARY}₽ </b>\n' \
                    f'✅ -- дни, доступные для групповых тренировок.'
-        training_days = get_potential_days_for_group_training(user).filter(
+        training_days = get_potential_days_for_group_training(player).filter(
             date__gte=moscow_datetime(datetime.now()).date()
         )
         highlight_dates = list(training_days.values_list('date', flat=True))

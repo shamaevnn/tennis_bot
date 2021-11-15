@@ -6,7 +6,7 @@ from django.core.exceptions import ValidationError
 from django.db.models import ExpressionWrapper, F, DateTimeField, Count
 from django.utils.safestring import mark_safe
 
-from base.models import User, TrainingGroup, GroupTrainingDay
+from base.models import TrainingGroup, GroupTrainingDay, Player
 from base.django_admin.utils import send_alert_about_changing_tr_day_status, send_alert_about_changing_tr_day_time
 from player_bot.menu_and_commands.keyboards import construct_main_menu
 from base.common_for_bots.utils import DT_BOT_FORMAT, TM_TIME_SCHEDULE_FORMAT, moscow_datetime
@@ -18,22 +18,22 @@ from player_bot.registration.static_text import NOW_YOU_HAVE_ACCESS_CONGRATS
 from base.common_for_bots.static_text import from_eng_to_rus_day_week
 
 
-class UserForm(forms.ModelForm):
+class PlayerForm(forms.ModelForm):
     class Meta:
-        model = User
+        model = Player
         fields = ['id', 'first_name', 'last_name', 'phone_number', 'parent', 'status', 'time_before_cancel',
                   'bonus_lesson', 'add_info']
 
     def clean(self):
         if 'status' in self.changed_data:
             new_status = self.cleaned_data.get('status')
-            if self.instance.status == User.STATUS_WAITING and (
-                    new_status == User.STATUS_ARBITRARY or new_status == User.STATUS_TRAINING):
+            if self.instance.status == Player.STATUS_WAITING and (
+                    new_status == Player.STATUS_ARBITRARY or new_status == Player.STATUS_TRAINING):
                 text = NOW_YOU_HAVE_ACCESS_CONGRATS
                 reply_markup = construct_main_menu(self.instance)
 
                 clear_broadcast_messages(
-                    user_ids=[self.instance.id],
+                    chat_ids=[self.instance.id],
                     message=text,
                     reply_markup=reply_markup
                 )
@@ -42,7 +42,7 @@ class UserForm(forms.ModelForm):
 class TrainingGroupForm(forms.ModelForm):
     class Meta:
         model = TrainingGroup
-        fields = ['name', 'users', 'max_players', 'status', 'level', 'tarif_for_one_lesson',
+        fields = ['name', 'players', 'max_players', 'status', 'level', 'tarif_for_one_lesson',
                   'available_for_additional_lessons']
 
     def clean(self):

@@ -2,8 +2,7 @@ from datetime import datetime, timedelta, time
 
 from django.test import TestCase
 
-from base.common_for_bots.utils import get_n_free_places
-from base.models import User, TrainingGroup, GroupTrainingDay
+from base.models import Player, TrainingGroup, GroupTrainingDay
 from player_bot.take_lesson.static_text import NO_PLACES_FOR_THIS_TIME_CHOOSE_ANOTHER, CHOOSE_TYPE_OF_PAYMENT
 from player_bot.take_lesson.group.keyboards import choose_type_of_payment_for_group_lesson_keyboard, \
     back_to_group_times_when_no_left_keyboard
@@ -11,21 +10,19 @@ from player_bot.take_lesson.group.utils import handle_taking_group_lesson
 from tennis_bot.settings import TARIF_PAYMENT_ADD_LESSON, TARIF_GROUP, TARIF_ARBITRARY
 
 
-def create_group_user(id: int, first_name: str, **kwargs):
-    user = User.objects.create(id=id, username=first_name, first_name=first_name, status=User.STATUS_TRAINING,
-                               password='123', **kwargs)
-    return user
+def create_group_player(id: int, first_name: str, **kwargs):
+    player = Player.objects.create(tg_id=id, first_name=first_name, status=Player.STATUS_TRAINING, **kwargs)
+    return player
 
 
-def create_arbitrary_user(id: int, first_name: str, **kwargs):
-    user = User.objects.create(id=id, username=first_name, first_name=first_name, status=User.STATUS_ARBITRARY,
-                               password='123', **kwargs)
-    return user
+def create_arbitrary_player(id: int, first_name: str, **kwargs):
+    player = Player.objects.create(tg_id=id, first_name=first_name, status=Player.STATUS_ARBITRARY, **kwargs)
+    return player
 
 
 def create_group(
         name="БАНДА №1", max_players=6, status=TrainingGroup.STATUS_GROUP, level=TrainingGroup.LEVEL_GREEN, **kwargs
-    ):
+    ) -> TrainingGroup:
     group = TrainingGroup.objects.create(
         name=name, max_players=max_players, status=status, level=level, **kwargs
     )
@@ -57,32 +54,32 @@ class NoFreePlacesTests(TestCase):
     def setUp(self):
         # gr = group, u = user, w = with, wo = without, bl = bonus lesson, mp = max players,
         # al = additional lesson
-        self.gr_u_w_bl = create_group_user(id=350490234, first_name='Nikita 1', bonus_lesson=10)
-        self.gr_u_wo_bl = create_group_user(id=350490235, first_name='Nikita 2', bonus_lesson=0)
-        self.arb_u_w_bl = create_arbitrary_user(id=350490236, first_name='Nikita 3', bonus_lesson=10)
-        self.arb_u_wo_bl = create_arbitrary_user(id=350490236, first_name='Nikita 4', bonus_lesson=0)
+        self.gr_u_w_bl = create_group_player(id=350490234, first_name='Nikita 1', bonus_lesson=10)
+        self.gr_u_wo_bl = create_group_player(id=350490235, first_name='Nikita 2', bonus_lesson=0)
+        self.arb_u_w_bl = create_arbitrary_player(id=350490236, first_name='Nikita 3', bonus_lesson=10)
+        self.arb_u_wo_bl = create_arbitrary_player(id=350490236, first_name='Nikita 4', bonus_lesson=0)
 
-        self.user_1 = create_group_user(id=1, first_name='user_1')
-        self.user_2 = create_group_user(id=2, first_name='user_2')
-        self.user_3 = create_group_user(id=3, first_name='user_3')
-        self.user_4 = create_group_user(id=4, first_name='user_4')
-        self.user_5 = create_group_user(id=5, first_name='user_5')
-        self.user_6 = create_group_user(id=6, first_name='user_6')
-        self.user_7 = create_group_user(id=7, first_name='user_7')
-        self.user_8 = create_group_user(id=8, first_name='user_8')
-        self.user_9 = create_group_user(id=9, first_name='user_9')
+        self.user_1 = create_group_player(id=1, first_name='user_1')
+        self.user_2 = create_group_player(id=2, first_name='user_2')
+        self.user_3 = create_group_player(id=3, first_name='user_3')
+        self.user_4 = create_group_player(id=4, first_name='user_4')
+        self.user_5 = create_group_player(id=5, first_name='user_5')
+        self.user_6 = create_group_player(id=6, first_name='user_6')
+        self.user_7 = create_group_player(id=7, first_name='user_7')
+        self.user_8 = create_group_player(id=8, first_name='user_8')
+        self.user_9 = create_group_player(id=9, first_name='user_9')
 
         self.gr_4_mp = create_group(max_players=4)
         self.gr_6_mp = create_group(max_players=6)
-        self.gr_4_mp.users.add(self.user_1, self.user_2, self.user_3, self.user_4)
-        self.gr_6_mp.users.add(self.user_1, self.user_2, self.user_3, self.user_4, self.user_5, self.user_6)
+        self.gr_4_mp.players.add(self.user_1, self.user_2, self.user_3, self.user_4)
+        self.gr_6_mp.players.add(self.user_1, self.user_2, self.user_3, self.user_4, self.user_5, self.user_6)
 
         self.gr_4_mp_al = create_group(max_players=4, available_for_additional_lessons=True)
         self.gr_5_mp_al = create_group(max_players=5, available_for_additional_lessons=True)
         self.gr_6_mp_al = create_group(max_players=6, available_for_additional_lessons=True)
-        self.gr_4_mp_al.users.add(self.user_1, self.user_2, self.user_3, self.user_4)
-        self.gr_5_mp_al.users.add(self.user_1, self.user_2, self.user_3, self.user_4, self.user_5)
-        self.gr_6_mp_al.users.add(self.user_1, self.user_2, self.user_3, self.user_4, self.user_5, self.user_6)
+        self.gr_4_mp_al.players.add(self.user_1, self.user_2, self.user_3, self.user_4)
+        self.gr_5_mp_al.players.add(self.user_1, self.user_2, self.user_3, self.user_4, self.user_5)
+        self.gr_6_mp_al.players.add(self.user_1, self.user_2, self.user_3, self.user_4, self.user_5, self.user_6)
 
     def test_no_free_places_no_additional_lessons(self):
         tr_day_4 = create_tr_day_for_group(self.gr_4_mp)

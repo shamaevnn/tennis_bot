@@ -3,17 +3,17 @@ from datetime import date, datetime, timedelta
 
 from telegram.ext import ConversationHandler
 
-from base.models import User, Payment, TrainingGroup
+from base.models import Payment, TrainingGroup, Player
 from player_bot.menu_and_commands.keyboards import construct_main_menu
 from base.common_for_bots.utils import moscow_datetime
-from player_bot.user_info.static_text import NO_PAYMENT_BUTTON, SUCCESS_PAYMENT
+from player_bot.player_info.static_text import NO_PAYMENT_BUTTON, SUCCESS_PAYMENT
 from base.common_for_bots.static_text import from_digit_to_month
 from player_bot.registration.utils import check_status_decor
-from player_bot.user_info.utils import balls_lessons_payment, group_users_info
+from player_bot.player_info.utils import balls_lessons_payment, group_players_info
 
 
 @check_status_decor
-def user_main_info(update, context):
+def player_main_info(update, context):
     """посмотреть, основную инфу:
         статус
         группа, если есть
@@ -22,18 +22,18 @@ def user_main_info(update, context):
     """
 
     from_user_to_intro = {
-        User.STATUS_WAITING: 'в листе ожидания.',
-        User.STATUS_TRAINING: 'тренируешься в группе.',
-        User.STATUS_FINISHED: 'закончил тренировки.',
-        User.STATUS_ARBITRARY: 'тренируешься по свободному графику.'
+        Player.STATUS_WAITING: 'в листе ожидания.',
+        Player.STATUS_TRAINING: 'тренируешься в группе.',
+        Player.STATUS_FINISHED: 'закончил тренировки.',
+        Player.STATUS_ARBITRARY: 'тренируешься по свободному графику.'
     }
 
     today_date = date.today()
-    user, _ = User.get_user_and_created(update, context)
-    user_payment = Payment.objects.filter(player=user, player__status=User.STATUS_TRAINING, fact_amount=0,
+    user, _ = Player.get_player_and_created(update, context)
+    user_payment = Payment.objects.filter(player=user, player__status=Player.STATUS_TRAINING, fact_amount=0,
                                           year=today_date.year - 2020, month=today_date.month)
 
-    if user.status == User.STATUS_TRAINING:
+    if user.status == Player.STATUS_TRAINING:
         if user_payment.exists():
             payment_status = f'{NO_PAYMENT_BUTTON}\n'
         else:
@@ -45,9 +45,9 @@ def user_main_info(update, context):
 
     group = TrainingGroup.objects.filter(users__in=[user]).exclude(max_players=1).first()
 
-    teammates = group.users.all() if group else User.objects.none()
+    teammates = group.players.all() if group else Player.objects.none()
 
-    group_info = "Твоя группа -- {}:\n{}\n\n".format(group.name, group_users_info(teammates)) if teammates else ''
+    group_info = "Твоя группа -- {}:\n{}\n\n".format(group.name, group_players_info(teammates)) if teammates else ''
 
     number_of_add_games = 'Количество отыгрышей: <b>{}</b>\n\n'.format(user.bonus_lesson)
 

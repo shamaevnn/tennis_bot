@@ -1,9 +1,11 @@
+from datetime import datetime
+
 from django.contrib import admin
 # Register your models here.
+from django.db.models import Q
 from django.utils.http import urlencode
 
-from .forms import UserForm, TrainingGroupForm, GroupTrainingDayForm
-from .models import *
+from .forms import PlayerForm, TrainingGroupForm, GroupTrainingDayForm
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.admin import SimpleListFilter
 from django.core.exceptions import ValidationError
@@ -11,15 +13,16 @@ from django import forms
 from django.shortcuts import redirect
 from django.utils.html import format_html
 
+from .models import TrainingGroup, Player, GroupTrainingDay, Payment, Photo
 from .utils import create_tr_days_for_future
 from .django_admin.utils import send_alert_about_changing_tr_day_status
 
 
-class UserTabularForm(forms.ModelForm):
+class PlayerTabularForm(forms.ModelForm):
     def clean(self):
         tr_group = self.cleaned_data.get('traininggroup')
         if tr_group and tr_group.status == TrainingGroup.STATUS_GROUP:
-            users = tr_group.users.all()
+            users = tr_group.players.all()
             max_players = tr_group.max_players
             if users.count() > max_players:
                 raise ValidationError(
@@ -27,16 +30,16 @@ class UserTabularForm(forms.ModelForm):
                         format(max_players, users.count() + 1)})
 
 
-class UserTabularInline(admin.StackedInline):
-    model = TrainingGroup.users.through
+class PlayerTabularInline(admin.StackedInline):
+    model = TrainingGroup.players.through
     max_num = 2
-    form = UserTabularForm
+    form = PlayerTabularForm
 
 
-@admin.register(User)
-class UserAdmin(admin.ModelAdmin):
-    form = UserForm
-    inlines = [UserTabularInline]
+@admin.register(Player)
+class PlayerAdmin(admin.ModelAdmin):
+    form = PlayerForm
+    inlines = [PlayerTabularInline]
     list_display = ('id', 'first_name', 'last_name', 'phone_number', 'status')
     search_fields = ('first_name', 'last_name')
     list_filter = ('status',)
@@ -85,7 +88,7 @@ class TrainingGroupAdmin(admin.ModelAdmin):
 
     form = TrainingGroupForm
     list_display = ('name', 'max_players', 'level', 'available_for_additional_lessons', 'tarif_for_one_lesson')
-    filter_horizontal = ('users',)
+    filter_horizontal = ('players',)
     list_filter = [DefaultGroupStatus]
     actions = [make_group_green, make_group_orange]
 
@@ -126,19 +129,19 @@ class GroupTrainingDayAdmin(admin.ModelAdmin):
 
     def formfield_for_manytomany(self, db_field, request, **kwargs):
         if db_field.name == 'absent' and hasattr(request, 'report_obj'):
-            kwargs['queryset'] = User.objects.filter(traininggroup__id=request.report_obj.group.id)
+            kwargs['queryset'] = Player.objects.filter(traininggroup__id=request.report_obj.group.id)
         if db_field.name == 'visitors' and hasattr(request, 'report_obj'):
-            kwargs['queryset'] = User.objects.exclude(
+            kwargs['queryset'] = Player.objects.exclude(
                 Q(traininggroup__id=request.report_obj.group.id) |
                 Q(id__in=request.report_obj.pay_visitors.all().union(request.report_obj.pay_bonus_visitors.all()).values('id'))
             )
         if db_field.name == 'pay_visitors' and hasattr(request, 'report_obj'):
-            kwargs['queryset'] = User.objects.exclude(
+            kwargs['queryset'] = Player.objects.exclude(
                 Q(traininggroup__id=request.report_obj.group.id) |
                 Q(id__in=request.report_obj.visitors.all().union(request.report_obj.pay_bonus_visitors.all()).values('id'))
             )
         if db_field.name == 'pay_bonus_visitors' and hasattr(request, 'report_obj'):
-            kwargs['queryset'] = User.objects.exclude(
+            kwargs['queryset'] = Player.objects.exclude(
                 Q(traininggroup__id=request.report_obj.group.id) |
                 Q(id__in=request.report_obj.visitors.all().union(request.report_obj.pay_visitors.all()).values('id')))
 

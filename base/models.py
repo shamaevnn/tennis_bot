@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 import re
+from typing import Optional, Tuple
+from uuid import uuid4
 
 import telegram
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.db.models import Q, F, Case, When, Sum, IntegerField
@@ -21,6 +24,14 @@ class ModelwithTimeManager(models.Manager):
         return self.filter(is_available=True, tr_day_status=GroupTrainingDay.MY_TRAIN_STATUS, *args, **kwargs)
 
 
+class GetOrNoneManager(models.Manager):
+    def get_or_none(self, **kwargs):
+        try:
+            return self.get(**kwargs)
+        except ObjectDoesNotExist:
+            return None
+
+
 class ModelwithTime(models.Model):
     dttm_added = models.DateTimeField(default=timezone.now)
     dttm_deleted = models.DateTimeField(null=True, blank=True)
@@ -29,6 +40,85 @@ class ModelwithTime(models.Model):
 
     class Meta:
         abstract = True
+
+
+class Player(models.Model):
+    STATUS_WAITING = 'W'
+    STATUS_TRAINING = 'G'
+    STATUS_FINISHED = 'F'
+    STATUS_ARBITRARY = 'A'
+    STATUS_IND_TRAIN = 'I'
+    STATUSES = (
+        (STATUS_WAITING, 'в ожидании'),
+        (STATUS_TRAINING, 'групповые тренировки'),
+        (STATUS_ARBITRARY, 'свободный график'),
+        (STATUS_FINISHED, 'закончил'),
+    )
+
+    tarif_for_status = {
+        STATUS_TRAINING: TARIF_GROUP,
+        STATUS_ARBITRARY: TARIF_ARBITRARY,
+        STATUS_IND_TRAIN: TARIF_IND,
+    }
+
+    id = models.UUIDField(primary_key=True, unique=True, default=uuid4)
+
+    first_name = models.CharField(max_length=32, null=True, verbose_name='Имя')
+    last_name = models.CharField(max_length=32, null=True, verbose_name='Фамилия')
+    phone_number = models.CharField(max_length=16, null=True, verbose_name='Номер телефона')
+
+    tg_id = models.PositiveBigIntegerField(verbose_name='telegram id')
+    tg_username = models.CharField(max_length=64, null=True, blank=True)
+    has_blocked_bot = models.BooleanField(default=False, verbose_name='заблокировал бота')
+    deep_link = models.CharField(max_length=64, null=True, blank=True)
+
+    status = models.CharField(max_length=1, choices=STATUSES, default=STATUS_WAITING, verbose_name='статус')
+
+    time_before_cancel = models.DurationField(
+        null=True, help_text='ЧАСЫ:МИНУТЫ:СЕКУНДЫ', verbose_name='Время, за которое нужно предупредить',
+        default=timedelta(hours=6)
+    )
+    bonus_lesson = models.SmallIntegerField(null=True, blank=True, default=0, verbose_name='Количество отыгрышей')
+
+    objects = GetOrNoneManager()
+
+    class Meta:
+        verbose_name = 'игрок'
+        verbose_name_plural = 'игроки'
+
+    def __str__(self):
+        return '{} {} -- {}'.format(self.first_name, self.last_name, self.phone_number)
+
+    @classmethod
+    def get_by_update(cls, update: Update) -> Optional[Player]:
+        from base.utils import Telegram
+        data = Telegram.extract_user_data_from_update(update)
+        tg_id = data['id']
+        player = cls.objects.get_or_none(tg_id=tg_id)
+        return player
+
+    @classmethod
+    def get_player_and_created(cls, update: Update, context) -> Tuple[Player, bool]:
+        """ python-telegram-bot's Update, Context --> User instance """
+        from base.utils import Telegram
+        data = Telegram.extract_user_data_from_update(update)
+        tg_id = data["id"]
+        u, created = cls.objects.update_or_create(
+            tg_id=tg_id,
+            defaults={
+                'tg_username': data['username'] if data.get('username') else None,
+                'username': data['id'],
+                'has_blocked_bot': data['is_blocked']
+            }
+        )
+
+        if created:
+            if context is not None and context.args is not None and len(context.args) > 0:
+                payload = context.args[0]
+                if str(payload).strip() != str(tg_id).strip():  # you can't invite yourself
+                    u.deep_link = payload
+                    u.save()
+        return u, created
 
 
 class User(AbstractUser):
@@ -84,8 +174,8 @@ class User(AbstractUser):
     @classmethod
     def get_user_and_created(cls, update: Update, context):
         """ python-telegram-bot's Update, Context --> User instance """
-        from base.utils import extract_user_data_from_update
-        data = extract_user_data_from_update(update)
+        from base.utils import Telegram
+        data = Telegram.extract_user_data_from_update(update)
         u, created = cls.objects.update_or_create(
             id=data["id"],
             defaults={
@@ -133,7 +223,7 @@ class TrainingGroup(ModelwithTime):
     )
 
     name = models.CharField(max_length=32, verbose_name='Название')
-    users = models.ManyToManyField(User)
+    players = models.ManyToManyField(Player, verbose_name='Игроки группы')
     max_players = models.SmallIntegerField(default=6, verbose_name='Максимальное количество игроков в группе')
     status = models.CharField(max_length=1, choices=GROUP_STATUSES, verbose_name='Статус группы', default=STATUS_GROUP)
     level = models.CharField(max_length=1, choices=GROUP_LEVELS, verbose_name='Уровень группы', default=LEVEL_ORANGE)
@@ -152,18 +242,20 @@ class TrainingGroup(ModelwithTime):
         return '{}, max_players: {}'.format(self.name, self.max_players)
 
     @classmethod
-    def get_or_create_ind_group(cls, user: User):
+    def _get_or_create_ind_or_rent_group(cls, player: Player, status: str):
+        assert status in (cls.STATUS_RENT, cls.STATUS_4IND)
         group, _ = cls.objects.get_or_create(
-            name=user.first_name + user.last_name, status=TrainingGroup.STATUS_4IND, max_players=1
+            name=player.first_name + player.last_name, status=status, max_players=1
         )
         return group
 
     @classmethod
-    def get_or_create_rent_group(cls, user: User):
-        group, _ = cls.objects.get_or_create(
-            name=user.first_name + user.last_name, status=TrainingGroup.STATUS_RENT, max_players=1
-        )
-        return group
+    def get_or_create_ind_group(cls, player: Player):
+        return cls._get_or_create_ind_or_rent_group(player, status=cls.STATUS_4IND)
+
+    @classmethod
+    def get_or_create_rent_group(cls, player: Player):
+        return cls._get_or_create_ind_or_rent_group(player, status=cls.STATUS_RENT)
 
     def save(self, *args, **kwargs):
         # для того, чтобы БАНДА №10 была позже БАНДА №1
@@ -183,18 +275,21 @@ class GroupTrainingDay(ModelwithTime):
     )
 
     group = models.ForeignKey(TrainingGroup, on_delete=models.PROTECT, verbose_name='Группа')
-    absent = models.ManyToManyField(User, blank=True, help_text='Кто сегодня отсутствует', verbose_name='Отсутствующие')
     date = models.DateField(default=timezone.now, verbose_name='Дата Занятия')
     is_available = models.BooleanField(default=True, help_text='Будет ли в этот день тренировка у этой группы')
     start_time = models.TimeField(null=True, help_text='ЧАСЫ:МИНУТЫ:СЕКУНДЫ', verbose_name='Время начала занятия')
     duration = models.DurationField(null=True, default=timedelta(hours=1), help_text='ЧАСЫ:МИНУТЫ:СЕКУНДЫ',
                                     verbose_name='Продолжительность занятия')
 
-    visitors = models.ManyToManyField(User, blank=True, help_text='Пришли из других групп\n', related_name='visitors',
+    absent = models.ManyToManyField(Player, blank=True, help_text='Кто сегодня отсутствует', verbose_name='Отсутствующие')
+
+    visitors = models.ManyToManyField(Player, blank=True, help_text='Пришли из других групп\n', related_name='visitors',
                                       verbose_name='Игроки из других групп')
-    pay_visitors = models.ManyToManyField(User, blank=True, help_text='Заплатили за занятие',
+
+    pay_visitors = models.ManyToManyField(Player, blank=True, help_text='Заплатили за занятие',
                                           related_name='pay_visitors', verbose_name='Заплатившие игроки')
-    pay_bonus_visitors = models.ManyToManyField(User, blank=True, help_text='Платный отыгрыш',
+
+    pay_bonus_visitors = models.ManyToManyField(Player, blank=True, help_text='Платный отыгрыш',
                                                 related_name='pay_bonus_visitors', verbose_name='Заплатили ₽ + отыгрыш')
 
     tr_day_status = models.CharField(max_length=1, default=MY_TRAIN_STATUS, help_text='Моя тренировка или аренда',
@@ -227,7 +322,7 @@ class Payment(models.Model):
         (YEAR_2020, '2020'), (YEAR_2021, '2021')
     )
 
-    player = models.ForeignKey(User, on_delete=models.SET_NULL, verbose_name='игрок', null=True)
+    player = models.ForeignKey(Player, on_delete=models.SET_NULL, verbose_name='игрок', null=True)
     month = models.CharField(max_length=2, choices=MONTHS, verbose_name='месяц')
     year = models.CharField(max_length=1, choices=YEARS, verbose_name='год')
     fact_amount = models.PositiveIntegerField(verbose_name='Сколько заплатил', null=True, default=0)
@@ -288,7 +383,7 @@ class AlertsLog(models.Model):
         (SHOULD_PAY, 'нужно заплатить за месяц')
     )
 
-    player = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    player = models.ForeignKey(Player, on_delete=models.SET_NULL, null=True)
     is_sent = models.BooleanField(default=False)
     dttm_sent = models.DateTimeField(auto_now_add=True)
     tr_day = models.ForeignKey(GroupTrainingDay, on_delete=models.SET_NULL, null=True)
@@ -349,7 +444,7 @@ def create_training_days_for_next_two_months(sender, instance, created, **kwargs
 
 
 @receiver(post_delete, sender=GroupTrainingDay)
-def delete_training_days(sender, instance, **kwargs):
+def delete_training_days(sender, instance: GroupTrainingDay, **kwargs):
     """
         При удалении instance GroupTrainingDay автоматом удаляем
         занятие в это время для более поздних дат.
@@ -358,17 +453,17 @@ def delete_training_days(sender, instance, **kwargs):
                                     date__gt=instance.date).delete()
 
 
-@receiver(post_save, sender=User)
-def create_group_for_arbitrary(sender, instance, created, **kwargs):
+@receiver(post_save, sender=Player)
+def create_group_for_arbitrary(sender, instance: Player, created, **kwargs):
     """
         Если игрок ходит по свободному графику, то создадим
         для него группу, состояющую только из него.
     """
-    if instance.status == User.STATUS_ARBITRARY:
+    if instance.status == Player.STATUS_ARBITRARY:
         group, _ = TrainingGroup.objects.get_or_create(
             name=instance.first_name + instance.last_name,
             max_players=1,
             status=TrainingGroup.STATUS_4IND
         )
-        if not group.users.count():
-            group.users.add(instance)
+        if not group.players.count():
+            group.players.add(instance)

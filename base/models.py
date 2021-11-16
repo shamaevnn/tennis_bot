@@ -166,7 +166,7 @@ class TrainingGroup(ModelwithTime):
     def _get_or_create_ind_or_rent_group(cls, player: Player, status: str):
         assert status in (cls.STATUS_RENT, cls.STATUS_4IND)
         group, _ = cls.objects.get_or_create(
-            name=player.first_name + player.last_name, status=status, max_players=1
+            name=f"{player.first_name}{player.last_name}", status=status, max_players=1
         )
         return group
 
@@ -386,5 +386,5 @@ def create_group_for_arbitrary(sender, instance: Player, created, **kwargs):
             max_players=1,
             status=TrainingGroup.STATUS_4IND
         )
-        if not group.players.count():
+        if not group.players.exists():
             group.players.add(instance)

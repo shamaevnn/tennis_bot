@@ -64,7 +64,7 @@ class TestOnlyOneHour(TestCase):
     @classmethod
     def setUpTestData(self):
         self.player = Player.objects.create(
-            tg_id=1, first_name='Nikita', status=Player.STATUS_TRAINING, password='123'
+            tg_id=1, first_name='Nikita', status=Player.STATUS_TRAINING
         )
         self.group = TrainingGroup.objects.create(name='Nikita_group', max_players=1, status=TrainingGroup.STATUS_4IND)
 

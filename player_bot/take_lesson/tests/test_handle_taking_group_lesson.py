@@ -11,12 +11,12 @@ from tennis_bot.settings import TARIF_PAYMENT_ADD_LESSON, TARIF_GROUP, TARIF_ARB
 
 
 def create_group_player(id: int, first_name: str, **kwargs):
-    player = Player.objects.create(tg_id=id, first_name=first_name, status=Player.STATUS_TRAINING, **kwargs)
+    player = Player.objects.create(tg_id=id, first_name=first_name, last_name=first_name, status=Player.STATUS_TRAINING, **kwargs)
     return player
 
 
 def create_arbitrary_player(id: int, first_name: str, **kwargs):
-    player = Player.objects.create(tg_id=id, first_name=first_name, status=Player.STATUS_ARBITRARY, **kwargs)
+    player = Player.objects.create(tg_id=id, first_name=first_name, last_name=first_name, status=Player.STATUS_ARBITRARY, **kwargs)
     return player
 
 

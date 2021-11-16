@@ -8,7 +8,7 @@ import telegram
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-from django.db.models import Q, F, Case, When, Sum, IntegerField
+from django.db.models import Q, F, Case, When, Sum, IntegerField, Manager
 from django.utils import timezone
 from datetime import datetime, date, timedelta
 
@@ -30,6 +30,11 @@ class GetOrNoneManager(models.Manager):
             return self.get(**kwargs)
         except ObjectDoesNotExist:
             return None
+
+
+class CoachPlayerManager(Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(is_coach=True)
 
 
 class ModelwithTime(models.Model):
@@ -67,19 +72,20 @@ class Player(models.Model):
     last_name = models.CharField(max_length=32, null=True, verbose_name='Фамилия')
     phone_number = models.CharField(max_length=16, null=True, verbose_name='Номер телефона')
 
-    tg_id = models.PositiveBigIntegerField(verbose_name='telegram id')
+    tg_id = models.PositiveBigIntegerField(verbose_name='telegram id', null=True, blank=True)
     tg_username = models.CharField(max_length=64, null=True, blank=True)
     has_blocked_bot = models.BooleanField(default=False, verbose_name='заблокировал бота')
     deep_link = models.CharField(max_length=64, null=True, blank=True)
 
     status = models.CharField(max_length=1, choices=STATUSES, default=STATUS_WAITING, verbose_name='статус')
-
     time_before_cancel = models.DurationField(
         null=True, help_text='ЧАСЫ:МИНУТЫ:СЕКУНДЫ', verbose_name='Время, за которое нужно предупредить',
         default=timedelta(hours=6)
     )
     bonus_lesson = models.SmallIntegerField(null=True, blank=True, default=0, verbose_name='Количество отыгрышей')
+    is_coach = models.BooleanField(default=False, verbose_name='Тренер')
 
+    coaches = CoachPlayerManager()
     objects = GetOrNoneManager()
 
     class Meta:
@@ -145,7 +151,7 @@ class TrainingGroup(ModelwithTime):
 
     name = models.CharField(max_length=32, verbose_name='Название')
     players = models.ManyToManyField(Player, verbose_name='Игроки группы')
-    max_players = models.SmallIntegerField(default=6, verbose_name='Максимальное количество игроков в группе')
+    max_players = models.SmallIntegerField(default=6, verbose_name='Макс. игроков')
     status = models.CharField(max_length=1, choices=GROUP_STATUSES, verbose_name='Статус группы', default=STATUS_GROUP)
     level = models.CharField(max_length=1, choices=GROUP_LEVELS, verbose_name='Уровень группы', default=LEVEL_ORANGE)
     tarif_for_one_lesson = models.PositiveIntegerField(default=400, verbose_name='Тариф за одно занятие')
@@ -163,19 +169,21 @@ class TrainingGroup(ModelwithTime):
         return '{}, max_players: {}'.format(self.name, self.max_players)
 
     @classmethod
-    def _get_or_create_ind_or_rent_group(cls, player: Player, status: str):
+    def _get_or_create_ind_or_rent_group(cls, player: Player, status: str) -> TrainingGroup:
         assert status in (cls.STATUS_RENT, cls.STATUS_4IND)
         group, _ = cls.objects.get_or_create(
             name=f"{player.first_name}{player.last_name}", status=status, max_players=1
         )
+        if player not in group.players.all():
+            group.players.add(player)
         return group
 
     @classmethod
-    def get_or_create_ind_group(cls, player: Player):
+    def get_or_create_ind_group(cls, player: Player) -> TrainingGroup:
         return cls._get_or_create_ind_or_rent_group(player, status=cls.STATUS_4IND)
 
     @classmethod
-    def get_or_create_rent_group(cls, player: Player):
+    def get_or_create_rent_group(cls, player: Player) -> TrainingGroup:
         return cls._get_or_create_ind_or_rent_group(player, status=cls.STATUS_RENT)
 
     def save(self, *args, **kwargs):
@@ -197,7 +205,7 @@ class GroupTrainingDay(ModelwithTime):
 
     group = models.ForeignKey(TrainingGroup, on_delete=models.PROTECT, verbose_name='Группа')
     date = models.DateField(default=timezone.now, verbose_name='Дата Занятия')
-    is_available = models.BooleanField(default=True, help_text='Будет ли в этот день тренировка у этой группы')
+    is_available = models.BooleanField(default=True, help_text='Будет ли в этот день тренировка у этой группы', verbose_name='Доступно')
     start_time = models.TimeField(null=True, help_text='ЧАСЫ:МИНУТЫ:СЕКУНДЫ', verbose_name='Время начала занятия')
     duration = models.DurationField(null=True, default=timedelta(hours=1), help_text='ЧАСЫ:МИНУТЫ:СЕКУНДЫ',
                                     verbose_name='Продолжительность занятия')
@@ -381,10 +389,4 @@ def create_group_for_arbitrary(sender, instance: Player, created, **kwargs):
         для него группу, состояющую только из него.
     """
     if instance.status == Player.STATUS_ARBITRARY:
-        group, _ = TrainingGroup.objects.get_or_create(
-            name=instance.first_name + instance.last_name,
-            max_players=1,
-            status=TrainingGroup.STATUS_4IND
-        )
-        if not group.players.exists():
-            group.players.add(instance)
+        TrainingGroup.get_or_create_ind_group(instance)

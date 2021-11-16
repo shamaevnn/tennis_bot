@@ -22,12 +22,12 @@ class PlayerTabularForm(forms.ModelForm):
     def clean(self):
         tr_group = self.cleaned_data.get('traininggroup')
         if tr_group and tr_group.status == TrainingGroup.STATUS_GROUP:
-            users = tr_group.players.all()
+            players = tr_group.players.all()
             max_players = tr_group.max_players
-            if users.count() > max_players:
+            if players.count() > max_players:
                 raise ValidationError(
                     {'traininggroup': 'Количество игроков в группе должно быть не больше {}, вы указали {}.'. \
-                        format(max_players, users.count() + 1)})
+                        format(max_players, players.count() + 1)})
 
 
 class PlayerTabularInline(admin.StackedInline):

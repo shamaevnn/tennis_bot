@@ -39,10 +39,10 @@ def create_tr_day_for_group(group, **kwargs):
 
 
 class NoFreePlacesTests(TestCase):
-    def assert_no_places_choose_another(self, user_text, user_markup, admin_text, admin_markup, tr_day):
-        self.assertEqual(user_text, NO_PLACES_FOR_THIS_TIME_CHOOSE_ANOTHER)
+    def assert_no_places_choose_another(self, player_text, player_markup, admin_text, admin_markup, tr_day):
+        self.assertEqual(player_text, NO_PLACES_FOR_THIS_TIME_CHOOSE_ANOTHER)
         self.assertEqual(
-            user_markup, back_to_group_times_when_no_left_keyboard(
+            player_markup, back_to_group_times_when_no_left_keyboard(
                 year=tr_day.date.year,
                 month=tr_day.date.month,
                 day=tr_day.date.day
@@ -59,76 +59,76 @@ class NoFreePlacesTests(TestCase):
         self.arb_u_w_bl = create_arbitrary_player(id=350490236, first_name='Nikita 3', bonus_lesson=10)
         self.arb_u_wo_bl = create_arbitrary_player(id=350490236, first_name='Nikita 4', bonus_lesson=0)
 
-        self.user_1 = create_group_player(id=1, first_name='user_1')
-        self.user_2 = create_group_player(id=2, first_name='user_2')
-        self.user_3 = create_group_player(id=3, first_name='user_3')
-        self.user_4 = create_group_player(id=4, first_name='user_4')
-        self.user_5 = create_group_player(id=5, first_name='user_5')
-        self.user_6 = create_group_player(id=6, first_name='user_6')
-        self.user_7 = create_group_player(id=7, first_name='user_7')
-        self.user_8 = create_group_player(id=8, first_name='user_8')
-        self.user_9 = create_group_player(id=9, first_name='user_9')
+        self.player_1 = create_group_player(id=1, first_name='player_1')
+        self.player_2 = create_group_player(id=2, first_name='player_2')
+        self.player_3 = create_group_player(id=3, first_name='player_3')
+        self.player_4 = create_group_player(id=4, first_name='player_4')
+        self.player_5 = create_group_player(id=5, first_name='player_5')
+        self.player_6 = create_group_player(id=6, first_name='player_6')
+        self.player_7 = create_group_player(id=7, first_name='player_7')
+        self.player_8 = create_group_player(id=8, first_name='player_8')
+        self.player_9 = create_group_player(id=9, first_name='player_9')
 
         self.gr_4_mp = create_group(max_players=4)
         self.gr_6_mp = create_group(max_players=6)
-        self.gr_4_mp.players.add(self.user_1, self.user_2, self.user_3, self.user_4)
-        self.gr_6_mp.players.add(self.user_1, self.user_2, self.user_3, self.user_4, self.user_5, self.user_6)
+        self.gr_4_mp.players.add(self.player_1, self.player_2, self.player_3, self.player_4)
+        self.gr_6_mp.players.add(self.player_1, self.player_2, self.player_3, self.player_4, self.player_5, self.player_6)
 
         self.gr_4_mp_al = create_group(max_players=4, available_for_additional_lessons=True)
         self.gr_5_mp_al = create_group(max_players=5, available_for_additional_lessons=True)
         self.gr_6_mp_al = create_group(max_players=6, available_for_additional_lessons=True)
-        self.gr_4_mp_al.players.add(self.user_1, self.user_2, self.user_3, self.user_4)
-        self.gr_5_mp_al.players.add(self.user_1, self.user_2, self.user_3, self.user_4, self.user_5)
-        self.gr_6_mp_al.players.add(self.user_1, self.user_2, self.user_3, self.user_4, self.user_5, self.user_6)
+        self.gr_4_mp_al.players.add(self.player_1, self.player_2, self.player_3, self.player_4)
+        self.gr_5_mp_al.players.add(self.player_1, self.player_2, self.player_3, self.player_4, self.player_5)
+        self.gr_6_mp_al.players.add(self.player_1, self.player_2, self.player_3, self.player_4, self.player_5, self.player_6)
 
     def test_no_free_places_no_additional_lessons(self):
         tr_day_4 = create_tr_day_for_group(self.gr_4_mp)
         tr_day_6 = create_tr_day_for_group(self.gr_6_mp)
 
         # все игроки из группы придут на занятие и нельзя записаться на доп. места
-        user_text, user_markup, admin_text, admin_markup = handle_taking_group_lesson(self.gr_u_w_bl, tr_day_4)
-        self.assert_no_places_choose_another(user_text, user_markup, admin_text, admin_markup, tr_day_4)
+        player_text, player_markup, admin_text, admin_markup = handle_taking_group_lesson(self.gr_u_w_bl, tr_day_4)
+        self.assert_no_places_choose_another(player_text, player_markup, admin_text, admin_markup, tr_day_4)
 
-        user_text, user_markup, admin_text, admin_markup = handle_taking_group_lesson(self.gr_u_wo_bl, tr_day_4)
-        self.assert_no_places_choose_another(user_text, user_markup, admin_text, admin_markup, tr_day_4)
+        player_text, player_markup, admin_text, admin_markup = handle_taking_group_lesson(self.gr_u_wo_bl, tr_day_4)
+        self.assert_no_places_choose_another(player_text, player_markup, admin_text, admin_markup, tr_day_4)
 
-        user_text, user_markup, admin_text, admin_markup = handle_taking_group_lesson(self.arb_u_w_bl, tr_day_4)
-        self.assert_no_places_choose_another(user_text, user_markup, admin_text, admin_markup, tr_day_4)
+        player_text, player_markup, admin_text, admin_markup = handle_taking_group_lesson(self.arb_u_w_bl, tr_day_4)
+        self.assert_no_places_choose_another(player_text, player_markup, admin_text, admin_markup, tr_day_4)
 
-        user_text, user_markup, admin_text, admin_markup = handle_taking_group_lesson(self.arb_u_wo_bl, tr_day_4)
-        self.assert_no_places_choose_another(user_text, user_markup, admin_text, admin_markup, tr_day_4)
+        player_text, player_markup, admin_text, admin_markup = handle_taking_group_lesson(self.arb_u_wo_bl, tr_day_4)
+        self.assert_no_places_choose_another(player_text, player_markup, admin_text, admin_markup, tr_day_4)
 
-        user_text, user_markup, admin_text, admin_markup = handle_taking_group_lesson(self.gr_u_w_bl, tr_day_6)
-        self.assert_no_places_choose_another(user_text, user_markup, admin_text, admin_markup, tr_day_6)
+        player_text, player_markup, admin_text, admin_markup = handle_taking_group_lesson(self.gr_u_w_bl, tr_day_6)
+        self.assert_no_places_choose_another(player_text, player_markup, admin_text, admin_markup, tr_day_6)
 
-        user_text, user_markup, admin_text, admin_markup = handle_taking_group_lesson(self.gr_u_wo_bl, tr_day_6)
-        self.assert_no_places_choose_another(user_text, user_markup, admin_text, admin_markup, tr_day_6)
+        player_text, player_markup, admin_text, admin_markup = handle_taking_group_lesson(self.gr_u_wo_bl, tr_day_6)
+        self.assert_no_places_choose_another(player_text, player_markup, admin_text, admin_markup, tr_day_6)
 
-        user_text, user_markup, admin_text, admin_markup = handle_taking_group_lesson(self.arb_u_w_bl, tr_day_6)
-        self.assert_no_places_choose_another(user_text, user_markup, admin_text, admin_markup, tr_day_6)
+        player_text, player_markup, admin_text, admin_markup = handle_taking_group_lesson(self.arb_u_w_bl, tr_day_6)
+        self.assert_no_places_choose_another(player_text, player_markup, admin_text, admin_markup, tr_day_6)
 
-        user_text, user_markup, admin_text, admin_markup = handle_taking_group_lesson(self.arb_u_wo_bl, tr_day_6)
-        self.assert_no_places_choose_another(user_text, user_markup, admin_text, admin_markup, tr_day_6)
+        player_text, player_markup, admin_text, admin_markup = handle_taking_group_lesson(self.arb_u_wo_bl, tr_day_6)
+        self.assert_no_places_choose_another(player_text, player_markup, admin_text, admin_markup, tr_day_6)
 
     def test_no_free_places_with_all_kinds_of_visitors_and_available_additional_lessons(self):
         tr_day_4 = create_tr_day_for_group(self.gr_4_mp_al)
-        tr_day_4.absent.add(self.user_1, self.user_2, self.user_3)
-        tr_day_4.visitors.add(self.user_5)
-        tr_day_4.pay_visitors.add(self.user_6)
-        tr_day_4.pay_bonus_visitors.add(self.user_7)
+        tr_day_4.absent.add(self.player_1, self.player_2, self.player_3)
+        tr_day_4.visitors.add(self.player_5)
+        tr_day_4.pay_visitors.add(self.player_6)
+        tr_day_4.pay_bonus_visitors.add(self.player_7)
 
         tr_day_6 = create_tr_day_for_group(self.gr_6_mp_al)
-        tr_day_6.absent.add(self.user_1, self.user_2, self.user_3)
-        tr_day_6.visitors.add(self.user_7)
-        tr_day_6.pay_visitors.add(self.user_8)
-        tr_day_6.pay_bonus_visitors.add(self.user_9)
+        tr_day_6.absent.add(self.player_1, self.player_2, self.player_3)
+        tr_day_6.visitors.add(self.player_7)
+        tr_day_6.pay_visitors.add(self.player_8)
+        tr_day_6.pay_bonus_visitors.add(self.player_9)
 
         # если есть отыгрыши, то должна появиться следующая клава с выбором типа оплаты:
         # за отыгрыш + деньги либо просто за деньги
-        user_text, user_markup, admin_text, admin_markup = handle_taking_group_lesson(self.gr_u_w_bl, tr_day_4)
-        self.assertEqual(user_text, CHOOSE_TYPE_OF_PAYMENT)
+        player_text, player_markup, admin_text, admin_markup = handle_taking_group_lesson(self.gr_u_w_bl, tr_day_4)
+        self.assertEqual(player_text, CHOOSE_TYPE_OF_PAYMENT)
         self.assertEqual(
-            user_markup, choose_type_of_payment_for_group_lesson_keyboard(
+            player_markup, choose_type_of_payment_for_group_lesson_keyboard(
                     payment_add_lesson=TARIF_PAYMENT_ADD_LESSON,
                     tr_day_id=tr_day_4.id,
                     tarif=TARIF_GROUP,
@@ -137,10 +137,10 @@ class NoFreePlacesTests(TestCase):
         self.assertEqual(admin_text, '')
         self.assertIsNone(admin_markup)
 
-        user_text, user_markup, admin_text, admin_markup = handle_taking_group_lesson(self.arb_u_w_bl, tr_day_4)
-        self.assertEqual(user_text, CHOOSE_TYPE_OF_PAYMENT)
+        player_text, player_markup, admin_text, admin_markup = handle_taking_group_lesson(self.arb_u_w_bl, tr_day_4)
+        self.assertEqual(player_text, CHOOSE_TYPE_OF_PAYMENT)
         self.assertEqual(
-            user_markup, choose_type_of_payment_for_group_lesson_keyboard(
+            player_markup, choose_type_of_payment_for_group_lesson_keyboard(
                 payment_add_lesson=TARIF_PAYMENT_ADD_LESSON,
                 tr_day_id=tr_day_4.id,
                 tarif=TARIF_ARBITRARY,
@@ -150,32 +150,32 @@ class NoFreePlacesTests(TestCase):
         self.assertIsNone(admin_markup)
 
         # если нет отыгрышей, то добавляем пользователя в pay_visitors и соответствующие texts
-        user_text, user_markup, admin_text, admin_markup = handle_taking_group_lesson(self.gr_u_wo_bl, tr_day_4)
-        self.assertIn(f"Не забудь заплатить <b>{TARIF_GROUP}₽</b>", user_text)
+        player_text, player_markup, admin_text, admin_markup = handle_taking_group_lesson(self.gr_u_wo_bl, tr_day_4)
+        self.assertIn(f"Не забудь заплатить <b>{TARIF_GROUP}₽</b>", player_text)
         self.assertIn(f"<b>не за счет отыгрышей, не забудь взять {TARIF_GROUP}₽.</b>", admin_text)
-        self.assertIsNone(user_markup)
+        self.assertIsNone(player_markup)
         self.assertIsNone(admin_markup)
         self.assertIn(self.gr_u_wo_bl, tr_day_4.pay_visitors.all())
 
-        user_text, user_markup, admin_text, admin_markup = handle_taking_group_lesson(self.arb_u_wo_bl, tr_day_4)
-        self.assertIn(f"Не забудь заплатить <b>{TARIF_ARBITRARY}₽</b>", user_text)
+        player_text, player_markup, admin_text, admin_markup = handle_taking_group_lesson(self.arb_u_wo_bl, tr_day_4)
+        self.assertIn(f"Не забудь заплатить <b>{TARIF_ARBITRARY}₽</b>", player_text)
         self.assertIn(f"<b>не за счет отыгрышей, не забудь взять {TARIF_ARBITRARY}₽.</b>", admin_text)
-        self.assertIsNone(user_markup)
+        self.assertIsNone(player_markup)
         self.assertIsNone(admin_markup)
         self.assertIn(self.arb_u_wo_bl, tr_day_4.pay_visitors.all())
 
         # если максимум 6 игроков и все места заняты, то нужно предлагать другое время
-        user_text, user_markup, admin_text, admin_markup = handle_taking_group_lesson(self.gr_u_w_bl, tr_day_6)
-        self.assert_no_places_choose_another(user_text, user_markup, admin_text, admin_markup, tr_day_6)
+        player_text, player_markup, admin_text, admin_markup = handle_taking_group_lesson(self.gr_u_w_bl, tr_day_6)
+        self.assert_no_places_choose_another(player_text, player_markup, admin_text, admin_markup, tr_day_6)
 
-        user_text, user_markup, admin_text, admin_markup = handle_taking_group_lesson(self.gr_u_wo_bl, tr_day_6)
-        self.assert_no_places_choose_another(user_text, user_markup, admin_text, admin_markup, tr_day_6)
+        player_text, player_markup, admin_text, admin_markup = handle_taking_group_lesson(self.gr_u_wo_bl, tr_day_6)
+        self.assert_no_places_choose_another(player_text, player_markup, admin_text, admin_markup, tr_day_6)
 
-        user_text, user_markup, admin_text, admin_markup = handle_taking_group_lesson(self.arb_u_w_bl, tr_day_6)
-        self.assert_no_places_choose_another(user_text, user_markup, admin_text, admin_markup, tr_day_6)
+        player_text, player_markup, admin_text, admin_markup = handle_taking_group_lesson(self.arb_u_w_bl, tr_day_6)
+        self.assert_no_places_choose_another(player_text, player_markup, admin_text, admin_markup, tr_day_6)
 
-        user_text, user_markup, admin_text, admin_markup = handle_taking_group_lesson(self.arb_u_wo_bl, tr_day_6)
-        self.assert_no_places_choose_another(user_text, user_markup, admin_text, admin_markup, tr_day_6)
+        player_text, player_markup, admin_text, admin_markup = handle_taking_group_lesson(self.arb_u_wo_bl, tr_day_6)
+        self.assert_no_places_choose_another(player_text, player_markup, admin_text, admin_markup, tr_day_6)
 
     def test_full_group_one_pay_plus_one(self):
         # additional_lessons=True, группа из 5 человек, один записался за деньги,
@@ -183,16 +183,16 @@ class NoFreePlacesTests(TestCase):
         # надо предлагать другое время.
 
         tr_day_5 = create_tr_day_for_group(self.gr_5_mp_al)
-        tr_day_5.pay_visitors.add(self.user_6)
+        tr_day_5.pay_visitors.add(self.player_6)
 
-        user_text, user_markup, admin_text, admin_markup = handle_taking_group_lesson(self.arb_u_w_bl, tr_day_5)
-        self.assert_no_places_choose_another(user_text, user_markup, admin_text, admin_markup, tr_day_5)
+        player_text, player_markup, admin_text, admin_markup = handle_taking_group_lesson(self.arb_u_w_bl, tr_day_5)
+        self.assert_no_places_choose_another(player_text, player_markup, admin_text, admin_markup, tr_day_5)
 
-        user_text, user_markup, admin_text, admin_markup = handle_taking_group_lesson(self.arb_u_wo_bl, tr_day_5)
-        self.assert_no_places_choose_another(user_text, user_markup, admin_text, admin_markup, tr_day_5)
+        player_text, player_markup, admin_text, admin_markup = handle_taking_group_lesson(self.arb_u_wo_bl, tr_day_5)
+        self.assert_no_places_choose_another(player_text, player_markup, admin_text, admin_markup, tr_day_5)
 
-        user_text, user_markup, admin_text, admin_markup = handle_taking_group_lesson(self.gr_u_wo_bl, tr_day_5)
-        self.assert_no_places_choose_another(user_text, user_markup, admin_text, admin_markup, tr_day_5)
+        player_text, player_markup, admin_text, admin_markup = handle_taking_group_lesson(self.gr_u_wo_bl, tr_day_5)
+        self.assert_no_places_choose_another(player_text, player_markup, admin_text, admin_markup, tr_day_5)
 
-        user_text, user_markup, admin_text, admin_markup = handle_taking_group_lesson(self.gr_u_w_bl, tr_day_5)
-        self.assert_no_places_choose_another(user_text, user_markup, admin_text, admin_markup, tr_day_5)
+        player_text, player_markup, admin_text, admin_markup = handle_taking_group_lesson(self.gr_u_w_bl, tr_day_5)
+        self.assert_no_places_choose_another(player_text, player_markup, admin_text, admin_markup, tr_day_5)

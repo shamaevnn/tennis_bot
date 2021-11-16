@@ -46,20 +46,20 @@ class TrainingGroupForm(forms.ModelForm):
                   'available_for_additional_lessons']
 
     def clean(self):
-        users = self.cleaned_data.get('users')
+        players = self.cleaned_data.get('players')
         max_players = self.cleaned_data.get('max_players')
-        if users.count() > max_players:
+        if players.count() > max_players:
             raise ValidationError(
-                {'max_players': ERROR_LIMIT_MAX_PLAYERS.format(max_players, users.count())})
+                {'max_players': ERROR_LIMIT_MAX_PLAYERS.format(max_players, players.count())})
 
-        if 'users' in self.changed_data:
+        if 'players' in self.changed_data:
             tr_day = GroupTrainingDay.objects.filter(
                 group__max_players__gt=1,
                 group=self.instance,
                 is_available=True
             ).annotate(
                 start=ExpressionWrapper(F('start_time') + F('date'), output_field=DateTimeField()),
-                group_users_cnt=Count('group__users', distinct=True),
+                group_players_cnt=Count('group__players', distinct=True),
                 absent_cnt=Count('absent', distinct=True),
                 visitors_cnt=Count('visitors', distinct=True),
                 pay_visitors_cnt=Count('pay_visitors', distinct=True),
@@ -67,18 +67,18 @@ class TrainingGroupForm(forms.ModelForm):
                 max_players=F('group__max_players')
             ).filter(
                 start__gte=moscow_datetime(datetime.now()),
-                group_users_cnt__lt=users.count(),
+                group_players_cnt__lt=players.count(),
                 max_players=F('visitors_cnt') +
                             F('pay_visitors_cnt') +
                             F('pay_bonus_visitors_cnt') +
-                            F('group_users_cnt') -
+                            F('group_players_cnt') -
                             F('absent_cnt')
             ).distinct().values('id', 'date', 'start_time')
             if tr_day.exists():
                 error_ids = "\n".join(['<a href="http://vladlen82.fvds.ru/tgadmin/base/grouptrainingday/{}/change/">{} {}</a>'.format(x['id'], x['date'], x['start_time']) for x in tr_day])
                 error_text = f"{ERROR_MAX_PLAYERS_IN_FUTURE}:\n{error_ids}"
                 raise ValidationError(
-                    {'users': mark_safe(error_text)})
+                    {'players': mark_safe(error_text)})
 
 
 class GroupTrainingDayForm(forms.ModelForm):
@@ -100,32 +100,32 @@ class GroupTrainingDayForm(forms.ModelForm):
 
     def clean(self):
         def send_alert_about_cancel_in_visitors(self, type_of_visitors='visitors'):
-            canceled_users = None
+            canceled_players = None
             if type_of_visitors == 'visitors':
                 if self.cleaned_data.get(type_of_visitors).count() < self.instance.visitors.count():
-                    canceled_users = self.instance.visitors.all().exclude(
+                    canceled_players = self.instance.visitors.all().exclude(
                         id__in=self.cleaned_data.get(type_of_visitors))
             elif type_of_visitors == 'pay_visitors':
                 if self.cleaned_data.get(type_of_visitors).count() < self.instance.pay_visitors.count():
-                    canceled_users = self.instance.pay_visitors.all().exclude(
+                    canceled_players = self.instance.pay_visitors.all().exclude(
                         id__in=self.cleaned_data.get(type_of_visitors))
             elif type_of_visitors == 'pay_bonus_visitors':
                 if self.cleaned_data.get(type_of_visitors).count() < self.instance.pay_bonus_visitors.count():
-                    canceled_users = self.instance.pay_bonus_visitors.all().exclude(
+                    canceled_players = self.instance.pay_bonus_visitors.all().exclude(
                         id__in=self.cleaned_data.get(type_of_visitors))
 
-            if canceled_users:
+            if canceled_players:
                 text = CANCEL_TRAIN_PLUS_BONUS_LESSON.format(self.cleaned_data.get("date"))
 
                 clear_broadcast_messages(
-                    list(canceled_users.values_list('id', flat=True)),
+                    list(canceled_players.values_list('id', flat=True)),
                     text,
                     reply_markup=construct_main_menu()
                 )
 
-                canceled_users.update(bonus_lesson=F('bonus_lesson') + 1)
+                canceled_players.update(bonus_lesson=F('bonus_lesson') + 1)
 
-        group = self.cleaned_data.get('group')
+        group: TrainingGroup = self.cleaned_data.get('group')
 
         if not group:
             raise ValidationError('Не выбрана группа')
@@ -133,7 +133,7 @@ class GroupTrainingDayForm(forms.ModelForm):
         current_amount_of_players = self.cleaned_data.get('visitors').count() + \
                                     self.cleaned_data.get('pay_visitors').count() + \
                                     self.cleaned_data.get('pay_bonus_visitors').count() + \
-                                    group.users.count() - self.cleaned_data.get('absent').count()
+                                    group.players.count() - self.cleaned_data.get('absent').count()
 
         if group.available_for_additional_lessons:
             if current_amount_of_players > 6:

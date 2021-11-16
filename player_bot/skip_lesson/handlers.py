@@ -48,7 +48,7 @@ def skip_lesson_when_geq_2(update: Update, context):
 
 
 def skip_lesson(update: Update, context):
-    user = User.get_user(update, context)
+    player = Player.get_by_update(update)
 
     tr_day_id = update.callback_query.data[len(SHOW_INFO_ABOUT_SKIPPING_DAY):]
     training_day = GroupTrainingDay.objects.get(id=tr_day_id)
@@ -62,9 +62,9 @@ def skip_lesson(update: Update, context):
 
         skip_lesson_main_menu_button(context.bot, update)
     else:
-        text, admin_text = handle_skipping_train(training_day, user, date_info)
+        text, admin_text = handle_skipping_train(training_day, player, date_info)
 
-        admins = User.objects.filter(is_superuser=True, is_blocked=False)
+        admins = Player.objects.filter(is_superuser=True, is_blocked=False)
         clear_broadcast_messages(
             chat_ids=list(admins.values_list('id', flat=True)),
             message=admin_text,

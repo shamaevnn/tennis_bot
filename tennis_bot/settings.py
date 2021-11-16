@@ -146,8 +146,6 @@ PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(PROJECT_ROOT, 'static')
 
-AUTH_USER_MODEL = 'base.User'
-
 # -----> CELERY
 REDIS_URL = os.getenv('REDIS_URL', 'redis://redis:6379')
 BROKER_URL = REDIS_URL

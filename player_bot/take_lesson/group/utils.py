@@ -25,8 +25,8 @@ def handle_taking_group_lesson(
     admin_markup = None
     if n_free_places > 0:
         tr_day.visitors.add(player)
-        user_text = f'Записал тебя на тренировку.\n{date_info}'
-        user_markup = None
+        player_text = f'Записал тебя на тренировку.\n{date_info}'
+        player_markup = None
 
         if player.bonus_lesson > 0 and player.status == Player.STATUS_TRAINING:
             admin_text = f'{player.first_name} {player.last_name} придёт на гр. тренировку за отыгрыш.\n{date_info}'
@@ -42,31 +42,31 @@ def handle_taking_group_lesson(
             tarif = TARIF_ARBITRARY if player.status == Player.STATUS_ARBITRARY else TARIF_GROUP
             if player.bonus_lesson == 0:
                 tr_day.pay_visitors.add(player)
-                user_text = f'Записал тебя на тренировку' \
-                            f'⚠️ATTENTION⚠️\n' \
-                            f'Не забудь заплатить <b>{tarif}₽</b>\n' \
-                            f'{date_info}'
+                player_text = f'Записал тебя на тренировку' \
+                              f'⚠️ATTENTION⚠️\n' \
+                              f'Не забудь заплатить <b>{tarif}₽</b>\n' \
+                              f'{date_info}'
                 admin_text = f'⚠️ATTENTION⚠️\n' \
                              f'{player.first_name} {player.last_name} придёт на гр. тренировку ' \
                              f'<b>не за счет отыгрышей, не забудь взять {tarif}₽.</b>\n' \
                              f'{date_info}'
-                user_markup = None
+                player_markup = None
             else:
-                user_text = CHOOSE_TYPE_OF_PAYMENT
-                user_markup = choose_type_of_payment_for_group_lesson_keyboard(
+                player_text = CHOOSE_TYPE_OF_PAYMENT
+                player_markup = choose_type_of_payment_for_group_lesson_keyboard(
                     payment_add_lesson=TARIF_PAYMENT_ADD_LESSON,
                     tr_day_id=tr_day.id,
                     tarif=tarif,
                 )
         else:
-            user_text = NO_PLACES_FOR_THIS_TIME_CHOOSE_ANOTHER
-            user_markup = back_to_group_times_when_no_left_keyboard(
+            player_text = NO_PLACES_FOR_THIS_TIME_CHOOSE_ANOTHER
+            player_markup = back_to_group_times_when_no_left_keyboard(
                 year=tr_day.date.year,
                 month=tr_day.date.month,
                 day=tr_day.date.day
             )
 
-    return user_text, user_markup, admin_text, admin_markup
+    return player_text, player_markup, admin_text, admin_markup
 
 
 def handle_choosing_type_of_payment_for_pay_visiting_when_have_bonus_lessons(
@@ -76,15 +76,15 @@ def handle_choosing_type_of_payment_for_pay_visiting_when_have_bonus_lessons(
     time_tlg, _, _, date_tlg, day_of_week, _, _ = get_time_info_from_tr_day(tr_day)
     date_info = DATE_INFO.format(date_tlg, day_of_week, time_tlg)
 
-    user_text, admin_text = '', ''
+    player_text, admin_text = '', ''
     if payment_choice == PAYMENT_MONEY_AND_BONUS_LESSONS:
         player.bonus_lesson -= 1
         player.save()
 
         tr_day.pay_bonus_visitors.add(player)
-        user_text = f'Записал тебя на тренировку\n' \
-                    f'⚠️ATTENTION⚠️\n' \
-                    f'Не забудь заплатить <b>{TARIF_PAYMENT_ADD_LESSON}₽</b>\n{date_info}'
+        player_text = f'Записал тебя на тренировку\n' \
+                      f'⚠️ATTENTION⚠️\n' \
+                      f'Не забудь заплатить <b>{TARIF_PAYMENT_ADD_LESSON}₽</b>\n{date_info}'
 
         admin_text = f'⚠️ATTENTION⚠️\n' \
                      f'{player.first_name} {player.last_name} придёт ' \
@@ -94,12 +94,12 @@ def handle_choosing_type_of_payment_for_pay_visiting_when_have_bonus_lessons(
         tr_day.pay_visitors.add(player)
         tarif = TARIF_ARBITRARY if player.status == Player.STATUS_ARBITRARY else TARIF_GROUP
 
-        user_text = f'Записал тебя на тренировку\n' \
-                    f'⚠️ATTENTION⚠️\n' \
-                    f'Не забудь заплатить <b>{tarif}₽</b>\n{date_info}'
+        player_text = f'Записал тебя на тренировку\n' \
+                      f'⚠️ATTENTION⚠️\n' \
+                      f'Не забудь заплатить <b>{tarif}₽</b>\n{date_info}'
 
         admin_text = f'⚠️ATTENTION⚠️\n' \
                      f'{player.first_name} {player.last_name} придёт ' \
                      f'<b>в дополнительное время, не забудь взять {tarif}₽.</b>\n{date_info}'
 
-    return user_text, admin_text
+    return player_text, admin_text

@@ -49,8 +49,8 @@ def broadcast_message(
         sleep_between=0.4,
         parse_mode="HTML"
 ):
-    """ It's used to broadcast message to big amount of users """
-    logger.info(f"Going to send message: '{message}' to {len(chat_ids)} users")
+    """ It's used to broadcast message to big amount of players """
+    logger.info(f"Going to send message: '{message}' to {len(chat_ids)} players")
 
     for chat_id in chat_ids:
         try:

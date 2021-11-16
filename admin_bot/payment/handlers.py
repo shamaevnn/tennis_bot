@@ -95,7 +95,7 @@ def group_payment(update: Update, context):
             'player__first_name'
         )
 
-        users_info = have_not_paid_players_info(payments_values)
+        players_info = have_not_paid_players_info(payments_values)
         n_lessons_info, should_pay, should_pay_balls, tarif_info, this_month_payment_info, payment_info = '', '', '',\
                                                                                                    '', '', ''
     else:
@@ -130,13 +130,13 @@ def group_payment(update: Update, context):
             should_pay_balls
         )
 
-        users_info = payment_players_info(payments)
+        players_info = payment_players_info(payments)
 
     date_info = f'{from_digit_to_month[int(month)]} {int(year) + 2020}\n'
 
     text = f"{title}{date_info}{n_lessons_info}{tarif_info}{payment_info}\n{this_month_payment_info}" \
            f"<b>id</b>. {help_info}\n\n" \
-           f"{users_info}"
+           f"{players_info}"
 
     markup = keyboards.change_payment_info_keyboard(
         year=year,

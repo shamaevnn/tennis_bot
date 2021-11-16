@@ -21,14 +21,24 @@ from base.common_for_bots.static_text import from_eng_to_rus_day_week
 class PlayerForm(forms.ModelForm):
     class Meta:
         model = Player
-        fields = ['id', 'first_name', 'last_name', 'phone_number', 'parent', 'status', 'time_before_cancel',
-                  'bonus_lesson', 'add_info']
+        fields = [
+            'tg_id',
+            'first_name',
+            'last_name',
+            'phone_number',
+            'status',
+            'time_before_cancel',
+            'bonus_lesson',
+            'is_coach',
+        ]
 
     def clean(self):
         if 'status' in self.changed_data:
             new_status = self.cleaned_data.get('status')
-            if self.instance.status == Player.STATUS_WAITING and (
-                    new_status == Player.STATUS_ARBITRARY or new_status == Player.STATUS_TRAINING):
+            current_status = self.instance.status
+            if current_status == Player.STATUS_WAITING and (
+                new_status == Player.STATUS_ARBITRARY or new_status == Player.STATUS_TRAINING
+            ):
                 text = NOW_YOU_HAVE_ACCESS_CONGRATS
                 reply_markup = construct_main_menu(self.instance)
 

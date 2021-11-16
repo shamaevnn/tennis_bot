@@ -5,10 +5,9 @@ from typing import Optional, Tuple
 from uuid import uuid4
 
 import telegram
-from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-from django.db.models import Q, F, Case, When, Sum, IntegerField, Manager
+from django.db.models import Q, F, Case, When, Sum, IntegerField
 from django.utils import timezone
 from datetime import datetime, date, timedelta
 
@@ -16,35 +15,10 @@ from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from telegram import Update
 
-from tennis_bot.settings import TARIF_ARBITRARY, TARIF_GROUP, TARIF_IND, TARIF_SECTION, TARIF_FEW, TELEGRAM_TOKEN, DEBUG
-
-
-class ModelwithTimeManager(models.Manager):
-    def tr_day_is_my_available(self, *args, **kwargs):
-        return self.filter(is_available=True, tr_day_status=GroupTrainingDay.MY_TRAIN_STATUS, *args, **kwargs)
-
-
-class GetOrNoneManager(models.Manager):
-    def get_or_none(self, **kwargs):
-        try:
-            return self.get(**kwargs)
-        except ObjectDoesNotExist:
-            return None
-
-
-class CoachPlayerManager(Manager):
-    def get_queryset(self):
-        return super().get_queryset().filter(is_coach=True)
-
-
-class ModelwithTime(models.Model):
-    dttm_added = models.DateTimeField(default=timezone.now)
-    dttm_deleted = models.DateTimeField(null=True, blank=True)
-
-    objects = ModelwithTimeManager()
-
-    class Meta:
-        abstract = True
+from base.utils.db_managers import GetOrNoneManager, CoachPlayerManager
+from base.utils.models import ModelwithTime
+from base.utils.telegram import extract_user_data_from_update
+from tennis_bot.settings import TARIF_ARBITRARY, TARIF_GROUP, TARIF_IND, TARIF_SECTION, TARIF_FEW, TELEGRAM_TOKEN
 
 
 class Player(models.Model):
@@ -97,8 +71,7 @@ class Player(models.Model):
 
     @classmethod
     def get_by_update(cls, update: Update) -> Optional[Player]:
-        from base.utils import Telegram
-        data = Telegram.extract_user_data_from_update(update)
+        data = extract_user_data_from_update(update)
         tg_id = data['id']
         player = cls.objects.get_or_none(tg_id=tg_id)
         return player
@@ -106,8 +79,7 @@ class Player(models.Model):
     @classmethod
     def get_player_and_created(cls, update: Update, context) -> Tuple[Player, bool]:
         """ python-telegram-bot's Update, Context --> User instance """
-        from base.utils import Telegram
-        data = Telegram.extract_user_data_from_update(update)
+        data = extract_user_data_from_update(update)
         tg_id = data["id"]
         u, created = cls.objects.update_or_create(
             tg_id=tg_id,
@@ -232,6 +204,22 @@ class GroupTrainingDay(ModelwithTime):
 
     def __str__(self):
         return 'Группа: {}, дата тренировки {}, время начала: {}'.format(self.group, self.date, self.start_time)
+
+    def create_tr_days_for_future(self):
+        period = 8 if self.group.status in (TrainingGroup.STATUS_4IND, TrainingGroup.STATUS_RENT) else 24
+        date = self.date + timedelta(days=7)
+        dates = [date]
+        for _ in range(period):
+            date += timedelta(days=7)
+            dates.append(date)
+        instances = [GroupTrainingDay(
+            group=self.group,
+            date=dat,
+            start_time=self.start_time,
+            duration=self.duration,
+            is_individual=self.is_individual
+        ) for dat in dates]
+        GroupTrainingDay.objects.bulk_create(instances)
 
 
 class Payment(models.Model):

@@ -6,7 +6,6 @@ from admin_bot.ind_train.keyboards import how_many_trains_to_save_keyboard
 from admin_bot.ind_train.manage_data import PERMISSION_FOR_IND_TRAIN, AMOUNT_OF_IND_TRAIN, PERMISSION_YES, AMOUNT_ONE
 from base.common_for_bots.static_text import DATE_INFO, ATTENTION
 from base.models import GroupTrainingDay, Player
-from base.utils import create_tr_days_for_future
 from base.common_for_bots.utils import bot_edit_message, get_time_info_from_tr_day
 from player_bot.take_lesson.individual.static_text import COACH_CONFIRMED_TRAIN, COACH_CANCELLED_TRAIN
 from tennis_bot.settings import TELEGRAM_TOKEN
@@ -63,7 +62,7 @@ def save_many_ind_trains(update, context):
     if num_lessons == AMOUNT_ONE:
         text += static_text.SAVED_ONCE
     else:
-        create_tr_days_for_future(tr_day)
+        tr_day.create_tr_days_for_future()
         text += static_text.SAVED_2_MONTHS_AHEAD
 
     bot_edit_message(context.bot, text, update)

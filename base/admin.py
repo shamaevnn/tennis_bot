@@ -14,7 +14,6 @@ from django.shortcuts import redirect
 from django.utils.html import format_html
 
 from .models import TrainingGroup, Player, GroupTrainingDay, Payment, Photo
-from .utils import create_tr_days_for_future
 from .django_admin.utils import send_alert_about_changing_tr_day_status
 
 
@@ -159,11 +158,11 @@ class GroupTrainingDayAdmin(admin.ModelAdmin):
         url = '{}?{}'.format(request.path, urlencode(query_params))
         return redirect(url)
 
-    def response_add(self, request, obj, post_url_continue=None):
+    def response_add(self, request, obj: GroupTrainingDay, post_url_continue=None):
         if "_saveonce" in request.POST:
             pass
         else:
-            create_tr_days_for_future(obj)
+            obj.create_tr_days_for_future()
 
         return super().response_add(request, obj)
 

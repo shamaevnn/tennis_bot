@@ -106,8 +106,8 @@ class Player(models.Model):
     bonus_lesson = models.SmallIntegerField(null=True, blank=True, default=0, verbose_name='Количество отыгрышей')
     is_coach = models.BooleanField(default=False, verbose_name='Тренер ли')
 
-    coaches = CoachPlayerManager()
     objects = GetOrNoneManager()
+    coaches = CoachPlayerManager()
 
     class Meta:
         verbose_name = 'игрок'

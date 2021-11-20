@@ -19,7 +19,7 @@ class Migration(migrations.Migration):
                 ('first_name', models.CharField(max_length=32, null=True, verbose_name='Имя')),
                 ('last_name', models.CharField(max_length=32, null=True, verbose_name='Фамилия')),
                 ('phone_number', models.CharField(max_length=16, null=True, verbose_name='Номер телефона')),
-                ('tg_id', models.PositiveBigIntegerField(verbose_name='telegram id')),
+                ('tg_id', models.PositiveBigIntegerField(blank=True, null=True, verbose_name='telegram id')),
                 ('tg_username', models.CharField(blank=True, max_length=64, null=True)),
                 ('has_blocked_bot', models.BooleanField(default=False, verbose_name='заблокировал бота')),
                 ('deep_link', models.CharField(blank=True, max_length=64, null=True)),

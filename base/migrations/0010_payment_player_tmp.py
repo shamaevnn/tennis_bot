@@ -9,7 +9,7 @@ def insert_data_from_users_to_players(apps, schema_editor):
     Payment = apps.get_model('base', 'Payment')
 
     for payment in Payment.objects.filter(player__isnull=False).iterator():
-        player_tmp = Player.objects.filter(tg_id=payment.player.id)
+        player_tmp = Player.objects.filter(tg_id=payment.player.id).first()
         payment.player_tmp = player_tmp
         payment.save()
 

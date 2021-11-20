@@ -7,7 +7,7 @@ import django.db.models.manager
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0013_delete_user'),
+        ('base', '0012_from_users_to_players'),
     ]
 
     operations = [

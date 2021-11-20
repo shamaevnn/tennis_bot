@@ -5,24 +5,6 @@ from django.db import migrations, models
 import uuid
 
 
-def insert_data_from_users_to_players(apps, schema_editor):
-    Player = apps.get_model('base', 'Player')
-    User = apps.get_model('base', 'User')
-
-    for user in User.objects.all().iterator():
-        Player.objects.create(
-            first_name=user.first_name,
-            last_name=user.last_name,
-            phone_number=user.phone_number,
-            tg_id=user.id,
-            tg_username=user.telegram_username,
-            has_blocked_bot=user.is_blocked,
-            status=user.status,
-            time_before_cancel=user.time_before_cancel,
-            bonus_lesson=user.bonus_lesson,
-        )
-
-
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -49,6 +31,5 @@ class Migration(migrations.Migration):
                 'verbose_name': 'игрок',
                 'verbose_name_plural': 'игроки',
             },
-        ),
-        migrations.RunPython(insert_data_from_users_to_players)
+        )
     ]

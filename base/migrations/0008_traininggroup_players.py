@@ -9,7 +9,9 @@ def insert_players_from_users(apps, schema_editor):
 
     for group in TrainingGroup.objects.all().iterator():
         users_tg_ids = list(group.users.all().values_list('id', flat=True))
+        print(group.name, f"user tg ids: {users_tg_ids}")
         players = Player.objects.filter(tg_id__in=users_tg_ids)
+        print(f"new players: {players}")
         group.players.add(*players)
 
 

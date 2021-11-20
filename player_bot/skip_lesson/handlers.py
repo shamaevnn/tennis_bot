@@ -48,7 +48,7 @@ def skip_lesson_when_geq_2(update: Update, context):
 
 
 def skip_lesson(update: Update, context):
-    player = Player.get_by_update(update)
+    player = Player.from_update(update)
 
     tr_day_id = update.callback_query.data[len(SHOW_INFO_ABOUT_SKIPPING_DAY):]
     training_day = GroupTrainingDay.objects.get(id=tr_day_id)

@@ -22,7 +22,7 @@ def process_calendar_selection(update, context):
     Process the callback_query. This method generates a new calendar if forward or
     backward is pressed. This method should be called inside a CallbackQueryHandler.
     """
-    player = Player.get_by_update(update)
+    player = Player.from_update(update)
 
     query = update.callback_query
     (purpose, action, year, month, day) = separate_callback_data(query.data)

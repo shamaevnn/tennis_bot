@@ -1,6 +1,8 @@
 import calendar
 from datetime import datetime, timedelta
 
+from telegram import Update
+
 from admin_bot.rent_court.keyboards import permission4rent_keyboard
 from admin_bot.rent_court.static_text import PLAYER_WANTS_TO_RENT_COURT
 from base.common_for_bots.static_text import from_eng_to_rus_day_week, DATE_INFO
@@ -17,13 +19,13 @@ from ..static_text import CHOOSE_DATE_OF_TRAIN
 from ...calendar.manage_data import CLNDR_ACTION_TAKE_RENT
 
 
-def select_dt_for_rent_lesson(update, context):
+def select_dt_for_rent_lesson(update: Update, context):
     duration = float(update.callback_query.data[len(manage_data.SELECT_DURATION_FOR_RENT):])
     markup = create_calendar(f'{CLNDR_ACTION_TAKE_RENT}{duration}')
     bot_edit_message(context.bot, CHOOSE_DATE_OF_TRAIN, update, markup)
 
 
-def select_rent_time(update, context):
+def select_rent_time(update: Update, context):
     """
     После того, как выбрал точное время, дату и продолжительность, спрашиваем, сколько придет человек.
     """
@@ -42,7 +44,7 @@ def select_rent_time(update, context):
     bot_edit_message(context.bot, HOW_MANY_PEOPLE_WILL_COME, update, markup)
 
 
-def take_rent_info_train(update, context):
+def take_rent_info_train(update: Update, context):
     """
     После выбора всех параметров аренды, показываем краткую инфу + кнопку записаться
     """
@@ -76,7 +78,7 @@ def take_rent_info_train(update, context):
     bot_edit_message(context.bot, text, update, markup)
 
 
-def take_rent(update, context):
+def take_rent(update: Update, context):
     """
     Игрок окончательно подтвердил, что хочет арендовать корт.
     """
@@ -91,7 +93,7 @@ def take_rent(update, context):
 
     price_for_renting = _get_price_for_renting(number_of_players, duration_hours)
 
-    player = Player.get_by_update(context)
+    player = Player.from_update(update)
     group = TrainingGroup.get_or_create_rent_group(player)
     tr_day = GroupTrainingDay.objects.create(
         group=group, date=date_dt, start_time=st_time_obj.time(), duration=duration,

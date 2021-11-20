@@ -66,33 +66,6 @@ class User(AbstractUser):
     def __str__(self):
         return '{} {} -- {}'.format(self.first_name, self.last_name, self.phone_number)
 
-    @classmethod
-    def get_user(cls, update: Update, context) -> User:
-        u, _ = cls.get_user_and_created(update, context)
-        return u
-
-    @classmethod
-    def get_user_and_created(cls, update: Update, context):
-        """ python-telegram-bot's Update, Context --> User instance """
-        data = extract_user_data_from_update(update)
-        u, created = cls.objects.update_or_create(
-            id=data["id"],
-            defaults={
-                'telegram_username': data['username'] if data.get('username') else None,
-                'username': data['id'],
-                'is_blocked': data['is_blocked']
-            }
-        )
-
-        if created:
-            if context is not None and context.args is not None and len(context.args) > 0:
-                payload = context.args[0]
-                if str(payload).strip() != str(data["id"]).strip():  # you can't invite yourself
-                    u.deep_link = payload
-                    u.save()
-
-        return u, created
-
     def save(self, *args, **kwargs):
         if not self.username and DEBUG:
             self.username = self.id
@@ -148,7 +121,7 @@ class Player(models.Model):
         return '{} {} -- {}'.format(self.first_name, self.last_name, self.phone_number)
 
     @classmethod
-    def get_by_update(cls, update: Update) -> Optional[Player]:
+    def from_update(cls, update: Update) -> Optional[Player]:
         data = extract_user_data_from_update(update)
         tg_id = data['id']
         player = cls.objects.get_or_none(tg_id=tg_id)

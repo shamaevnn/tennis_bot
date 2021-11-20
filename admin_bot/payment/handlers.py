@@ -149,7 +149,7 @@ def group_payment(update: Update, context):
 
 def change_payment_data(update: Update, context):
     year, month, _ = update.callback_query.data[len(manage_data.PAYMENT_START_CHANGE):].split('|')
-    player = Player.get_by_update(update)
+    player = Player.from_update(update)
 
     markup = keyboards.back_to_payment_groups_when_changing_payment_keyboard(
         year=year,
@@ -166,7 +166,7 @@ def change_payment_data(update: Update, context):
 
 
 def get_id_amount(update: Update, context):
-    coach = Player.get_by_update(update)
+    coach = Player.from_update(update)
     try:
         payment_id, amount = update.message.text.split(' ')
         payment_id = int(payment_id)

@@ -27,7 +27,7 @@ def select_ind_time(update, context):
 
     day_of_week = from_eng_to_rus_day_week[calendar.day_name[date_dt.date().weekday()]]
 
-    player = Player.get_by_update(update)
+    player = Player.from_update(update)
     group = TrainingGroup.get_or_create_ind_group(player)
 
     tr_day = GroupTrainingDay.objects.create(group=group, date=date_dt, start_time=st_time_obj, duration=duration,

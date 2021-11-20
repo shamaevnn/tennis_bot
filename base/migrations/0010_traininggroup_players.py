@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0008_alter_user_options'),
+        ('base', '0009_insert_players_from_users'),
     ]
 
     operations = [

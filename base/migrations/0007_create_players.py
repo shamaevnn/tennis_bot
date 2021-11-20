@@ -8,7 +8,7 @@ import uuid
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0006_auto_20211030_1220'),
+        ('base', '0007_alter_user_meta'),
     ]
 
     operations = [
@@ -26,6 +26,7 @@ class Migration(migrations.Migration):
                 ('status', models.CharField(choices=[('W', 'в ожидании'), ('G', 'групповые тренировки'), ('A', 'свободный график'), ('F', 'закончил')], default='W', max_length=1, verbose_name='статус')),
                 ('time_before_cancel', models.DurationField(default=datetime.timedelta(seconds=21600), help_text='ЧАСЫ:МИНУТЫ:СЕКУНДЫ', null=True, verbose_name='Время, за которое нужно предупредить')),
                 ('bonus_lesson', models.SmallIntegerField(blank=True, default=0, null=True, verbose_name='Количество отыгрышей')),
+                ('is_coach', models.BooleanField(default=False, verbose_name='Тренер ли')),
             ],
             options={
                 'verbose_name': 'игрок',

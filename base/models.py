@@ -104,7 +104,7 @@ class Player(models.Model):
         default=timedelta(hours=6)
     )
     bonus_lesson = models.SmallIntegerField(null=True, blank=True, default=0, verbose_name='Количество отыгрышей')
-    is_coach = models.BooleanField(default=False, verbose_name='Тренер')
+    is_coach = models.BooleanField(default=False, verbose_name='Тренер ли')
 
     coaches = CoachPlayerManager()
     objects = GetOrNoneManager()

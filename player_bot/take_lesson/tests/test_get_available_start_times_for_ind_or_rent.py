@@ -1,18 +1,12 @@
 from datetime import datetime, timedelta, time
 
 from django.test import TestCase
-from base.models import Player, TrainingGroup, GroupTrainingDay
+from base.models import Player, TrainingGroup
+from base.utils.for_tests import CreateData
 from player_bot.take_lesson.utils import get_available_start_times_for_given_duration_and_date
 
-today = datetime.today()
-date = (today + timedelta(days=2)).date()
-
-
-def create_tr_day_for_group(group: TrainingGroup, start_time: time, duration: timedelta, **kwargs):
-    tr_day = GroupTrainingDay.objects.create(
-        group=group, date=date, start_time=start_time, duration=duration, **kwargs
-    )
-    return tr_day
+_today = datetime.today()
+_date = (_today + timedelta(days=2)).date()
 
 
 class TestAllAvailablePeriods(TestCase):
@@ -23,16 +17,16 @@ class TestAllAvailablePeriods(TestCase):
         )
         self.group = TrainingGroup.objects.create(name='Nikita_group', max_players=1, status=TrainingGroup.STATUS_4IND)
 
-        self.tr_day_9__10 = create_tr_day_for_group(
+        self.tr_day_9__10 = CreateData.tr_day_for_group(
             group=self.group, start_time=time(9, 0), duration=timedelta(hours=1)
         )
-        self.tr_day_1130__13 = create_tr_day_for_group(self.group, time(11, 30), timedelta(hours=1, minutes=30))
-        self.tr_day_1330__1530 = create_tr_day_for_group(self.group, time(13, 30), timedelta(hours=2))
-        self.tr_day_1630__1730 = create_tr_day_for_group(self.group, time(16, 30), timedelta(hours=1))
-        self.tr_day_1930__21 = create_tr_day_for_group(self.group, time(19, 30), timedelta(hours=1, minutes=30))
+        self.tr_day_1130__13 = CreateData.tr_day_for_group(self.group, start_time=time(11, 30), duration=timedelta(hours=1, minutes=30))
+        self.tr_day_1330__1530 = CreateData.tr_day_for_group(self.group, start_time=time(13, 30), duration=timedelta(hours=2))
+        self.tr_day_1630__1730 = CreateData.tr_day_for_group(self.group, start_time=time(16, 30), duration=timedelta(hours=1))
+        self.tr_day_1930__21 = CreateData.tr_day_for_group(self.group, start_time=time(19, 30), duration=timedelta(hours=1, minutes=30))
 
     def test_one_hour_period(self):
-        start_times = list(get_available_start_times_for_given_duration_and_date(duration_in_hours='1.0', tr_day_date=date))
+        start_times = list(get_available_start_times_for_given_duration_and_date(duration_in_hours='1.0', tr_day_date=_date))
 
         self.assertIn(time(8, 0), start_times)
         self.assertIn(time(10, 0), start_times)
@@ -45,7 +39,7 @@ class TestAllAvailablePeriods(TestCase):
         self.assertEqual(7, len(start_times))
 
     def test_one_and_half_hour_period(self):
-        start_times = list(get_available_start_times_for_given_duration_and_date(duration_in_hours='1.5', tr_day_date=date))
+        start_times = list(get_available_start_times_for_given_duration_and_date(duration_in_hours='1.5', tr_day_date=_date))
 
         self.assertIn(time(10, 0), start_times)
         self.assertIn(time(17, 30), start_times)
@@ -54,7 +48,7 @@ class TestAllAvailablePeriods(TestCase):
         self.assertEqual(3, len(start_times))
 
     def test_two_hours_period(self):
-        start_times = list(get_available_start_times_for_given_duration_and_date(duration_in_hours='2.0', tr_day_date=date))
+        start_times = list(get_available_start_times_for_given_duration_and_date(duration_in_hours='2.0', tr_day_date=_date))
 
         self.assertIn(time(17, 30), start_times)
         self.assertEqual(1, len(start_times))
@@ -68,15 +62,14 @@ class TestOnlyOneHour(TestCase):
         )
         self.group = TrainingGroup.objects.create(name='Nikita_group', max_players=1, status=TrainingGroup.STATUS_4IND)
 
-        self.tr_day_8__10 = create_tr_day_for_group(self.group, time(8, 0), timedelta(hours=2))
-        self.tr_day_10__12 = create_tr_day_for_group(self.group, time(10, 0), timedelta(hours=2))
-        self.tr_day_1230__14 = create_tr_day_for_group(self.group, time(12, 30), timedelta(hours=1, minutes=30))
-        self.tr_day_15__17 = create_tr_day_for_group(self.group, time(15, 0), timedelta(hours=2))
-        self.tr_day_18__20 = create_tr_day_for_group(self.group, time(18, 0), timedelta(hours=2))
+        self.tr_day_8__10 = CreateData.tr_day_for_group(self.group, start_time=time(8, 0), duration=timedelta(hours=2))
+        self.tr_day_10__12 = CreateData.tr_day_for_group(self.group, start_time=time(10, 0), duration=timedelta(hours=2))
+        self.tr_day_1230__14 = CreateData.tr_day_for_group(self.group, start_time=time(12, 30), duration=timedelta(hours=1, minutes=30))
+        self.tr_day_15__17 = CreateData.tr_day_for_group(self.group, start_time=time(15, 0), duration=timedelta(hours=2))
+        self.tr_day_18__20 = CreateData.tr_day_for_group(self.group, start_time=time(18, 0), duration=timedelta(hours=2))
 
     def test_one_hour_period(self):
-        start_times = list(get_available_start_times_for_given_duration_and_date(duration_in_hours='1.0', tr_day_date=date))
-        print(f"period=1.0", start_times)
+        start_times = list(get_available_start_times_for_given_duration_and_date(duration_in_hours='1.0', tr_day_date=_date))
 
         self.assertIn(time(14, 0), start_times)
         self.assertIn(time(17, 0), start_times)
@@ -85,12 +78,10 @@ class TestOnlyOneHour(TestCase):
         self.assertEqual(3, len(start_times))
 
     def test_one_and_half_hour_period(self):
-        start_times = list(get_available_start_times_for_given_duration_and_date(duration_in_hours='1.5', tr_day_date=date))
-        print(f"period=1.5", start_times)
+        start_times = list(get_available_start_times_for_given_duration_and_date(duration_in_hours='1.5', tr_day_date=_date))
         self.assertEqual(0, len(start_times))
 
     def test_two_hours_period(self):
-        start_times = list(get_available_start_times_for_given_duration_and_date(duration_in_hours='2.0', tr_day_date=date))
-        print(f"period=2.0", start_times)
+        start_times = list(get_available_start_times_for_given_duration_and_date(duration_in_hours='2.0', tr_day_date=_date))
         self.assertEqual(0, len(start_times))
 

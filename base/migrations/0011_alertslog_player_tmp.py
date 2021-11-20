@@ -9,7 +9,7 @@ def insert_data_from_users_to_players(apps, schema_editor):
     AlertsLog = apps.get_model('base', 'AlertsLog')
 
     for alert_log in AlertsLog.objects.filter(player__isnull=False).iterator():
-        player_tmp = Player.objects.filter(tg_id=alert_log.player.id)
+        player_tmp = Player.objects.filter(tg_id=alert_log.player.id).first()
         alert_log.player_tmp = player_tmp
         alert_log.save()
 

@@ -3,22 +3,10 @@
 from django.db import migrations, models
 
 
-def insert_players_from_users(apps, schema_editor):
-    Player = apps.get_model('base', 'Player')
-    TrainingGroup = apps.get_model('base', 'TrainingGroup')
-
-    for group in TrainingGroup.objects.all().iterator():
-        users_tg_ids = list(group.users.all().values_list('id', flat=True))
-        print(group.name, f"user tg ids: {users_tg_ids}")
-        players = Player.objects.filter(tg_id__in=users_tg_ids)
-        print(f"new players: {players}")
-        group.players.add(*players)
-
-
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0007_create_players_from_users'),
+        ('base', '0008_alter_user_options'),
     ]
 
     operations = [
@@ -27,5 +15,4 @@ class Migration(migrations.Migration):
             name='players',
             field=models.ManyToManyField(to='base.Player'),
         ),
-        migrations.RunPython(insert_players_from_users)
     ]

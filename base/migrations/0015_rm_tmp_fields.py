@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0011_alertslog_player_tmp'),
+        ('base', '0014_tr_day_players'),
     ]
 
     operations = [

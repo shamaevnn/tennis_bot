@@ -17,7 +17,7 @@ def insert_data_from_users_to_players(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0009_tr_day_players'),
+        ('base', '0012_alertslog_player_tmp'),
     ]
 
     operations = [

@@ -44,8 +44,6 @@ class User(AbstractUser):
     telegram_username = models.CharField(max_length=64, null=True, blank=True)
     first_name = models.CharField(max_length=32, null=True, verbose_name='Имя')
     phone_number = models.CharField(max_length=16, null=True, verbose_name='Номер телефона')
-    parent = models.ForeignKey('self', on_delete=models.PROTECT, blank=True, null=True, verbose_name='Родитель',
-                               related_name='children')
 
     is_superuser = models.BooleanField(default=False)
     is_blocked = models.BooleanField(default=False)

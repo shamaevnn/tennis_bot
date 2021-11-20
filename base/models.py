@@ -59,10 +59,6 @@ class User(AbstractUser):
 
     add_info = models.CharField(max_length=128, null=True, blank=True, verbose_name='Доп. информация')
 
-    class Meta:
-        verbose_name = 'игрок'
-        verbose_name_plural = 'игроки'
-
     def __str__(self):
         return '{} {} -- {}'.format(self.first_name, self.last_name, self.phone_number)
 

@@ -13,7 +13,7 @@ from django import forms
 from django.shortcuts import redirect
 from django.utils.html import format_html
 
-from .models import TrainingGroup, Player, GroupTrainingDay, Payment, Photo
+from .models import TrainingGroup, Player, GroupTrainingDay, Payment, Photo, User
 from .django_admin.utils import send_alert_about_changing_tr_day_status
 
 
@@ -33,6 +33,11 @@ class PlayerTabularInline(admin.StackedInline):
     model = TrainingGroup.players.through
     max_num = 2
     form = PlayerTabularForm
+
+
+@admin.register(User)
+class UserAdmin(admin.ModelAdmin):
+    pass
 
 
 @admin.register(Player)

@@ -6,10 +6,9 @@ from telegram import Update
 from admin_bot.rent_court.keyboards import permission4rent_keyboard
 from admin_bot.rent_court.static_text import PLAYER_WANTS_TO_RENT_COURT
 from base.common_for_bots.static_text import from_eng_to_rus_day_week, DATE_INFO
-from base.common_for_bots.tasks import clear_broadcast_messages
+from base.common_for_bots.tasks import send_message_to_coaches
 from base.common_for_bots.utils import create_calendar, bot_edit_message, DT_BOT_FORMAT, get_time_info_from_tr_day
 from base.models import Player, TrainingGroup, GroupTrainingDay
-from tennis_bot.settings import ADMIN_TELEGRAM_TOKEN
 from . import manage_data
 from .keyboards import number_of_people_to_rent_cort_keyboard, take_rent_lesson_or_back
 from .manage_data import NUMBER_OF_PEOPLE_TO_RENT_CORT, TAKE_RENT_LESSON
@@ -112,7 +111,6 @@ def take_rent(update: Update, context):
     )
     bot_edit_message(context.bot, text, update)
 
-    admins = Player.objects.filter(is_staff=True, is_blocked=False)
     markup = permission4rent_keyboard(
         tg_id=player.tg_id,
         tr_day_id=tr_day.id,
@@ -127,9 +125,7 @@ def take_rent(update: Update, context):
         date_info=date_info,
     )
 
-    clear_broadcast_messages(
-        chat_ids=list(admins.values_list('id', flat=True)),
-        message=admin_text,
+    send_message_to_coaches(
+        text=admin_text,
         reply_markup=markup,
-        tg_token=ADMIN_TELEGRAM_TOKEN
     )

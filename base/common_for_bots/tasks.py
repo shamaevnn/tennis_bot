@@ -1,13 +1,13 @@
 import time
-from typing import List
+from typing import List, Optional
 
 import telegram
 from celery.utils.log import get_task_logger
-from telegram import InlineKeyboardMarkup, InlineKeyboardButton
+from telegram import InlineKeyboardMarkup, InlineKeyboardButton, ParseMode
 
 from base.models import Player
 from tennis_bot.celery import app
-from tennis_bot.settings import TELEGRAM_TOKEN, DEBUG
+from tennis_bot.settings import TELEGRAM_TOKEN, DEBUG, ADMIN_TELEGRAM_TOKEN
 
 logger = get_task_logger(__name__)
 
@@ -97,3 +97,19 @@ def clear_broadcast_messages(
         )
 
 
+def send_message_to_coaches(
+        text: str,
+        reply_markup: Optional[InlineKeyboardMarkup] = None,
+        tg_token: str = ADMIN_TELEGRAM_TOKEN,
+        parse_mode=ParseMode.HTML,
+):
+    coaches = Player.coaches.all()
+    coach_tg_ids = list(coaches.values_list('tg_id', flat=True))
+
+    clear_broadcast_messages(
+        chat_ids=coach_tg_ids,
+        message=text,
+        reply_markup=reply_markup,
+        tg_token=tg_token,
+        parse_mode=parse_mode,
+    )

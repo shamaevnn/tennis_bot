@@ -1,6 +1,6 @@
 import player_bot.take_lesson.group.manage_data
 from base.common_for_bots.static_text import DATE_INFO
-from base.common_for_bots.tasks import clear_broadcast_messages
+from base.common_for_bots.tasks import clear_broadcast_messages, send_message_to_coaches
 from base.common_for_bots.utils import get_time_info_from_tr_day, get_actual_players_without_absent, get_n_free_places, \
     bot_edit_message
 from base.models import GroupTrainingDay, TrainingGroup, Player
@@ -54,13 +54,9 @@ def confirm_group_lesson(update, context):
     bot_edit_message(context.bot, player_text, update, player_markup)
 
     if admin_text:
-        admins = Player.objects.filter(is_staff=True, is_blocked=False)
-
-        clear_broadcast_messages(
-            chat_ids=list(admins.values_list('id', flat=True)),
-            message=admin_text,
+        send_message_to_coaches(
+            text=admin_text,
             reply_markup=admin_markup,
-            tg_token=ADMIN_TELEGRAM_TOKEN
         )
 
 
@@ -77,11 +73,6 @@ def choose_type_of_payment_for_pay_visiting(update, context):
     bot_edit_message(context.bot, player_text, update)
 
     if admin_text:
-        admins = Player.objects.filter(is_staff=True, is_blocked=False)
-
-        clear_broadcast_messages(
-            chat_ids=list(admins.values_list('id', flat=True)),
-            message=admin_text,
-            reply_markup=None,
-            tg_token=ADMIN_TELEGRAM_TOKEN
+        send_message_to_coaches(
+            text=admin_text,
         )

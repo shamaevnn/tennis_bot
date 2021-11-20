@@ -3,7 +3,7 @@ from datetime import datetime
 
 from admin_bot.ind_train.keyboards import permission4ind_train_keyboard
 from base.common_for_bots.static_text import from_eng_to_rus_day_week
-from base.common_for_bots.tasks import clear_broadcast_messages
+from base.common_for_bots.tasks import clear_broadcast_messages, send_message_to_coaches
 from base.common_for_bots.utils import create_calendar, bot_edit_message, DT_BOT_FORMAT
 from base.models import Player, TrainingGroup, GroupTrainingDay
 from player_bot.calendar.manage_data import CLNDR_ACTION_TAKE_IND
@@ -38,7 +38,6 @@ def select_ind_time(update, context):
            f"Время: <b>{start_time} — {end_time}</b>"
     bot_edit_message(context.bot, text, update)
 
-    admins = Player.objects.filter(is_staff=True, has_blocked_bot=False)
     markup = permission4ind_train_keyboard(
         tg_id=player.tg_id,
         tr_day_id=tr_day.id,
@@ -49,9 +48,7 @@ def select_ind_time(update, context):
            f" в <b>{start_time} — {end_time}</b>\n" \
            f"<b>Разрешить?</b>"
 
-    clear_broadcast_messages(
-        chat_ids=list(admins.values_list('id', flat=True)),
-        message=text,
+    send_message_to_coaches(
+        text=text,
         reply_markup=markup,
-        tg_token=ADMIN_TELEGRAM_TOKEN
     )

@@ -5,7 +5,7 @@ from base.models import Player, GroupTrainingDay
 from player_bot.menu_and_commands.keyboards import construct_main_menu
 from base.common_for_bots.utils import bot_edit_message, get_time_info_from_tr_day, \
     create_calendar, get_actual_players_without_absent
-from base.common_for_bots.tasks import clear_broadcast_messages
+from base.common_for_bots.tasks import send_message_to_coaches
 from player_bot.skip_lesson.keyboards import construct_detail_menu_for_skipping
 from player_bot.skip_lesson.manage_data import SELECT_SKIP_TIME_BUTTON, SHOW_INFO_ABOUT_SKIPPING_DAY
 from player_bot.calendar.manage_data import CLNDR_ACTION_SKIP
@@ -13,7 +13,6 @@ from player_bot.registration.utils import check_status_decor
 from player_bot.skip_lesson.static_text import ONLY_ONE_LEFT
 from player_bot.skip_lesson.utils import select_tr_days_for_skipping, \
     make_group_name_group_players_info_for_skipping, handle_skipping_train
-from tennis_bot.settings import ADMIN_TELEGRAM_TOKEN
 
 
 @check_status_decor
@@ -64,18 +63,14 @@ def skip_lesson(update: Update, context):
     else:
         text, admin_text = handle_skipping_train(training_day, player, date_info)
 
-        admins = Player.objects.filter(is_superuser=True, is_blocked=False)
-        clear_broadcast_messages(
-            chat_ids=list(admins.values_list('id', flat=True)),
-            message=admin_text,
-            tg_token=ADMIN_TELEGRAM_TOKEN,
+        send_message_to_coaches(
+            text=admin_text,
         )
+
         n_players_left_for_this_lesson = get_actual_players_without_absent(training_day).count()
         if n_players_left_for_this_lesson == 1:
-            clear_broadcast_messages(
-                chat_ids=list(admins.values_list('id', flat=True)),
-                message=ONLY_ONE_LEFT.format(training_day.group.name, date_info),
-                tg_token=ADMIN_TELEGRAM_TOKEN,
+            send_message_to_coaches(
+                text=ONLY_ONE_LEFT.format(training_day.group.name, date_info),
             )
 
         bot_edit_message(context.bot, text, update)

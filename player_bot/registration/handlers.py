@@ -4,7 +4,7 @@ from telegram.ext import ConversationHandler
 
 from admin_bot.go_to_site.keyboards import go_to_site_set_up_personal_data
 from admin_bot.go_to_site.static_text import NEW_CLIENT_HAS_COME
-from base.common_for_bots.tasks import clear_broadcast_messages
+from base.common_for_bots.tasks import clear_broadcast_messages, send_message_to_coaches
 from base.models import Player
 from player_bot.menu_and_commands.keyboards import construct_main_menu
 from player_bot.menu_and_commands.handlers import INSERT_PHONE_NUMBER
@@ -47,13 +47,9 @@ def get_phone_number(update, context):
             reply_markup=construct_main_menu()
         )
 
-        admins = Player.objects.filter(is_staff=True)
-
-        clear_broadcast_messages(
-            chat_ids=list(admins.values_list('id', flat=True)),
-            message=NEW_CLIENT_HAS_COME.format(player),
-            reply_markup=go_to_site_set_up_personal_data(player.id),
-            tg_token=ADMIN_TELEGRAM_TOKEN,
+        send_message_to_coaches(
+            text=NEW_CLIENT_HAS_COME.format(player),
+            reply_markup=go_to_site_set_up_personal_data(player.id)
         )
 
     return ConversationHandler.END

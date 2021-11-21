@@ -9,7 +9,7 @@ from telegram import InlineKeyboardMarkup, InlineKeyboardButton, Bot, Update
 
 from base.common_for_bots.manage_data import CLNDR_IGNORE, CLNDR_DAY, CLNDR_PREV_MONTH, CLNDR_NEXT_MONTH
 from base.common_for_bots.static_text import from_digit_to_month, from_eng_to_rus_day_week
-from base.models import GroupTrainingDay, User
+from base.models import GroupTrainingDay, Player
 
 DTTM_BOT_FORMAT = '%Y.%m.%d.%H.%M'
 DT_BOT_FORMAT = '%Y.%m.%d'
@@ -18,15 +18,15 @@ TM_DAY_BOT_FORMAT = '%d'
 TM_TIME_SCHEDULE_FORMAT = '%H:%M'
 
 
-def get_players_for_tr_day(tr_day: GroupTrainingDay) -> QuerySet[User]:
-    group_members = tr_day.group.users.all()
+def get_players_for_tr_day(tr_day: GroupTrainingDay) -> QuerySet[Player]:
+    group_members = tr_day.group.players.all()
     visitors = tr_day.visitors.all()
     pay_visitors = tr_day.pay_visitors.all()
     pay_bonus_visitors = tr_day.pay_bonus_visitors.all()
     return group_members.union(visitors, pay_visitors, pay_bonus_visitors)
 
 
-def get_actual_players_without_absent(tr_day: GroupTrainingDay) -> QuerySet[User]:
+def get_actual_players_without_absent(tr_day: GroupTrainingDay) -> QuerySet[Player]:
     return get_players_for_tr_day(tr_day).difference(tr_day.absent.all())
 
 

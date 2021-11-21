@@ -3,7 +3,7 @@ from telegram.ext import ConversationHandler
 from admin_bot.send_message.keyboards import construct_menu_groups_for_send_message
 from admin_bot.send_message import static_text
 from base.common_for_bots.static_text import UP_TO_YOU
-from base.models import TrainingGroup, User, AlertsLog
+from base.models import TrainingGroup, Player, AlertsLog
 from base.common_for_bots.utils import bot_edit_message
 from base.common_for_bots.tasks import clear_broadcast_messages
 from admin_bot.send_message.manage_data import SEND_MESSAGE
@@ -49,18 +49,18 @@ def text_to_send(update, context):
 
             banda_groups = TrainingGroup.objects.filter(status=TrainingGroup.STATUS_GROUP,
                                                         max_players__gt=1).distinct()
-            players = User.objects.filter(traininggroup__in=banda_groups).distinct()
+            players = Player.objects.filter(traininggroup__in=banda_groups).distinct()
 
         elif -2 in list_of_group_ids:
             # pressed 'send to all'
             text = static_text.WILL_SEND_TO_ALL_TYPE_TEXT
-            players = User.objects.filter(status__in=[User.STATUS_TRAINING,
-                                                      User.STATUS_ARBITRARY,
-                                                      User.STATUS_IND_TRAIN])
+            players = Player.objects.filter(status__in=[Player.STATUS_TRAINING,
+                                                      Player.STATUS_ARBITRARY,
+                                                      Player.STATUS_IND_TRAIN])
         elif -3 in list_of_group_ids:
             # pressed 'send to free view_schedule'
             text = static_text.WILL_SEND_TO_FREE_SCHEDULE
-            players = User.objects.filter(status=User.STATUS_ARBITRARY)
+            players = Player.objects.filter(status=Player.STATUS_ARBITRARY)
 
         else:
             text = static_text.WILL_SEND_TO_THE_FOLLOWING_GROUPS
@@ -69,7 +69,7 @@ def text_to_send(update, context):
             text += group_names
             text += static_text.TYPE_TEXT_OF_MESSAGE
 
-            players = User.objects.filter(traininggroup__in=list_of_group_ids).distinct()
+            players = Player.objects.filter(traininggroup__in=list_of_group_ids).distinct()
 
         objs = [AlertsLog(player=player, alert_type=AlertsLog.CUSTOM_COACH_MESSAGE) for player in players]
         AlertsLog.objects.bulk_create(objs)
@@ -102,7 +102,7 @@ def receive_text_and_send(update, context):
         player_ids = list(alert_instances.values_list('player', flat=True))
 
         clear_broadcast_messages(
-            user_ids=player_ids,
+            chat_ids=player_ids,
             message=text
         )
 

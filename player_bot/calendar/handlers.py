@@ -1,10 +1,10 @@
 import re
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta
 
 from base.common_for_bots.manage_data import CLNDR_IGNORE, CLNDR_DAY, CLNDR_PREV_MONTH, CLNDR_NEXT_MONTH, \
     CLNDR_ACTION_BACK
 from base.common_for_bots.utils import separate_callback_data, bot_edit_message, create_calendar
-from base.models import User
+from base.models import Player
 from player_bot.calendar.manage_data import CLNDR_ACTION_SKIP, CLNDR_ACTION_TAKE_GROUP, CLNDR_ACTION_TAKE_IND, \
     CLNDR_ACTION_TAKE_RENT
 from player_bot.skip_lesson.utils import select_tr_days_for_skipping, calendar_skipping
@@ -22,16 +22,16 @@ def process_calendar_selection(update, context):
     Process the callback_query. This method generates a new calendar if forward or
     backward is pressed. This method should be called inside a CallbackQueryHandler.
     """
-    user, _ = User.get_user_and_created(update, context)
+    player = Player.from_update(update)
 
     query = update.callback_query
     (purpose, action, year, month, day) = separate_callback_data(query.data)
     curr = datetime(int(year), int(month), 1)
 
     if purpose == CLNDR_ACTION_SKIP:
-        highlight_dates = list(select_tr_days_for_skipping(user).values_list('date', flat=True))
+        highlight_dates = list(select_tr_days_for_skipping(player).values_list('date', flat=True))
     elif purpose == CLNDR_ACTION_TAKE_GROUP:
-        training_days = get_potential_days_for_group_training(user)
+        training_days = get_potential_days_for_group_training(player)
         highlight_dates = list(training_days.values_list('date', flat=True))
     else:
         highlight_dates = None
@@ -71,14 +71,14 @@ def process_calendar_selection(update, context):
 
 @check_status_decor
 def inline_calendar_handler(update, context):
-    user, _ = User.get_user_and_created(update, context)
+    player = Player.get_player_and_created(update, context)
     selected, purpose, date_time = process_calendar_selection(update, context)
     if selected:
 
         if purpose == CLNDR_ACTION_SKIP:
-            text, markup = calendar_skipping(user, purpose, date_time)
+            text, markup = calendar_skipping(player, purpose, date_time)
         elif purpose == CLNDR_ACTION_TAKE_GROUP:
-            text, markup = calendar_taking_group_lesson(user, purpose, date_time)
+            text, markup = calendar_taking_group_lesson(player, purpose, date_time)
         elif re.findall(rf'({CLNDR_ACTION_TAKE_IND})(\d.\d)', purpose):
             text, markup = calendar_taking_rent_and_ind_lesson(CLNDR_ACTION_TAKE_IND, SELECT_PRECISE_IND_TIME, purpose, date_time)
         elif re.findall(rf'({CLNDR_ACTION_TAKE_RENT})(\d.\d)', purpose):

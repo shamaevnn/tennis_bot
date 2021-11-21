@@ -3,14 +3,15 @@ import calendar
 from datetime import date
 from base.common_for_bots.static_text import from_eng_to_rus_day_week
 from base.common_for_bots.utils import DT_BOT_FORMAT, create_calendar
+from base.models import Player
 from player_bot.take_lesson.group.keyboards import construct_time_menu_for_group_lesson
 from player_bot.take_lesson.group.manage_data import SELECT_PRECISE_GROUP_TIME
 from player_bot.take_lesson.group.query import get_potential_days_for_group_training
 
 
-def calendar_taking_group_lesson(user, purpose, date_time):
+def calendar_taking_group_lesson(player: Player, purpose, date_time):
     date_comparison = date(date_time.year, date_time.month, date_time.day)
-    training_days = get_potential_days_for_group_training(user, date=date_comparison)
+    training_days = get_potential_days_for_group_training(player, date=date_comparison)
     highlight_dates = list(training_days.values_list('date', flat=True))
     if training_days.exists():
         buttons = construct_time_menu_for_group_lesson(SELECT_PRECISE_GROUP_TIME, training_days, date_time,

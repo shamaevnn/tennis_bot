@@ -9,12 +9,12 @@ import telegram
 from tennis_bot.celery import app
 from celery.utils.log import get_task_logger
 from django.db.models import ExpressionWrapper, F, DurationField
-from base.models import AlertsLog, GroupTrainingDay, Payment, User, Photo
+from base.models import AlertsLog, GroupTrainingDay, Payment, Player, Photo
 from base.common_for_bots.utils import get_actual_players_without_absent, moscow_datetime, \
     get_time_info_from_tr_day
 from datetime import datetime, timedelta
 from tennis_bot.settings import TELEGRAM_TOKEN
-from player_bot.user_info.static_text import MY_DATA_BUTTON
+from player_bot.player_info.static_text import MY_DATA_BUTTON
 from base.common_for_bots.static_text import from_digit_to_month
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'tennis_bot.settings')
@@ -85,7 +85,7 @@ def send_alert_about_payment():
 
     not_paid = Payment.objects.filter(
                          fact_amount=0,
-                         player__status=User.STATUS_TRAINING,
+                         player__status=Player.STATUS_TRAINING,
                          year=str(now_day.year - 2020),
                          month=str(now_day.month)
     ).exclude(

@@ -71,10 +71,9 @@ def process_calendar_selection(update, context):
 
 @check_status_decor
 def inline_calendar_handler(update, context):
-    player = Player.get_player_and_created(update, context)
+    player, _ = Player.get_player_and_created(update, context)
     selected, purpose, date_time = process_calendar_selection(update, context)
     if selected:
-
         if purpose == CLNDR_ACTION_SKIP:
             text, markup = calendar_skipping(player, purpose, date_time)
         elif purpose == CLNDR_ACTION_TAKE_GROUP:

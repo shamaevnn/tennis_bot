@@ -12,15 +12,15 @@ For solving these and others not stated problems, *tennis bot* was created.
 **Actually, there are two bots: bot for coach and bot for players.**
 
 Functionality of coach bot:
- * [Viewing schedule](https://github.com/shamaevnn/tennis_bot/blob/master/COACH_BOT.md#schedule)
- * [Checking payments](https://github.com/shamaevnn/tennis_bot/blob/master/COACH_BOT.md#payment-info)
- * [Sending message to players](https://github.com/shamaevnn/tennis_bot/blob/master/COACH_BOT.md#sending-message)
+ * [Viewing schedule](./docs/COACH_BOT.md#schedule)
+ * [Checking payments](./docs/COACH_BOT.md#payment-info)
+ * [Sending message to players](./docs/COACH_BOT.md#sending-message)
 
 Functionality of player's bot:
- * [Checking my info](https://github.com/shamaevnn/tennis_bot/blob/master/PLAYER_BOT.md#my-info)
- * [Taking a lesson](https://github.com/shamaevnn/tennis_bot/blob/master/PLAYER_BOT.md#taking-a-training-individual-or-group)
+ * [Checking my info](./docs/PLAYER_BOT.md#my-info)
+ * [Taking a lesson](./docs/PLAYER_BOT.md#taking-a-training-individual-or-group)
  * Rent court
- * [Skipping a lesson](https://github.com/shamaevnn/tennis_bot/blob/master/PLAYER_BOT.md#taking-a-training-individual-or-group)
+ * [Skipping a lesson](./docs/PLAYER_BOT.md#taking-a-training-individual-or-group)
 
 
 ## Used technologies

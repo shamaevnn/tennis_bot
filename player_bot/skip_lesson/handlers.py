@@ -21,7 +21,7 @@ def skip_lesson_main_menu_button(update: Update, context):
     available_grouptraining_dates = select_tr_days_for_skipping(player)
     if available_grouptraining_dates.exists():
         context.bot.send_message(
-            player.id,
+            player.tg_id,
             'Выбери дату тренировки для отмены.\n'
             '✅ -- дни, доступные для отмены.',
             reply_markup=create_calendar(
@@ -31,7 +31,7 @@ def skip_lesson_main_menu_button(update: Update, context):
         )
     else:
         context.bot.send_message(
-            chat_id=player.id,
+            chat_id=player.tg_id,
             text='Пока что нечего пропускать.',
             reply_markup=construct_main_menu(player),
         )

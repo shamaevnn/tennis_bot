@@ -65,7 +65,7 @@ def send_alert_about_coming_train():
                 text_alert = f'{photo.text}\n{dttm_train_info}'
 
                 try:
-                    bot.send_photo(player.id,
+                    bot.send_photo(player.tg_id,
                                    photo=photo.telegram_id,
                                    caption=text_alert,
                                    parse_mode='HTML')

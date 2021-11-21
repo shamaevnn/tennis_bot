@@ -9,7 +9,7 @@ def check_status_decor(func):
         if player.status != Player.STATUS_WAITING and player.status != Player.STATUS_FINISHED:
             res = func(update, context)
         else:
-            context.bot.send_message(player.id, COACH_HAVE_NOT_CONFIRMED_YET)
+            context.bot.send_message(player.tg_id, COACH_HAVE_NOT_CONFIRMED_YET)
         return res
 
     return wrapper

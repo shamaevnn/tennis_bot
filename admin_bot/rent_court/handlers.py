@@ -35,7 +35,7 @@ def permission_for_rent_court(update: Update, context):
 
         tennis_bot = Bot(TELEGRAM_TOKEN)
         tennis_bot.send_message(
-            chat_id=player.id,
+            chat_id=player.tg_id,
             text=player_text,
             parse_mode=ParseMode.HTML
         )

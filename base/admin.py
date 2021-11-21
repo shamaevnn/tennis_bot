@@ -90,7 +90,6 @@ make_group_green.short_description = 'Сделать группу 🍏'
 
 @admin.register(TrainingGroup)
 class TrainingGroupAdmin(admin.ModelAdmin):
-
     form = TrainingGroupForm
     list_display = ('name', 'max_players', 'level', 'available_for_additional_lessons', 'tarif_for_one_lesson')
     filter_horizontal = ('players',)
@@ -118,7 +117,7 @@ make_trday_available.short_description = 'Сделать выбранные дн
 @admin.register(GroupTrainingDay)
 class GroupTrainingDayAdmin(admin.ModelAdmin):
     form = GroupTrainingDayForm
-    list_display = ('group', 'date', 'is_available', 'is_individual', 'start_time', 'duration', 'tr_day_status')
+    list_display = ('group', 'date', 'start_time', 'duration', 'tr_day_status', 'is_individual', 'is_available')
     list_filter = ('group', 'date', 'tr_day_status', 'is_individual', 'is_available')
     filter_horizontal = ('visitors', 'pay_visitors', 'pay_bonus_visitors', 'absent')
     date_hierarchy = 'date'

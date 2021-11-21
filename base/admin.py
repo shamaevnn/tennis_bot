@@ -37,7 +37,7 @@ class PlayerTabularInline(admin.StackedInline):
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
-    pass
+    list_display = ("username", "first_name")
 
 
 @admin.register(Player)

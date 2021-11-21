@@ -18,52 +18,16 @@ from telegram import Update
 from base.utils.db_managers import GetOrNoneManager, CoachPlayerManager
 from base.utils.models import ModelwithTime
 from base.utils.telegram import extract_user_data_from_update
-from tennis_bot.settings import TARIF_ARBITRARY, TARIF_GROUP, TARIF_IND, TARIF_SECTION, TARIF_FEW, TELEGRAM_TOKEN, DEBUG
+from tennis_bot.settings import TARIF_ARBITRARY, TARIF_GROUP, TARIF_IND, TARIF_SECTION, TARIF_FEW, TELEGRAM_TOKEN
 
 
 class User(AbstractUser):
-    STATUS_WAITING = 'W'
-    STATUS_TRAINING = 'G'
-    STATUS_FINISHED = 'F'
-    STATUS_ARBITRARY = 'A'
-    STATUS_IND_TRAIN = 'I'
-    STATUSES = (
-        (STATUS_WAITING, 'в ожидании'),
-        (STATUS_TRAINING, 'групповые тренировки'),
-        (STATUS_ARBITRARY, 'свободный график'),
-        (STATUS_FINISHED, 'закончил'),
-    )
-
-    tarif_for_status = {
-        STATUS_TRAINING: TARIF_GROUP,
-        STATUS_ARBITRARY: TARIF_ARBITRARY,
-        STATUS_IND_TRAIN: TARIF_IND,
-    }
-
-    id = models.BigIntegerField(primary_key=True)  # telegram id
-    telegram_username = models.CharField(max_length=64, null=True, blank=True)
+    """используется для логина в админку"""
+    id = models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')
     first_name = models.CharField(max_length=32, null=True, verbose_name='Имя')
-    phone_number = models.CharField(max_length=16, null=True, verbose_name='Номер телефона')
-
-    is_superuser = models.BooleanField(default=False)
-    is_blocked = models.BooleanField(default=False)
-    status = models.CharField(max_length=1, choices=STATUSES, default=STATUS_WAITING, verbose_name='статус')
-
-    time_before_cancel = models.DurationField(
-        null=True, help_text='ЧАСЫ:МИНУТЫ:СЕКУНДЫ', verbose_name='Время, за которое нужно предупредить',
-        default=timedelta(hours=6)
-    )
-    bonus_lesson = models.SmallIntegerField(null=True, blank=True, default=0, verbose_name='Количество отыгрышей')
-
-    add_info = models.CharField(max_length=128, null=True, blank=True, verbose_name='Доп. информация')
 
     def __str__(self):
-        return '{} {} -- {}'.format(self.first_name, self.last_name, self.phone_number)
-
-    def save(self, *args, **kwargs):
-        if not self.username and DEBUG:
-            self.username = self.id
-        super(User, self).save()
+        return self.get_full_name()
 
 
 class Player(models.Model):
@@ -78,12 +42,6 @@ class Player(models.Model):
         (STATUS_ARBITRARY, 'свободный график'),
         (STATUS_FINISHED, 'закончил'),
     )
-
-    tarif_for_status = {
-        STATUS_TRAINING: TARIF_GROUP,
-        STATUS_ARBITRARY: TARIF_ARBITRARY,
-        STATUS_IND_TRAIN: TARIF_IND,
-    }
 
     id = models.UUIDField(primary_key=True, unique=True, default=uuid4)
 
@@ -142,6 +100,15 @@ class Player(models.Model):
                     u.deep_link = payload
                     u.save()
         return u, created
+
+    @classmethod
+    def get_tarif_by_status(cls, status: str) -> int:
+        tarif_by_status = {
+            cls.STATUS_TRAINING: TARIF_GROUP,
+            cls.STATUS_ARBITRARY: TARIF_ARBITRARY,
+            cls.STATUS_IND_TRAIN: TARIF_IND,
+        }
+        return tarif_by_status[status]
 
 
 class TrainingGroup(ModelwithTime):

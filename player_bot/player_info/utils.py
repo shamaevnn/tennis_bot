@@ -21,7 +21,7 @@ def balls_lessons_payment(year: int, month: int, player: Player):
     elif player.status == Player.STATUS_ARBITRARY:
         tr_days_num_this_month: int = tr_days_this_month.filter(visitors__in=[player]).distinct().count()
         balls_this_month: int = 0
-        tarif: int = Player.tarif_for_status[player.status]
+        tarif: int = Player.get_tarif_by_status(player.status)
     else:
         tarif: int = 0
         tr_days_num_this_month: int = 0

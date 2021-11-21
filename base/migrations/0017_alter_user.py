@@ -50,4 +50,14 @@ class Migration(migrations.Migration):
                                       help_text='Designates that this user has all permissions without explicitly assigning them.',
                                       verbose_name='superuser status'),
         ),
+        migrations.AlterField(
+            model_name='player',
+            name='bonus_lesson',
+            field=models.SmallIntegerField(default=0, verbose_name='Количество отыгрышей'),
+        ),
+        migrations.AlterField(
+            model_name='user',
+            name='first_name',
+            field=models.CharField(blank=True, max_length=32, null=True, verbose_name='Имя'),
+        ),
     ]

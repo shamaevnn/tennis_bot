@@ -44,8 +44,9 @@ class UserAdmin(admin.ModelAdmin):
 class PlayerAdmin(admin.ModelAdmin):
     form = PlayerForm
     inlines = [PlayerTabularInline]
-    list_display = ('id', 'first_name', 'last_name', 'phone_number', 'status')
+    list_display = ('tg_id', 'first_name', 'last_name', 'phone_number', 'status')
     search_fields = ('first_name', 'last_name')
+    readonly_fields = ('tg_id',)
     list_filter = ('status',)
     ordering = ['first_name']
 

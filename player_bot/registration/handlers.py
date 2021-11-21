@@ -4,13 +4,12 @@ from telegram.ext import ConversationHandler
 
 from admin_bot.go_to_site.keyboards import go_to_site_set_up_personal_data
 from admin_bot.go_to_site.static_text import NEW_CLIENT_HAS_COME
-from base.common_for_bots.tasks import clear_broadcast_messages, send_message_to_coaches
+from base.common_for_bots.tasks import send_message_to_coaches
 from base.models import Player
 from player_bot.menu_and_commands.keyboards import construct_main_menu
 from player_bot.menu_and_commands.handlers import INSERT_PHONE_NUMBER
 from player_bot.registration.static_text import FIRST_TIME_INSERT_PHONE_NUMBER, WRONG_PHONE_NUMBER_FORMAT, \
     I_WILL_TEXT_AS_SOON_AS_COACH_CONFIRM
-from tennis_bot.settings import ADMIN_TELEGRAM_TOKEN
 
 
 def get_first_last_name(update, context):

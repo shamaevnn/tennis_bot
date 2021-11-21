@@ -16,7 +16,7 @@ from django.dispatch import receiver
 from telegram import Update
 
 from base.utils.db_managers import GetOrNoneManager, CoachPlayerManager
-from base.utils.models import ModelwithTime
+from base.utils.models import ModelwithTime, nb
 from base.utils.telegram import extract_user_data_from_update
 from tennis_bot.settings import TARIF_ARBITRARY, TARIF_GROUP, TARIF_IND, TARIF_SECTION, TARIF_FEW, TELEGRAM_TOKEN
 
@@ -24,7 +24,7 @@ from tennis_bot.settings import TARIF_ARBITRARY, TARIF_GROUP, TARIF_IND, TARIF_S
 class User(AbstractUser):
     """используется для логина в админку"""
     id = models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')
-    first_name = models.CharField(max_length=32, null=True, verbose_name='Имя')
+    first_name = models.CharField(max_length=32, **nb, verbose_name='Имя')
 
     def __str__(self):
         return self.get_full_name()
@@ -49,17 +49,17 @@ class Player(models.Model):
     last_name = models.CharField(max_length=32, null=True, verbose_name='Фамилия')
     phone_number = models.CharField(max_length=16, null=True, verbose_name='Номер телефона')
 
-    tg_id = models.PositiveBigIntegerField(verbose_name='telegram id', null=True, blank=True)
-    tg_username = models.CharField(max_length=64, null=True, blank=True)
+    tg_id = models.PositiveBigIntegerField(verbose_name='telegram id', **nb)
+    tg_username = models.CharField(max_length=64, **nb)
     has_blocked_bot = models.BooleanField(default=False, verbose_name='заблокировал бота')
-    deep_link = models.CharField(max_length=64, null=True, blank=True)
+    deep_link = models.CharField(max_length=64, **nb)
 
     status = models.CharField(max_length=1, choices=STATUSES, default=STATUS_WAITING, verbose_name='статус')
     time_before_cancel = models.DurationField(
         null=True, help_text='ЧАСЫ:МИНУТЫ:СЕКУНДЫ', verbose_name='Время, за которое нужно предупредить',
         default=timedelta(hours=6)
     )
-    bonus_lesson = models.SmallIntegerField(null=True, blank=True, default=0, verbose_name='Количество отыгрышей')
+    bonus_lesson = models.SmallIntegerField(default=0, verbose_name='Количество отыгрышей')
     is_coach = models.BooleanField(default=False, verbose_name='Тренер ли')
 
     objects = GetOrNoneManager()
@@ -88,7 +88,6 @@ class Player(models.Model):
             tg_id=tg_id,
             defaults={
                 'tg_username': data['username'] if data.get('username') else None,
-                'username': data['id'],
                 'has_blocked_bot': data['is_blocked']
             }
         )
@@ -325,11 +324,11 @@ class AlertsLog(models.Model):
 
 
 class Photo(models.Model):
-    url = models.TextField(null=True, blank=True, verbose_name='Ссылка на картинку')
+    url = models.TextField(verbose_name='Ссылка на картинку', **nb)
     telegram_id = models.CharField(
-        max_length=256, null=True, blank=True, verbose_name='id картинки на сервере телеграма'
+        max_length=256, verbose_name='id картинки на сервере телеграма', **nb
     )
-    text = models.TextField(null=True, blank=True, verbose_name='Текстовое описание')
+    text = models.TextField(verbose_name='Текстовое описание', **nb)
 
     class Meta:
         verbose_name = 'фотография'

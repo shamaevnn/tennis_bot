@@ -35,6 +35,7 @@ SECRET_KEY = os.getenv(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DJANGO_DEBUG", False)
 
+HOST = 'http://127.0.0.1:8000/tgadmin/base/' if DEBUG else 'https://vladlen82.fvds.ru/tgadmin/base/'
 ALLOWED_HOSTS = ['*']
 
 

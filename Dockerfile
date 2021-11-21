@@ -1,3 +1,4 @@
+# docker is used only for local development and testing
 FROM python:3.8
 
 ENV PYTHONUNBUFFERED=1

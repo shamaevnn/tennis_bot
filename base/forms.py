@@ -26,6 +26,7 @@ class PlayerForm(forms.ModelForm):
             'first_name',
             'last_name',
             'phone_number',
+            'parent',
             'status',
             'time_before_cancel',
             'bonus_lesson',

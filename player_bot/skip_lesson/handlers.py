@@ -1,4 +1,5 @@
 from telegram import Update
+from telegram.ext import CallbackContext
 
 from base.common_for_bots.static_text import DATE_INFO
 from base.models import Player, GroupTrainingDay
@@ -16,7 +17,7 @@ from player_bot.skip_lesson.utils import select_tr_days_for_skipping, \
 
 
 @check_status_decor
-def skip_lesson_main_menu_button(update: Update, context):
+def skip_lesson_main_menu_button(update: Update, context: CallbackContext):
     player, _ = Player.get_player_and_created(update, context)
     available_grouptraining_dates = select_tr_days_for_skipping(player)
     if available_grouptraining_dates.exists():
@@ -46,7 +47,7 @@ def skip_lesson_when_geq_2(update: Update, context):
     bot_edit_message(context.bot, text, update, markup)
 
 
-def skip_lesson(update: Update, context):
+def skip_lesson(update: Update, context: CallbackContext):
     player = Player.from_update(update)
 
     tr_day_id = update.callback_query.data[len(SHOW_INFO_ABOUT_SKIPPING_DAY):]

@@ -1,6 +1,7 @@
 import re
 
-from telegram.ext import ConversationHandler
+from telegram import Update
+from telegram.ext import ConversationHandler, CallbackContext
 
 from admin_bot.go_to_site.keyboards import go_to_site_set_up_personal_data
 from admin_bot.go_to_site.static_text import NEW_CLIENT_HAS_COME
@@ -12,7 +13,7 @@ from player_bot.registration.static_text import FIRST_TIME_INSERT_PHONE_NUMBER, 
     I_WILL_TEXT_AS_SOON_AS_COACH_CONFIRM
 
 
-def get_first_last_name(update, context):
+def get_first_last_name(update: Update, context: CallbackContext):
     player, _ = Player.get_player_and_created(update, context)
     text = update.message.text
 
@@ -27,7 +28,7 @@ def get_first_last_name(update, context):
     return INSERT_PHONE_NUMBER
 
 
-def get_phone_number(update, context):
+def get_phone_number(update: Update, context: CallbackContext):
     player, _ = Player.get_player_and_created(update, context)
     text = update.message.text
     phone_number_candidate = re.findall(r'\d+', text)

@@ -1,6 +1,9 @@
 import re
 from datetime import datetime, timedelta
 
+from telegram import Update
+from telegram.ext import CallbackContext
+
 from base.common_for_bots.manage_data import CLNDR_IGNORE, CLNDR_DAY, CLNDR_PREV_MONTH, CLNDR_NEXT_MONTH, \
     CLNDR_ACTION_BACK
 from base.common_for_bots.utils import separate_callback_data, bot_edit_message, create_calendar
@@ -17,7 +20,7 @@ from player_bot.take_lesson.static_text import CHOOSE_DATE_OF_TRAIN
 from player_bot.take_lesson.utils import calendar_taking_rent_and_ind_lesson
 
 
-def process_calendar_selection(update, context):
+def process_calendar_selection(update: Update, context: CallbackContext):
     """
     Process the callback_query. This method generates a new calendar if forward or
     backward is pressed. This method should be called inside a CallbackQueryHandler.
@@ -70,7 +73,7 @@ def process_calendar_selection(update, context):
 
 
 @check_status_decor
-def inline_calendar_handler(update, context):
+def inline_calendar_handler(update: Update, context: CallbackContext):
     player, _ = Player.get_player_and_created(update, context)
     selected, purpose, date_time = process_calendar_selection(update, context)
     if selected:

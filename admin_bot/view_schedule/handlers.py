@@ -1,3 +1,5 @@
+from telegram.ext import CallbackContext
+
 from admin_bot.view_schedule.keyboards import back_from_show_grouptrainingday_info_keyboard
 from admin_bot.view_schedule import static_text
 from admin_bot.view_schedule.manage_data import SHOW_GROUPDAY_INFO
@@ -6,7 +8,7 @@ from base.models import GroupTrainingDay, TrainingGroup
 from base.common_for_bots.utils import bot_edit_message, get_time_info_from_tr_day
 
 
-def show_trainingroupday_info(update, context):
+def show_trainingroupday_info(update, context: CallbackContext):
     tr_day_id = update.callback_query.data[len(SHOW_GROUPDAY_INFO):]
     tr_day = GroupTrainingDay.objects.select_related('group').prefetch_related('visitors', 'pay_visitors', 'pay_bonus_visitors').get(id=tr_day_id)
 

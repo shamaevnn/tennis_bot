@@ -1,4 +1,5 @@
 from telegram import Update, Bot, ParseMode
+from telegram.ext import CallbackContext
 
 from player_bot.take_lesson.rent.static_text import COACH_ACCEPTED_RENT_COURT, COACH_CANCELLED_RENT_COURT
 from tennis_bot.settings import TELEGRAM_TOKEN
@@ -9,7 +10,7 @@ from base.common_for_bots.utils import get_time_info_from_tr_day, bot_edit_messa
 from base.models import GroupTrainingDay, Player
 
 
-def permission_for_rent_court(update: Update, context):
+def permission_for_rent_court(update: Update, context: CallbackContext):
     permission, tg_id, tr_day_id = update.callback_query.data[len(PERMISSION_FOR_RENT_COURT):].split('|')
 
     player = Player.objects.get(tg_id=tg_id)

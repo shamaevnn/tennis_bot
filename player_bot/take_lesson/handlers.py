@@ -1,5 +1,8 @@
 from datetime import datetime
 
+from telegram import Update
+from telegram.ext import CallbackContext
+
 from base.models import Player
 from base.common_for_bots.utils import moscow_datetime, bot_edit_message, create_calendar
 from player_bot.take_lesson.keyboards import choose_type_of_training_keyboard
@@ -14,7 +17,7 @@ from tennis_bot.settings import TARIF_ARBITRARY
 
 
 @check_status_decor
-def choose_type_of_training(update, context):
+def choose_type_of_training(update: Update, context: CallbackContext):
     markup = choose_type_of_training_keyboard()
     text = CHOOSE_TYPE_OF_TRAIN
     if update.callback_query:
@@ -27,7 +30,7 @@ def choose_type_of_training(update, context):
 
 
 @check_status_decor
-def take_lesson(update, context):
+def take_lesson(update: Update, context: CallbackContext):
     """записаться на тренировку"""
     player, _ = Player.get_player_and_created(update, context)
     tr_type = update.callback_query.data[len(manage_data.SELECT_TRAINING_TYPE):]

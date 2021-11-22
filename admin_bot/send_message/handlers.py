@@ -1,4 +1,5 @@
-from telegram.ext import ConversationHandler
+from telegram import Update
+from telegram.ext import ConversationHandler, CallbackContext
 
 from admin_bot.send_message.keyboards import construct_menu_groups_for_send_message
 from admin_bot.send_message import static_text
@@ -11,7 +12,7 @@ from admin_bot.send_message.manage_data import SEND_MESSAGE
 GROUP_IDS, TEXT_TO_SEND = 2, 3
 
 
-def select_groups_where_should_send(update, context):
+def select_groups_where_should_send(update: Update, context: CallbackContext):
     text = static_text.WHOM_TO_SEND_TO
 
     banda_groups = TrainingGroup.objects.filter(
@@ -38,7 +39,7 @@ def select_groups_where_should_send(update, context):
         )
 
 
-def text_to_send(update, context):
+def text_to_send(update: Update, context: CallbackContext):
     group_ids = update.callback_query.data[len(SEND_MESSAGE):].split("|")
     group_ids.remove('')
     if group_ids[-1] == '-1':  # if pressed "confirm"
@@ -83,7 +84,7 @@ def text_to_send(update, context):
         select_groups_where_should_send(update, context)
 
 
-def receive_text_and_send(update, context):
+def receive_text_and_send(update: Update, context: CallbackContext):
     text = update.message.text
 
     if text == static_text.CANCEL_COMMAND:

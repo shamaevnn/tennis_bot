@@ -1,6 +1,9 @@
 import calendar
 from datetime import datetime
 
+from telegram import Update
+from telegram.ext import CallbackContext
+
 from admin_bot.ind_train.keyboards import permission4ind_train_keyboard
 from base.common_for_bots.static_text import from_eng_to_rus_day_week
 from base.common_for_bots.tasks import clear_broadcast_messages, send_message_to_coaches
@@ -12,13 +15,13 @@ from player_bot.take_lesson.static_text import CHOOSE_DATE_OF_TRAIN
 from tennis_bot.settings import ADMIN_TELEGRAM_TOKEN
 
 
-def select_dt_for_ind_lesson(update, context):
+def select_dt_for_ind_lesson(update: Update, context: CallbackContext):
     duration = float(update.callback_query.data[len(manage_data.SELECT_DURATION_FOR_IND_TRAIN):])
     markup = create_calendar(f'{CLNDR_ACTION_TAKE_IND}{duration}')
     bot_edit_message(context.bot, CHOOSE_DATE_OF_TRAIN, update, markup)
 
 
-def select_ind_time(update, context):
+def select_ind_time(update: Update, context: CallbackContext):
     day_dt, start_time, end_time = update.callback_query.data[len(manage_data.SELECT_PRECISE_IND_TIME):].split('|')
     date_dt = datetime.strptime(day_dt, DT_BOT_FORMAT)
     st_time_obj = datetime.strptime(start_time, '%H:%M:%S')

@@ -1,7 +1,8 @@
 from calendar import monthrange
 from datetime import date, datetime, timedelta
 
-from telegram.ext import ConversationHandler
+from telegram import Update
+from telegram.ext import ConversationHandler, CallbackContext
 
 from base.models import Payment, TrainingGroup, Player
 from player_bot.menu_and_commands.keyboards import construct_main_menu
@@ -13,7 +14,7 @@ from player_bot.player_info.utils import balls_lessons_payment, group_players_in
 
 
 @check_status_decor
-def player_main_info(update, context):
+def player_main_info(update: Update, context: CallbackContext):
     """посмотреть, основную инфу:
         статус
         группа, если есть

@@ -2,6 +2,7 @@ import calendar
 from datetime import datetime, timedelta
 
 from telegram import Update
+from telegram.ext import CallbackContext
 
 from admin_bot.rent_court.keyboards import permission4rent_keyboard
 from admin_bot.rent_court.static_text import PLAYER_WANTS_TO_RENT_COURT
@@ -18,13 +19,13 @@ from ..static_text import CHOOSE_DATE_OF_TRAIN
 from ...calendar.manage_data import CLNDR_ACTION_TAKE_RENT
 
 
-def select_dt_for_rent_lesson(update: Update, context):
+def select_dt_for_rent_lesson(update: Update, context: CallbackContext):
     duration = float(update.callback_query.data[len(manage_data.SELECT_DURATION_FOR_RENT):])
     markup = create_calendar(f'{CLNDR_ACTION_TAKE_RENT}{duration}')
     bot_edit_message(context.bot, CHOOSE_DATE_OF_TRAIN, update, markup)
 
 
-def select_rent_time(update: Update, context):
+def select_rent_time(update: Update, context: CallbackContext):
     """
     После того, как выбрал точное время, дату и продолжительность, спрашиваем, сколько придет человек.
     """
@@ -43,7 +44,7 @@ def select_rent_time(update: Update, context):
     bot_edit_message(context.bot, HOW_MANY_PEOPLE_WILL_COME, update, markup)
 
 
-def take_rent_info_train(update: Update, context):
+def take_rent_info_train(update: Update, context: CallbackContext):
     """
     После выбора всех параметров аренды, показываем краткую инфу + кнопку записаться
     """
@@ -77,7 +78,7 @@ def take_rent_info_train(update: Update, context):
     bot_edit_message(context.bot, text, update, markup)
 
 
-def take_rent(update: Update, context):
+def take_rent(update: Update, context: CallbackContext):
     """
     Игрок окончательно подтвердил, что хочет арендовать корт.
     """

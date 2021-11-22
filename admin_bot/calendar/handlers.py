@@ -1,6 +1,7 @@
 from datetime import date, timedelta
 
 from telegram import Update, Bot
+from telegram.ext import CallbackContext
 
 from admin_bot.calendar.keyboards import day_buttons_coach_info
 from admin_bot.calendar.static_text import TRAIN_DAYS, NO_TRAINS_THIS_DAY
@@ -44,7 +45,7 @@ def admin_calendar_selection(bot: Bot, update: Update):
     return False, purpose, []
 
 
-def inline_calendar_handler(update: Update, context):
+def inline_calendar_handler(update: Update, context: CallbackContext):
     selected, purpose, date_my = admin_calendar_selection(context.bot, update)
     if selected:
         if purpose == CLNDR_ADMIN_VIEW_SCHEDULE:
@@ -59,7 +60,7 @@ def inline_calendar_handler(update: Update, context):
             bot_edit_message(context.bot, text, update, markup)
 
 
-def show_coach_schedule(update: Update, context):
+def show_coach_schedule(update: Update, context: CallbackContext):
     update.message.reply_text(
         text=TRAIN_DAYS,
         reply_markup=create_calendar(CLNDR_ADMIN_VIEW_SCHEDULE)

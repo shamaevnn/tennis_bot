@@ -1,5 +1,6 @@
 import telegram
-from telegram import ParseMode
+from telegram import ParseMode, Update
+from telegram.ext import CallbackContext
 
 from admin_bot.ind_train import static_text
 from admin_bot.ind_train.keyboards import how_many_trains_to_save_keyboard
@@ -11,7 +12,7 @@ from player_bot.take_lesson.individual.static_text import COACH_CONFIRMED_TRAIN,
 from tennis_bot.settings import TELEGRAM_TOKEN
 
 
-def permission_for_ind_train(update, context):
+def permission_for_ind_train(update: Update, context: CallbackContext):
     permission, tg_id, tr_day_id = update.callback_query.data[len(PERMISSION_FOR_IND_TRAIN):].split('|')
 
     player = Player.objects.get(tg_id=tg_id)
@@ -49,7 +50,7 @@ def permission_for_ind_train(update, context):
     bot_edit_message(context.bot, admin_text, update, markup=markup)
 
 
-def save_many_ind_trains(update, context):
+def save_many_ind_trains(update: Update, context: CallbackContext):
     tr_day_id, num_lessons = update.callback_query.data[len(AMOUNT_OF_IND_TRAIN):].split("|")
     tr_day = GroupTrainingDay.objects.get(id=tr_day_id)
 

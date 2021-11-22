@@ -3,8 +3,7 @@ import datetime
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Sum
 from telegram import Update, ParseMode
-from telegram.ext import ConversationHandler
-
+from telegram.ext import ConversationHandler, CallbackContext
 
 from admin_bot.payment.keyboards import construct_menu_groups, construct_menu_months
 from admin_bot.payment import keyboards
@@ -24,7 +23,7 @@ from tennis_bot.settings import TARIF_SECTION, TARIF_FEW
 START_CHANGE_PAYMENT, CONFIRM_OR_CANCEL = range(2)
 
 
-def start_payment(update: Update, context):
+def start_payment(update: Update, context: CallbackContext):
     text = static_text.CHOOSE_YEAR
     now_date = moscow_datetime(datetime.datetime.now()).date()
     markup = keyboards.choose_year_to_group_payment_keyboard(
@@ -41,13 +40,13 @@ def start_payment(update: Update, context):
         )
 
 
-def year_payment(update: Update, context):
+def year_payment(update: Update, context: CallbackContext):
     year = update.callback_query.data[len(manage_data.PAYMENT_YEAR):]
     markup = construct_menu_months(Payment.MONTHS, f'{manage_data.PAYMENT_YEAR_MONTH}{year}|')
     bot_edit_message(context.bot, static_text.CHOOSE_MONTH, update, markup)
 
 
-def month_payment(update: Update, context):
+def month_payment(update: Update, context: CallbackContext):
     year, month = update.callback_query.data[len(manage_data.PAYMENT_YEAR_MONTH):].split('|')
 
     total_amount_for_month: int = get_total_paid_amount_for_month(year, month)
@@ -70,7 +69,7 @@ def month_payment(update: Update, context):
     return ConversationHandler.END
 
 
-def group_payment(update: Update, context):
+def group_payment(update: Update, context: CallbackContext):
     year, month, group_id = update.callback_query.data[len(manage_data.PAYMENT_YEAR_MONTH_GROUP):].split('|')
 
     if int(group_id) == 0:
@@ -147,7 +146,7 @@ def group_payment(update: Update, context):
     bot_edit_message(context.bot, text, update, markup)
 
 
-def change_payment_data(update: Update, context):
+def change_payment_data(update: Update, context: CallbackContext):
     year, month, _ = update.callback_query.data[len(manage_data.PAYMENT_START_CHANGE):].split('|')
     player = Player.from_update(update)
 
@@ -165,7 +164,7 @@ def change_payment_data(update: Update, context):
     return START_CHANGE_PAYMENT
 
 
-def get_id_amount(update: Update, context):
+def get_id_amount(update: Update, context: CallbackContext):
     coach = Player.from_update(update)
     try:
         payment_id, amount = update.message.text.split(' ')
@@ -200,7 +199,7 @@ def get_id_amount(update: Update, context):
     return CONFIRM_OR_CANCEL
 
 
-def confirm_or_cancel_changing_payment(update: Update, context):
+def confirm_or_cancel_changing_payment(update: Update, context: CallbackContext):
     permission, payment_id, amount = update.callback_query.data[len(manage_data.PAYMENT_CONFIRM_OR_CANCEL):].split('|')
     payment = Payment.objects.get(id=payment_id)
     if permission == PAYMENT_CHANGE_NO:

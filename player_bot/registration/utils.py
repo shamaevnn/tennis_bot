@@ -1,9 +1,12 @@
+from telegram import Update
+from telegram.ext import CallbackContext
+
 from base.models import Player
 from player_bot.registration.static_text import COACH_HAVE_NOT_CONFIRMED_YET
 
 
 def check_status_decor(func):
-    def wrapper(update, context):
+    def wrapper(update: Update, context: CallbackContext):
         res = None
         player, _ = Player.get_player_and_created(update, context)
         if player.status != Player.STATUS_WAITING and player.status != Player.STATUS_FINISHED:

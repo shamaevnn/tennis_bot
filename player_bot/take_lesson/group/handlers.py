@@ -1,3 +1,6 @@
+from telegram import Update
+from telegram.ext import CallbackContext
+
 import player_bot.take_lesson.group.manage_data
 from base.common_for_bots.static_text import DATE_INFO
 from base.common_for_bots.tasks import clear_broadcast_messages, send_message_to_coaches
@@ -10,7 +13,7 @@ from player_bot.take_lesson.group.utils import handle_taking_group_lesson, \
 from tennis_bot.settings import ADMIN_TELEGRAM_TOKEN
 
 
-def select_group_time(update, context):
+def select_group_time(update: Update, context: CallbackContext):
     """
     после того, как выбрал точное время для групповой тренировки,
     показываем инфу об этом дне с кнопкой записаться и назад
@@ -45,7 +48,7 @@ def select_group_time(update, context):
     bot_edit_message(context.bot, text, update, markup)
 
 
-def confirm_group_lesson(update, context):
+def confirm_group_lesson(update: Update, context: CallbackContext):
     tr_day_id = update.callback_query.data[len(player_bot.take_lesson.group.manage_data.CONFIRM_GROUP_LESSON):]
     tr_day = GroupTrainingDay.objects.select_related('group').get(id=tr_day_id)
     player, _ = Player.get_player_and_created(update, context)
@@ -60,7 +63,7 @@ def confirm_group_lesson(update, context):
         )
 
 
-def choose_type_of_payment_for_pay_visiting(update, context):
+def choose_type_of_payment_for_pay_visiting(update: Update, context: CallbackContext):
     payment_choice, tr_day_id = update.callback_query.data[len(
         player_bot.take_lesson.group.manage_data.PAYMENT_VISITING):].split('|')
     tr_day = GroupTrainingDay.objects.get(id=tr_day_id)

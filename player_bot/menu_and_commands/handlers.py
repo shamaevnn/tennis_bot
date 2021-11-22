@@ -1,4 +1,5 @@
-from telegram.ext import ConversationHandler
+from telegram import Update
+from telegram.ext import ConversationHandler, CallbackContext
 
 from base.common_for_bots.static_text import THIS_WAY_YEAH
 from base.models import Player
@@ -12,7 +13,7 @@ from player_bot.player_info.handlers import player_main_info
 INSERT_FIO, INSERT_PHONE_NUMBER = range(2)
 
 
-def start(update, context):
+def start(update: Update, context: CallbackContext):
     player, created = Player.get_player_and_created(update, context)
 
     if created:
@@ -34,7 +35,7 @@ def start(update, context):
         return ConversationHandler.END
 
 
-def cancel(update, context):
+def cancel(update: Update, context: CallbackContext):
     update.message.reply_text(
         text=THIS_WAY_YEAH,
         reply_markup=construct_main_menu()
@@ -43,7 +44,7 @@ def cancel(update, context):
     return ConversationHandler.END
 
 
-def get_help(update, context):
+def get_help(update: Update, context: CallbackContext):
     player, _ = Player.get_player_and_created(update, context)
     update.message.reply_text(
         text=HELP_MESSAGE,

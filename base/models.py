@@ -14,6 +14,7 @@ from datetime import datetime, date, timedelta
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from telegram import Update
+from telegram.ext import CallbackContext
 
 from base.utils.db_managers import GetOrNoneManager, CoachPlayerManager
 from base.utils.models import ModelwithTime, nb
@@ -81,7 +82,7 @@ class Player(models.Model):
         return player
 
     @classmethod
-    def get_player_and_created(cls, update: Update, context) -> Tuple[Player, bool]:
+    def get_player_and_created(cls, update: Update, context: CallbackContext) -> Tuple[Player, bool]:
         """ python-telegram-bot's Update, Context --> User instance """
         data = extract_user_data_from_update(update)
         tg_id = data["id"]

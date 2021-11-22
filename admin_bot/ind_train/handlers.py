@@ -14,7 +14,7 @@ from tennis_bot.settings import TELEGRAM_TOKEN
 def permission_for_ind_train(update, context):
     permission, tg_id, tr_day_id = update.callback_query.data[len(PERMISSION_FOR_IND_TRAIN):].split('|')
 
-    player = Player.objects.get(id=tg_id)
+    player = Player.objects.get(tg_id=tg_id)
     tr_day = GroupTrainingDay.objects.filter(id=tr_day_id)
 
     if tr_day.exists():

@@ -16,6 +16,7 @@ import sentry_sdk
 
 from sentry_sdk.integrations.django import DjangoIntegration
 from pathlib import Path
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -37,7 +38,6 @@ DEBUG = os.getenv("DJANGO_DEBUG", False)
 
 HOST = 'http://127.0.0.1:8000/tgadmin/base/' if DEBUG else 'https://vladlen82.fvds.ru/tgadmin/base/'
 ALLOWED_HOSTS = ['*']
-
 
 # Application definition
 
@@ -105,7 +105,6 @@ DATABASES = {
     'default': dj_database_url.config(conn_max_age=600, default="sqlite:///db.sqlite3"),
 }
 
-
 # Password validation
 # https://docs.djangoproject.com/en/1.11/ref/settings/#auth-password-validators
 
@@ -126,7 +125,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/1.11/topics/i18n/
 
@@ -139,7 +137,6 @@ USE_I18N = True
 USE_L10N = True
 
 USE_TZ = True
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
@@ -163,6 +160,7 @@ CELERY_TASK_DEFAULT_QUEUE = 'default'
 # -----> TELEGRAM
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 ADMIN_TELEGRAM_TOKEN = os.getenv("ADMIN_TELEGRAM_TOKEN")
+PARENT_TELEGRAM_TOKEN = os.getenv("PARENT_TELEGRAM_TOKEN")
 ADMIN_CHAT_ID = 350490234
 
 # -----> TARIFS
@@ -173,7 +171,6 @@ TARIF_ARBITRARY = 700
 TARIF_FEW = 400
 TARIF_SECTION = 4000
 TARIF_PAYMENT_ADD_LESSON = 100
-
 
 if not DEBUG:
     sentry_sdk.init(

@@ -5,14 +5,15 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.db.models import ExpressionWrapper, F, DateTimeField, Count
 from django.utils.safestring import mark_safe
-
 from base.models import TrainingGroup, GroupTrainingDay, Player
 from base.django_admin.utils import send_alert_about_changing_tr_day_status, send_alert_about_changing_tr_day_time
 from player_bot.menu_and_commands.keyboards import construct_main_menu
+from parent_bot.menu_and_commands.keyboards import construct_parent_main_menu
 from base.common_for_bots.utils import DT_BOT_FORMAT, TM_TIME_SCHEDULE_FORMAT, moscow_datetime
 from base.common_for_bots.tasks import clear_broadcast_messages
 from base.django_admin.static_text import ERROR_LIMIT_MAX_PLAYERS, ERROR_MAX_PLAYERS_IN_FUTURE, \
     ERROR_CANT_ADD_NEW_TRAIN
+from tennis_bot.settings import PARENT_TELEGRAM_TOKEN
 from player_bot.skip_lesson.static_text import CANCEL_TRAIN_PLUS_BONUS_LESSON
 from player_bot.registration.static_text import NOW_YOU_HAVE_ACCESS_CONGRATS
 from base.common_for_bots.static_text import from_eng_to_rus_day_week
@@ -38,15 +39,23 @@ class PlayerForm(forms.ModelForm):
             new_status = self.cleaned_data.get('status')
             current_status = self.instance.status
             if current_status == Player.STATUS_WAITING and (
-                new_status == Player.STATUS_ARBITRARY or new_status == Player.STATUS_TRAINING
+                    new_status == Player.STATUS_ARBITRARY or new_status == Player.STATUS_TRAINING
             ):
                 text = NOW_YOU_HAVE_ACCESS_CONGRATS
                 reply_markup = construct_main_menu(self.instance)
-
                 clear_broadcast_messages(
-                    chat_ids=[self.instance.id],
+                    chat_ids=[self.instance.tg_id],
                     message=text,
                     reply_markup=reply_markup
+                )
+            elif new_status == Player.STATUS_PARENT:
+                text = NOW_YOU_HAVE_ACCESS_CONGRATS
+                reply_markup = construct_parent_main_menu(self.instance)
+                clear_broadcast_messages(
+                    chat_ids=[self.instance.tg_id],
+                    message=text,
+                    reply_markup=reply_markup,
+                    tg_token=PARENT_TELEGRAM_TOKEN
                 )
 
 
@@ -86,7 +95,9 @@ class TrainingGroupForm(forms.ModelForm):
                             F('absent_cnt')
             ).distinct().values('id', 'date', 'start_time')
             if tr_day.exists():
-                error_ids = "\n".join(['<a href="http://vladlen82.fvds.ru/tgadmin/base/grouptrainingday/{}/change/">{} {}</a>'.format(x['id'], x['date'], x['start_time']) for x in tr_day])
+                error_ids = "\n".join([
+                                          '<a href="http://vladlen82.fvds.ru/tgadmin/base/grouptrainingday/{}/change/">{} {}</a>'.format(
+                                              x['id'], x['date'], x['start_time']) for x in tr_day])
                 error_text = f"{ERROR_MAX_PLAYERS_IN_FUTURE}:\n{error_ids}"
                 raise ValidationError(
                     {'players': mark_safe(error_text)})

@@ -37,11 +37,13 @@ class Player(models.Model):
     STATUS_FINISHED = 'F'
     STATUS_ARBITRARY = 'A'
     STATUS_IND_TRAIN = 'I'
+    STATUS_PARENT = 'P'
     STATUSES = (
         (STATUS_WAITING, 'в ожидании'),
         (STATUS_TRAINING, 'групповые тренировки'),
         (STATUS_ARBITRARY, 'свободный график'),
         (STATUS_FINISHED, 'закончил'),
+        (STATUS_PARENT, 'родитель'),
     )
 
     id = models.UUIDField(primary_key=True, unique=True, default=uuid4)
@@ -110,6 +112,20 @@ class Player(models.Model):
             cls.STATUS_IND_TRAIN: TARIF_IND,
         }
         return tarif_by_status[status]
+
+    @classmethod
+    def create_child(cls, update: Update, context: CallbackContext) -> Tuple[Player, bool]:
+        """ python-telegram-bot's Update, Context --> User instance """
+        data = extract_user_data_from_update(update)
+        parent = Player.from_update(update)
+        u, created = cls.objects.update_or_create(
+            tg_id=None,
+            parent=parent
+        )
+        if created:
+            if context is not None and context.args is not None and len(context.args) > 0:
+                u.save()
+        return u, created
 
 
 class TrainingGroup(ModelwithTime):
@@ -190,12 +206,14 @@ class GroupTrainingDay(ModelwithTime):
 
     group = models.ForeignKey(TrainingGroup, on_delete=models.PROTECT, verbose_name='Группа')
     date = models.DateField(default=timezone.now, verbose_name='Дата Занятия')
-    is_available = models.BooleanField(default=True, help_text='Будет ли в этот день тренировка у этой группы', verbose_name='Доступно')
+    is_available = models.BooleanField(default=True, help_text='Будет ли в этот день тренировка у этой группы',
+                                       verbose_name='Доступно')
     start_time = models.TimeField(null=True, help_text='ЧАСЫ:МИНУТЫ:СЕКУНДЫ', verbose_name='Время начала занятия')
     duration = models.DurationField(null=True, default=timedelta(hours=1), help_text='ЧАСЫ:МИНУТЫ:СЕКУНДЫ',
                                     verbose_name='Продолжительность занятия')
 
-    absent = models.ManyToManyField(Player, blank=True, help_text='Кто сегодня отсутствует', verbose_name='Отсутствующие')
+    absent = models.ManyToManyField(Player, blank=True, help_text='Кто сегодня отсутствует',
+                                    verbose_name='Отсутствующие')
 
     visitors = models.ManyToManyField(Player, blank=True, help_text='Пришли из других групп\n', related_name='visitors',
                                       verbose_name='Игроки из других групп')

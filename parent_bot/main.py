@@ -15,8 +15,8 @@ from telegram.ext import (
 import telegram
 
 from tennis_bot.settings import PARENT_TELEGRAM_TOKEN
-from parent_bot.registration.handlers import get_first_last_name, get_phone_number,get_children_first_last_name
-from parent_bot.registration_children.handlers import get_children_reg
+from parent_bot.registration.handlers import get_first_last_name, get_phone_number, get_child_first_last_name
+from parent_bot.registration_children.handlers import get_children_reg, INSERT_CHILD_FIO
 from parent_bot.menu_and_commands.handlers import start, cancel, INSERT_FIO, INSERT_PHONE_NUMBER
 from parent_bot.player_info.static_text import CHILDREN_REG_BUTTON
 
@@ -31,11 +31,21 @@ registration_handler = ConversationHandler(
     fallbacks=[CommandHandler('cancel', cancel)]
 
 )
+registration_child_handler = ConversationHandler(
+    entry_points=[MessageHandler(Filters.regex(CHILDREN_REG_BUTTON), get_children_reg)],
+
+    states={
+        INSERT_CHILD_FIO: [MessageHandler(Filters.regex(r'^\w+\s\w+$'), get_child_first_last_name)],
+    },
+
+    fallbacks=[CommandHandler('cancel', cancel)]
+
+)
 
 
-def setup_dispatcher(dp: object):
+def setup_dispatcher(dp):
     dp.add_handler(registration_handler)
-    dp.add_handler(MessageHandler(Filters.regex(CHILDREN_REG_BUTTON), get_children_reg))
+    dp.add_handler(registration_child_handler)
 
     return dp
 

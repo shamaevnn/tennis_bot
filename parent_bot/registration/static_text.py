@@ -7,3 +7,4 @@ WRONG_PHONE_NUMBER_FORMAT = 'Неправильный формат данных,
 I_WILL_TEXT_AS_SOON_AS_COACH_CONFIRM = 'Как только тренер подтвердит твою кандидатуру, я напишу.'
 NOW_YOU_HAVE_ACCESS_CONGRATS = 'Теперь тебе доступен мой функционал, поздравляю!'
 COACH_HAVE_NOT_CONFIRMED_YET = 'Тренер еще не одобрил.'
+CHILD_OK = 'Окей, добавил {first_name} {last_name}'

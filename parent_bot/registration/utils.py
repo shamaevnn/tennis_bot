@@ -9,7 +9,7 @@ def check_status_decor(func):
     def wrapper(update: Update, context: CallbackContext):
         res = None
         player, _ = Player.get_player_and_created(update, context)
-        if player.status == Player.STATUS_PARENT:
+        if player.status not in [Player.STATUS_WAITING,Player.STATUS_FINISHED]:
             res = func(update, context)
         else:
             context.bot.send_message(player.tg_id, COACH_HAVE_NOT_CONFIRMED_YET)

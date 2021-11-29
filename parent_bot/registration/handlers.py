@@ -10,7 +10,7 @@ from admin_bot.go_to_site.static_text import NEW_CLIENT_HAS_COME
 from parent_bot.menu_and_commands.handlers import INSERT_PHONE_NUMBER
 from parent_bot.menu_and_commands.keyboards import construct_parent_main_menu
 from parent_bot.registration.static_text import FIRST_TIME_INSERT_PHONE_NUMBER, WRONG_PHONE_NUMBER_FORMAT, \
-    I_WILL_TEXT_AS_SOON_AS_COACH_CONFIRM
+    I_WILL_TEXT_AS_SOON_AS_COACH_CONFIRM, CHILD_OK
 
 
 def get_first_last_name(update: Update, context: CallbackContext):
@@ -29,7 +29,6 @@ def get_first_last_name(update: Update, context: CallbackContext):
 
 
 def get_phone_number(update: Update, context: CallbackContext):
-    player, _ = Player.get_player_and_created(update, context)
     text = update.message.text
     phone_number_candidate = re.findall(r'\d+', text)
 
@@ -39,6 +38,7 @@ def get_phone_number(update: Update, context: CallbackContext):
         )
         return INSERT_PHONE_NUMBER
     else:
+        player, _ = Player.get_player_and_created(update, context)
         player.phone_number = int(phone_number_candidate[0])
         player.save()
 
@@ -55,8 +55,7 @@ def get_phone_number(update: Update, context: CallbackContext):
     return ConversationHandler.END
 
 
-def get_children_first_last_name(update: Update, context: CallbackContext):
-    print("Работает ")
+def get_child_first_last_name(update: Update, context: CallbackContext):
     player, _ = Player.create_child(update, context)
     text = update.message.text
     last_name, first_name = text.split(' ')
@@ -65,6 +64,6 @@ def get_children_first_last_name(update: Update, context: CallbackContext):
     player.save()
 
     update.message.reply_text(
-        text=I_WILL_TEXT_AS_SOON_AS_COACH_CONFIRM
+        text=CHILD_OK.format(first_name=first_name, last_name=last_name)
     )
     return ConversationHandler.END

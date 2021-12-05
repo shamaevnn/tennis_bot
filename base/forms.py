@@ -8,7 +8,7 @@ from django.utils.safestring import mark_safe
 from base.models import TrainingGroup, GroupTrainingDay, Player
 from base.django_admin.utils import send_alert_about_changing_tr_day_status, send_alert_about_changing_tr_day_time
 from player_bot.menu_and_commands.keyboards import construct_main_menu
-from parent_bot.menu_and_commands.keyboards import construct_parent_main_menu
+from parent_bot.menu_and_commands.keyboards import reg_child_butten
 from base.common_for_bots.utils import DT_BOT_FORMAT, TM_TIME_SCHEDULE_FORMAT, moscow_datetime
 from base.common_for_bots.tasks import clear_broadcast_messages
 from base.django_admin.static_text import ERROR_LIMIT_MAX_PLAYERS, ERROR_MAX_PLAYERS_IN_FUTURE, \
@@ -50,11 +50,9 @@ class PlayerForm(forms.ModelForm):
                 )
             elif new_status == Player.STATUS_PARENT:
                 text = NOW_YOU_HAVE_ACCESS_CONGRATS
-                reply_markup = construct_parent_main_menu(self.instance)
                 clear_broadcast_messages(
                     chat_ids=[self.instance.tg_id],
                     message=text,
-                    reply_markup=reply_markup,
                     tg_token=PARENT_TELEGRAM_TOKEN
                 )
 

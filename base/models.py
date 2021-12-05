@@ -118,14 +118,11 @@ class Player(models.Model):
         """ python-telegram-bot's Update, Context --> User instance """
         data = extract_user_data_from_update(update)
         parent = Player.from_update(update)
-        u, created = cls.objects.update_or_create(
+        u = cls.objects.сreate(
             tg_id=None,
             parent=parent
         )
-        if created:
-            if context is not None and context.args is not None and len(context.args) > 0:
-                u.save()
-        return u, created
+        return u
 
 
 class TrainingGroup(ModelwithTime):

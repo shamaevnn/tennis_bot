@@ -113,16 +113,16 @@ class Player(models.Model):
         }
         return tarif_by_status[status]
 
-    @classmethod
-    def create_child(cls, update: Update, context: CallbackContext) -> Tuple[Player, bool]:
-        """ python-telegram-bot's Update, Context --> User instance """
-        data = extract_user_data_from_update(update)
-        parent = Player.from_update(update)
-        u = cls.objects.сreate(
-            tg_id=None,
-            parent=parent
-        )
-        return u
+    #@classmethod
+    #def create_child(cls, update: Update, context: CallbackContext) -> Tuple[Player, bool]:
+        #""" python-telegram-bot's Update, Context --> User instance """
+        #data = extract_user_data_from_update(update)
+        #parent = Player.from_update(update)
+        #u = cls.objects.сreate(
+        #    tg_id=None,
+        #    parent=parent
+        #)
+        #return u
 
 
 class TrainingGroup(ModelwithTime):

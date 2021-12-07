@@ -2,7 +2,7 @@ import re
 
 from telegram import Update
 from telegram.ext import ConversationHandler, CallbackContext
-
+from base.utils.parent_utils import create_child
 from base.models import Player
 from admin_bot.go_to_site.keyboards import go_to_site_set_up_personal_data
 from base.common_for_bots.tasks import send_message_to_coaches
@@ -56,7 +56,7 @@ def get_phone_number(update: Update, context: CallbackContext):
 
 
 def get_child_first_last_name(update: Update, context: CallbackContext):
-    player, _ = Player.create_child(update, context)
+    player = create_child(update)
     text = update.message.text
     last_name, first_name = text.split(' ')
     player.last_name = last_name

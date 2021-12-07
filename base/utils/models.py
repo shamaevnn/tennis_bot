@@ -1,8 +1,6 @@
 from django.db import models
 from django.utils import timezone
-
 from base.utils.db_managers import ModelwithTimeManager
-
 
 nb = dict(null=True, blank=True)
 
@@ -15,4 +13,3 @@ class ModelwithTime(models.Model):
 
     class Meta:
         abstract = True
-

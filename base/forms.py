@@ -129,7 +129,7 @@ class GroupTrainingDayForm(forms.ModelForm):
                 text = CANCEL_TRAIN_PLUS_BONUS_LESSON.format(self.cleaned_data.get("date"))
 
                 clear_broadcast_messages(
-                    list(canceled_players.values_list('id', flat=True)),
+                    list(canceled_players.values_list('tg_id', flat=True)),
                     text,
                     reply_markup=construct_main_menu()
                 )

@@ -99,8 +99,7 @@ def send_alert_about_payment():
     for payment in not_paid:
         text = f'{payment.player.first_name}, нужно заплатить за {month}. Сумму можно узнать по кнопке "{MY_DATA_BUTTON}".'
         try:
-            bot.send_message(payment.player_id,
-                             text)
+            bot.send_message(payment.player.tg_id, text)
             AlertsLog.objects.create(is_sent=True, payment=payment, alert_type=AlertsLog.SHOULD_PAY)
         except (telegram.error.Unauthorized, telegram.error.BadRequest) as e:
             AlertsLog.objects.create(is_sent=False, payment=payment, alert_type=AlertsLog.SHOULD_PAY, info=str(e))

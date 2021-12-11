@@ -1,25 +1,29 @@
 import django
 import os
 
+from parent_bot.menu_and_commands.handlers import cancel, get_help
+from parent_bot.menu_and_commands.static_text import HELP_BUTTON, CHILDREN_MENU_BUTTON
+
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'tennis_bot.settings')
 django.setup()
+
 from telegram.ext import (
     Updater,
     CommandHandler,
     CallbackQueryHandler,
     ConversationHandler,
     MessageHandler,
-    Filters, Dispatcher
+    Filters
 )
 
 import telegram
 
 from tennis_bot.settings import PARENT_TELEGRAM_TOKEN
-from parent_bot.registration.handlers import get_first_last_name, get_phone_number, get_child_first_last_name
-from parent_bot.registration_children.handlers import get_children_reg, INSERT_CHILD_FIO, get_children_chek
-from parent_bot.menu_and_commands.handlers import start, cancel, INSERT_FIO, INSERT_PHONE_NUMBER
-from parent_bot.player_info.static_text import CHILDREN
-from parent_bot.registration_children.manage_data import CHILD_REG
+from .parent_registration.handlers import get_first_last_name, get_phone_number, start, \
+    INSERT_FIO, INSERT_PHONE_NUMBER
+from .child_registration.handlers import insert_child_first_last_name, INSERT_CHILD_FIO, get_child_first_last_name_and_create_child
+from parent_bot.children_info.handlers import list_all_children
+from .child_registration.manage_data import CHILD_REG
 
 registration_handler = ConversationHandler(
     entry_points=[CommandHandler("start", start)],
@@ -33,10 +37,10 @@ registration_handler = ConversationHandler(
 
 )
 registration_child_handler = ConversationHandler(
-    entry_points=[CallbackQueryHandler(get_children_reg, pattern=f'^{CHILD_REG}')],
+    entry_points=[CallbackQueryHandler(insert_child_first_last_name, pattern=f'^{CHILD_REG}')],
 
     states={
-        INSERT_CHILD_FIO: [MessageHandler(Filters.regex(r'^\w+\s\w+$'), get_child_first_last_name)],
+        INSERT_CHILD_FIO: [MessageHandler(Filters.regex(r'^\w+\s\w+$'), get_child_first_last_name_and_create_child)],
     },
 
     fallbacks=[CommandHandler('cancel', cancel)]
@@ -47,7 +51,9 @@ registration_child_handler = ConversationHandler(
 def setup_dispatcher(dp):
     dp.add_handler(registration_handler)
     dp.add_handler(registration_child_handler)
-    dp.add_handler(MessageHandler(Filters.regex(CHILDREN), get_children_chek))
+    dp.add_handler(MessageHandler(Filters.regex(CHILDREN_MENU_BUTTON), list_all_children))
+
+    dp.add_handler(MessageHandler(Filters.regex(HELP_BUTTON), get_help))
 
     return dp
 

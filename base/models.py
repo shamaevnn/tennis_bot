@@ -37,13 +37,11 @@ class Player(models.Model):
     STATUS_FINISHED = 'F'
     STATUS_ARBITRARY = 'A'
     STATUS_IND_TRAIN = 'I'
-    STATUS_PARENT = 'P'
     STATUSES = (
         (STATUS_WAITING, 'в ожидании'),
         (STATUS_TRAINING, 'групповые тренировки'),
         (STATUS_ARBITRARY, 'свободный график'),
         (STATUS_FINISHED, 'закончил'),
-        (STATUS_PARENT, 'родитель'),
     )
 
     id = models.UUIDField(primary_key=True, unique=True, default=uuid4)
@@ -65,6 +63,10 @@ class Player(models.Model):
     )
     bonus_lesson = models.SmallIntegerField(default=0, verbose_name='Количество отыгрышей')
     is_coach = models.BooleanField(default=False, verbose_name='Тренер ли')
+    is_parent = models.BooleanField(
+        default=False, verbose_name='Родитель ли',
+        help_text='является ли игрок родителем и имеет доступ к родительскому боту'
+    )
 
     objects = GetOrNoneManager()
     coaches = CoachPlayerManager()
@@ -75,6 +77,15 @@ class Player(models.Model):
 
     def __str__(self):
         return '{} {} -- {}'.format(self.first_name, self.last_name, self.phone_number)
+
+    def create_child(self, first_name: str, last_name: Optional[str] = None) -> Player:
+        """Создает ребенка для данного (self) игрока. self является родителем"""
+        return Player.objects.create(
+            tg_id=None,
+            parent=self,
+            first_name=first_name,
+            last_name=last_name,
+        )
 
     @classmethod
     def from_update(cls, update: Update) -> Optional[Player]:
@@ -112,17 +123,6 @@ class Player(models.Model):
             cls.STATUS_IND_TRAIN: TARIF_IND,
         }
         return tarif_by_status[status]
-
-    #@classmethod
-    #def create_child(cls, update: Update, context: CallbackContext) -> Tuple[Player, bool]:
-        #""" python-telegram-bot's Update, Context --> User instance """
-        #data = extract_user_data_from_update(update)
-        #parent = Player.from_update(update)
-        #u = cls.objects.сreate(
-        #    tg_id=None,
-        #    parent=parent
-        #)
-        #return u
 
 
 class TrainingGroup(ModelwithTime):

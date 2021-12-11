@@ -8,12 +8,11 @@ from django.utils.safestring import mark_safe
 from base.models import TrainingGroup, GroupTrainingDay, Player
 from base.django_admin.utils import send_alert_about_changing_tr_day_status, send_alert_about_changing_tr_day_time
 from player_bot.menu_and_commands.keyboards import construct_main_menu
-from parent_bot.menu_and_commands.keyboards import reg_child_butten
 from base.common_for_bots.utils import DT_BOT_FORMAT, TM_TIME_SCHEDULE_FORMAT, moscow_datetime
 from base.common_for_bots.tasks import clear_broadcast_messages
 from base.django_admin.static_text import ERROR_LIMIT_MAX_PLAYERS, ERROR_MAX_PLAYERS_IN_FUTURE, \
     ERROR_CANT_ADD_NEW_TRAIN
-from tennis_bot.settings import PARENT_TELEGRAM_TOKEN
+from tennis_bot.settings import PARENT_TELEGRAM_TOKEN, HOST
 from player_bot.skip_lesson.static_text import CANCEL_TRAIN_PLUS_BONUS_LESSON
 from player_bot.registration.static_text import NOW_YOU_HAVE_ACCESS_CONGRATS
 from base.common_for_bots.static_text import from_eng_to_rus_day_week
@@ -32,6 +31,7 @@ class PlayerForm(forms.ModelForm):
             'time_before_cancel',
             'bonus_lesson',
             'is_coach',
+            'is_parent',
         ]
 
     def clean(self):
@@ -48,7 +48,10 @@ class PlayerForm(forms.ModelForm):
                     message=text,
                     reply_markup=reply_markup
                 )
-            elif new_status == Player.STATUS_PARENT:
+
+            current_parent_status = self.instance.is_parent
+            new_parent_status = self.cleaned_data.get('is_parent')
+            if current_parent_status is False and new_parent_status is True:
                 text = NOW_YOU_HAVE_ACCESS_CONGRATS
                 clear_broadcast_messages(
                     chat_ids=[self.instance.tg_id],
@@ -93,9 +96,11 @@ class TrainingGroupForm(forms.ModelForm):
                             F('absent_cnt')
             ).distinct().values('id', 'date', 'start_time')
             if tr_day.exists():
-                error_ids = "\n".join([
-                                          '<a href="http://vladlen82.fvds.ru/tgadmin/base/grouptrainingday/{}/change/">{} {}</a>'.format(
-                                              x['id'], x['date'], x['start_time']) for x in tr_day])
+                error_ids = "\n".join(
+                    ['<a href="{}grouptrainingday/{}/change/">{} {}</a>'.format(
+                        HOST, x['id'], x['date'], x['start_time']) for x in tr_day
+                    ]
+                )
                 error_text = f"{ERROR_MAX_PLAYERS_IN_FUTURE}:\n{error_ids}"
                 raise ValidationError(
                     {'players': mark_safe(error_text)})

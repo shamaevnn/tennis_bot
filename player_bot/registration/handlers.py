@@ -4,7 +4,7 @@ from telegram import Update
 from telegram.ext import ConversationHandler, CallbackContext
 
 from admin_bot.go_to_site.keyboards import go_to_site_set_up_personal_data
-from admin_bot.go_to_site.static_text import NEW_CLIENT_HAS_COME
+from admin_bot.go_to_site.static_text import NEW_PLAYER_HAS_COME
 from base.common_for_bots.tasks import send_message_to_coaches
 from base.models import Player
 from player_bot.menu_and_commands.keyboards import construct_main_menu
@@ -48,7 +48,7 @@ def get_phone_number(update: Update, context: CallbackContext):
         )
 
         send_message_to_coaches(
-            text=NEW_CLIENT_HAS_COME.format(player),
+            text=NEW_PLAYER_HAS_COME.format(player),
             reply_markup=go_to_site_set_up_personal_data(player.id)
         )
 

@@ -51,7 +51,7 @@ def select_group_time(update: Update, context: CallbackContext):
 def confirm_group_lesson(update: Update, context: CallbackContext):
     tr_day_id = update.callback_query.data[len(player_bot.take_lesson.group.manage_data.CONFIRM_GROUP_LESSON):]
     tr_day = GroupTrainingDay.objects.select_related('group').get(id=tr_day_id)
-    player, _ = Player.get_player_and_created(update, context)
+    player = Player.from_update(update)
 
     player_text, player_markup, admin_text, admin_markup = handle_taking_group_lesson(player, tr_day)
     bot_edit_message(context.bot, player_text, update, player_markup)

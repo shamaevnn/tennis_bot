@@ -30,6 +30,7 @@ class PlayerForm(forms.ModelForm):
             'status',
             'time_before_cancel',
             'bonus_lesson',
+            'max_lessons_for_bonus_in_future',
             'is_coach',
         ]
 
@@ -48,6 +49,11 @@ class PlayerForm(forms.ModelForm):
                     message=text,
                     reply_markup=reply_markup
                 )
+
+        if self.cleaned_data.get('max_lessons_for_bonus_in_future') <= 0:
+            raise ValidationError(
+                {'max_lessons_for_bonus_in_future': 'ограничение на кол-во тренировок в будущем должно быть > 0.'}
+            )
 
 
 class TrainingGroupForm(forms.ModelForm):

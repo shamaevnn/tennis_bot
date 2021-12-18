@@ -51,6 +51,31 @@ class NoFreePlacesTests(TestCase):
         self.gr_5_mp_al.players.add(self.player_1, self.player_2, self.player_3, self.player_4, self.player_5)
         self.gr_6_mp_al.players.add(self.player_1, self.player_2, self.player_3, self.player_4, self.player_5, self.player_6)
 
+    def test_max_trainings_in_future(self):
+        """
+        Игрок gr_4_mp_al записался на 3 тренировки в будущем.
+        Пытается записаться на tr_day_4. Нельзя сделать это, тк максимум тренировок в будущем = 3
+        """
+        tr_day_1 = CreateData.tr_day_for_group(self.gr_4_mp_al)
+        tr_day_2 = CreateData.tr_day_for_group(self.gr_4_mp_al)
+        tr_day_3 = CreateData.tr_day_for_group(self.gr_4_mp_al)
+        tr_day_4 = CreateData.tr_day_for_group(self.gr_4_mp_al)
+        tr_day_1.visitors.add(self.gr_u_w_bl)
+        tr_day_2.pay_visitors.add(self.gr_u_w_bl)
+        tr_day_3.pay_bonus_visitors.add(self.gr_u_w_bl)
+
+        player_text, player_markup, admin_text, admin_markup = handle_taking_group_lesson(self.gr_u_w_bl, tr_day_4)
+        self.assertIsNotNone(player_text)
+        self.assertEqual(
+            player_markup, back_to_group_times_when_no_left_keyboard(
+                year=tr_day_4.date.year,
+                month=tr_day_4.date.month,
+                day=tr_day_4.date.day
+            )
+        )
+        self.assertEqual(admin_text, '')
+        self.assertIsNone(admin_markup)
+
     def test_no_free_places_no_additional_lessons(self):
         tr_day_4 = CreateData.tr_day_for_group(self.gr_4_mp)
         tr_day_6 = CreateData.tr_day_for_group(self.gr_6_mp)

@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Tuple, Optional
 
 from telegram import InlineKeyboardMarkup
 
@@ -8,6 +8,7 @@ from base.models import GroupTrainingDay, Player
 from player_bot.take_lesson.group.keyboards import choose_type_of_payment_for_group_lesson_keyboard, \
     back_to_group_times_when_no_left_keyboard
 from player_bot.take_lesson.group.manage_data import PAYMENT_MONEY_AND_BONUS_LESSONS, PAYMENT_MONEY
+from player_bot.take_lesson.group.static_text import CANT_TAKE_LESSON_MAX_IN_FUTURE
 from player_bot.take_lesson.static_text import CHOOSE_TYPE_OF_PAYMENT, NO_PLACES_FOR_THIS_TIME_CHOOSE_ANOTHER
 from tennis_bot.settings import TARIF_ARBITRARY, TARIF_GROUP, TARIF_PAYMENT_ADD_LESSON
 
@@ -15,14 +16,28 @@ from tennis_bot.settings import TARIF_ARBITRARY, TARIF_GROUP, TARIF_PAYMENT_ADD_
 def handle_taking_group_lesson(
         player: Player,
         tr_day: GroupTrainingDay
-) -> Tuple[str, InlineKeyboardMarkup, str, InlineKeyboardMarkup]:
+) -> Tuple[str, Optional[InlineKeyboardMarkup], Optional[str], Optional[InlineKeyboardMarkup]]:
+    admin_text = ''
+    admin_markup = None
+
+    max_lessons_in_future = player.max_lessons_for_bonus_in_future
+    now_count_lessons_in_future = player.count_not_self_group_trainings_in_future()
+    if now_count_lessons_in_future >= max_lessons_in_future:
+        player_text = CANT_TAKE_LESSON_MAX_IN_FUTURE.format(
+            max_lessons=max_lessons_in_future,
+            now_count_lessons=now_count_lessons_in_future,
+        )
+        player_markup = back_to_group_times_when_no_left_keyboard(
+            year=tr_day.date.year,
+            month=tr_day.date.month,
+            day=tr_day.date.day
+        )
+        return player_text, player_markup, admin_text, admin_markup
+
     time_tlg, _, _, date_tlg, day_of_week, _, end_time = get_time_info_from_tr_day(tr_day)
     date_info = DATE_INFO.format(date_tlg, day_of_week, time_tlg)
 
     n_free_places = get_n_free_places(tr_day)
-
-    admin_text = ''
-    admin_markup = None
     if n_free_places > 0:
         tr_day.visitors.add(player)
         player_text = f'Записал тебя на тренировку.\n{date_info}'

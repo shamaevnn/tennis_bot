@@ -62,6 +62,9 @@ class Player(models.Model):
         default=timedelta(hours=6)
     )
     bonus_lesson = models.SmallIntegerField(default=0, verbose_name='Количество отыгрышей')
+    max_lessons_for_bonus_in_future = models.PositiveSmallIntegerField(
+        default=3, verbose_name='Ограничение на кол-во тренировок за отыгрыши'
+    )
     is_coach = models.BooleanField(default=False, verbose_name='Тренер ли')
 
     objects = GetOrNoneManager()
@@ -73,6 +76,17 @@ class Player(models.Model):
 
     def __str__(self):
         return '{} {} -- {}'.format(self.first_name, self.last_name, self.phone_number)
+
+    def count_not_self_group_trainings_in_future(self):
+        """
+        Считаем на сколько тренировок записался игрок в будущем в другую группу,
+        либо за отыгрыши, либо за платные отыгрыши
+        """
+        return GroupTrainingDay.objects.filter(
+            Q(visitors__in=[self]) |
+            Q(pay_visitors__in=[self]) |
+            Q(pay_bonus_visitors__in=[self])
+        ).count()
 
     @classmethod
     def from_update(cls, update: Update) -> Optional[Player]:

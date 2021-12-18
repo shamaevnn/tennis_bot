@@ -122,7 +122,8 @@ class Player(models.Model):
         return GroupTrainingDay.objects.filter(
             Q(visitors__in=[self])
             | Q(pay_visitors__in=[self])
-            | Q(pay_bonus_visitors__in=[self])
+            | Q(pay_bonus_visitors__in=[self]),
+            date__gte=datetime.now(),
         ).count()
 
     @classmethod

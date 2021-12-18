@@ -7,7 +7,6 @@ from django.db.models import Q
 from django.utils.http import urlencode
 
 from .forms import PlayerForm, TrainingGroupForm, GroupTrainingDayForm
-from django.utils.translation import ugettext_lazy as _
 from django.contrib.admin import SimpleListFilter
 from django.core.exceptions import ValidationError
 from django import forms
@@ -57,7 +56,7 @@ class PlayerAdmin(admin.ModelAdmin):
 
 
 class DefaultGroupStatus(SimpleListFilter):
-    title = _("Статус")
+    title = "Статус"
 
     parameter_name = "status"
 

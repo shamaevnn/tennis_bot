@@ -6,7 +6,13 @@ from django.db.models import Manager
 class ModelwithTimeManager(models.Manager):
     def tr_day_is_my_available(self, *args, **kwargs):
         from base.models import GroupTrainingDay
-        return self.filter(is_available=True, tr_day_status=GroupTrainingDay.MY_TRAIN_STATUS, *args, **kwargs)
+
+        return self.filter(
+            is_available=True,
+            tr_day_status=GroupTrainingDay.MY_TRAIN_STATUS,
+            *args,
+            **kwargs
+        )
 
 
 class GetOrNoneManager(models.Manager):

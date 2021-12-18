@@ -4,31 +4,34 @@ from django.db import migrations, models
 
 
 def rm_non_admin_users(apps, schema_editor):
-    User = apps.get_model('base', 'User')
+    User = apps.get_model("base", "User")
     User.objects.exclude(is_superuser=True).delete()
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0015_rm_tmp_fields'),
+        ("base", "0015_rm_tmp_fields"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='user',
-            name='parent',
+            model_name="user",
+            name="parent",
         ),
         migrations.AlterField(
-            model_name='grouptrainingday',
-            name='is_available',
-            field=models.BooleanField(default=True, help_text='Будет ли в этот день тренировка у этой группы',
-                                      verbose_name='Доступно'),
+            model_name="grouptrainingday",
+            name="is_available",
+            field=models.BooleanField(
+                default=True,
+                help_text="Будет ли в этот день тренировка у этой группы",
+                verbose_name="Доступно",
+            ),
         ),
         migrations.AlterField(
-            model_name='traininggroup',
-            name='max_players',
-            field=models.SmallIntegerField(default=6, verbose_name='Макс. игроков'),
+            model_name="traininggroup",
+            name="max_players",
+            field=models.SmallIntegerField(default=6, verbose_name="Макс. игроков"),
         ),
         migrations.RunPython(rm_non_admin_users),
     ]

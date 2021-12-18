@@ -7,12 +7,12 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0006_auto_20211030_1220'),
+        ("base", "0006_auto_20211030_1220"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='user',
-            options={'verbose_name': 'user', 'verbose_name_plural': 'users'},
+            name="user",
+            options={"verbose_name": "user", "verbose_name_plural": "users"},
         ),
     ]

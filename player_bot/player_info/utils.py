@@ -5,21 +5,27 @@ from base.models import GroupTrainingDay, Player, TrainingGroup
 
 def balls_lessons_payment(year: int, month: int, player: Player):
     tr_days_this_month: QuerySet[GroupTrainingDay] = GroupTrainingDay.objects.filter(
-        date__year=year,
-        date__month=month,
-        is_available=True
+        date__year=year, date__month=month, is_available=True
     )
 
     if player.status == Player.STATUS_TRAINING:
-        tr_days_num_this_month: int = tr_days_this_month.filter(
-            group__players__in=[player], group__status=TrainingGroup.STATUS_GROUP
-        ).distinct().count()
+        tr_days_num_this_month: int = (
+            tr_days_this_month.filter(
+                group__players__in=[player], group__status=TrainingGroup.STATUS_GROUP
+            )
+            .distinct()
+            .count()
+        )
         balls_this_month: int = tr_days_num_this_month
 
-        group: TrainingGroup = TrainingGroup.objects.filter(players__in=[player], status=TrainingGroup.STATUS_GROUP).first()
+        group: TrainingGroup = TrainingGroup.objects.filter(
+            players__in=[player], status=TrainingGroup.STATUS_GROUP
+        ).first()
         tarif: int = group.tarif_for_one_lesson if group else 0
     elif player.status == Player.STATUS_ARBITRARY:
-        tr_days_num_this_month: int = tr_days_this_month.filter(visitors__in=[player]).distinct().count()
+        tr_days_num_this_month: int = (
+            tr_days_this_month.filter(visitors__in=[player]).distinct().count()
+        )
         balls_this_month: int = 0
         tarif: int = Player.get_tarif_by_status(player.status)
     else:
@@ -34,7 +40,9 @@ def balls_lessons_payment(year: int, month: int, player: Player):
 
 
 def group_players_info(players: QuerySet[Player]):
-    return '\n'.join((
-        f"👤{x['last_name']} {x['first_name']}"
-        for x in players.values('first_name', 'last_name').order_by('last_name')
-    ))
+    return "\n".join(
+        (
+            f"👤{x['last_name']} {x['first_name']}"
+            for x in players.values("first_name", "last_name").order_by("last_name")
+        )
+    )

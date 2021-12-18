@@ -7,14 +7,14 @@ from base.common_for_bots.utils import create_callback_data
 
 
 def back_from_show_grouptrainingday_info_keyboard(year, month, day):
-    buttons = [[
-        InlineKeyboardButton(
-            BACK_BUTTON,
-            callback_data=create_callback_data(
-                CLNDR_ADMIN_VIEW_SCHEDULE,
-                CLNDR_DAY,
-                year, month, day
-            )
-        ),
-    ]]
+    buttons = [
+        [
+            InlineKeyboardButton(
+                BACK_BUTTON,
+                callback_data=create_callback_data(
+                    CLNDR_ADMIN_VIEW_SCHEDULE, CLNDR_DAY, year, month, day
+                ),
+            ),
+        ]
+    ]
     return InlineKeyboardMarkup(buttons)

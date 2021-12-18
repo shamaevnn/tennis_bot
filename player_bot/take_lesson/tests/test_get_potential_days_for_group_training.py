@@ -6,13 +6,15 @@ from player_bot.take_lesson.group.query import get_potential_days_for_group_trai
 
 class BaseTestCases(TestCase):
     def setUp(self):
-        self.me_training_in_group = CreateData.group_player(tg_id=350490234, first_name='Nikita 1')
-        self.player_1 = CreateData.group_player(tg_id=1, first_name='player_1')
-        self.player_2 = CreateData.group_player(tg_id=2, first_name='player_2')
+        self.me_training_in_group = CreateData.group_player(
+            tg_id=350490234, first_name="Nikita 1"
+        )
+        self.player_1 = CreateData.group_player(tg_id=1, first_name="player_1")
+        self.player_2 = CreateData.group_player(tg_id=2, first_name="player_2")
 
     def test_no_individual(self):
         # нельзя записаться на индивидуальную тренировку
-        group = CreateData.group(name='ASdrqw', status=TrainingGroup.STATUS_4IND)
+        group = CreateData.group(name="ASdrqw", status=TrainingGroup.STATUS_4IND)
 
         tr_day = CreateData.tr_day_for_group(group=group, is_individual=True)
 
@@ -39,7 +41,9 @@ class BaseTestCases(TestCase):
     def test_not_my_group(self):
         # нельзя записаться в свою группу
         group_with_me = CreateData.group(max_players=4)
-        group_with_me.players.add(self.me_training_in_group, self.player_1, self.player_2)
+        group_with_me.players.add(
+            self.me_training_in_group, self.player_1, self.player_2
+        )
 
         tr_day = CreateData.tr_day_for_group(group=group_with_me)
 
@@ -79,21 +83,32 @@ class BaseTestCases(TestCase):
 
 class NotAvailableForAdditionalLessonsTestCases(TestCase):
     def setUp(self):
-        self.me_training_in_group = CreateData.group_player(tg_id=350490234, first_name='Nikita')
+        self.me_training_in_group = CreateData.group_player(
+            tg_id=350490234, first_name="Nikita"
+        )
 
-        self.player_1 = CreateData.group_player(tg_id=1, first_name='player_1')
-        self.player_2 = CreateData.group_player(tg_id=2, first_name='player_2')
-        self.player_3 = CreateData.group_player(tg_id=3, first_name='player_3')
-        self.player_4 = CreateData.group_player(tg_id=4, first_name='player_4')
-        self.player_5 = CreateData.group_player(tg_id=5, first_name='player_5')
-        self.player_6 = CreateData.group_player(tg_id=6, first_name='player_6')
-        self.player_7 = CreateData.group_player(tg_id=7, first_name='player_7')
+        self.player_1 = CreateData.group_player(tg_id=1, first_name="player_1")
+        self.player_2 = CreateData.group_player(tg_id=2, first_name="player_2")
+        self.player_3 = CreateData.group_player(tg_id=3, first_name="player_3")
+        self.player_4 = CreateData.group_player(tg_id=4, first_name="player_4")
+        self.player_5 = CreateData.group_player(tg_id=5, first_name="player_5")
+        self.player_6 = CreateData.group_player(tg_id=6, first_name="player_6")
+        self.player_7 = CreateData.group_player(tg_id=7, first_name="player_7")
 
         self.group_with_4_players = CreateData.group(name="Банда №1", max_players=4)
         self.group_with_6_players = CreateData.group(name="Банда №2", max_players=6)
 
-        self.group_with_4_players.players.add(self.player_1, self.player_2, self.player_3, self.player_4)
-        self.group_with_6_players.players.add(self.player_1, self.player_2, self.player_3, self.player_4, self.player_5, self.player_6)
+        self.group_with_4_players.players.add(
+            self.player_1, self.player_2, self.player_3, self.player_4
+        )
+        self.group_with_6_players.players.add(
+            self.player_1,
+            self.player_2,
+            self.player_3,
+            self.player_4,
+            self.player_5,
+            self.player_6,
+        )
 
     def test_all_players_from_group(self):
         # нельзя записаться, если присутствуют все из группы и max_players=count(players)
@@ -142,23 +157,38 @@ class NotAvailableForAdditionalLessonsTestCases(TestCase):
 
 class AvailableForAdditionalLessonsTestCases(TestCase):
     def setUp(self):
-        self.me_training_in_group = CreateData.group_player(tg_id=350490234, first_name='Nikita')
+        self.me_training_in_group = CreateData.group_player(
+            tg_id=350490234, first_name="Nikita"
+        )
 
-        self.player_1 = CreateData.group_player(tg_id=1, first_name='player_1')
-        self.player_2 = CreateData.group_player(tg_id=2, first_name='player_2')
-        self.player_3 = CreateData.group_player(tg_id=3, first_name='player_3')
-        self.player_4 = CreateData.group_player(tg_id=4, first_name='player_4')
-        self.player_5 = CreateData.group_player(tg_id=5, first_name='player_5')
-        self.player_6 = CreateData.group_player(tg_id=6, first_name='player_6')
-        self.player_7 = CreateData.group_player(tg_id=7, first_name='player_7')
-        self.player_8 = CreateData.group_player(tg_id=7, first_name='player_8')
-        self.player_9 = CreateData.group_player(tg_id=7, first_name='player_9')
+        self.player_1 = CreateData.group_player(tg_id=1, first_name="player_1")
+        self.player_2 = CreateData.group_player(tg_id=2, first_name="player_2")
+        self.player_3 = CreateData.group_player(tg_id=3, first_name="player_3")
+        self.player_4 = CreateData.group_player(tg_id=4, first_name="player_4")
+        self.player_5 = CreateData.group_player(tg_id=5, first_name="player_5")
+        self.player_6 = CreateData.group_player(tg_id=6, first_name="player_6")
+        self.player_7 = CreateData.group_player(tg_id=7, first_name="player_7")
+        self.player_8 = CreateData.group_player(tg_id=7, first_name="player_8")
+        self.player_9 = CreateData.group_player(tg_id=7, first_name="player_9")
 
-        self.group_with_4_players = CreateData.group(name="Банда №1", max_players=4, available_for_additional_lessons=True)
-        self.group_with_6_players = CreateData.group(name="Банда №2", max_players=6, available_for_additional_lessons=True)
+        self.group_with_4_players = CreateData.group(
+            name="Банда №1", max_players=4, available_for_additional_lessons=True
+        )
+        self.group_with_6_players = CreateData.group(
+            name="Банда №2", max_players=6, available_for_additional_lessons=True
+        )
 
-        self.group_with_4_players.players.add(self.player_1, self.player_2, self.player_3, self.player_4)
-        self.group_with_6_players.players.add(self.player_1, self.player_2, self.player_3, self.player_4, self.player_5, self.player_6)
+        self.group_with_4_players.players.add(
+            self.player_1, self.player_2, self.player_3, self.player_4
+        )
+        self.group_with_6_players.players.add(
+            self.player_1,
+            self.player_2,
+            self.player_3,
+            self.player_4,
+            self.player_5,
+            self.player_6,
+        )
 
     def test_full_group(self):
         # нельзя записаться, если есть все игроки из группы и при этом 6 человек
@@ -236,4 +266,3 @@ class AvailableForAdditionalLessonsTestCases(TestCase):
 
         days = get_potential_days_for_group_training(player=self.me_training_in_group)
         self.assertNotIn(tr_day_4, days)
-

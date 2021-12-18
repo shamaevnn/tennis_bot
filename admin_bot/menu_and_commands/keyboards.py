@@ -10,7 +10,7 @@ def construct_admin_main_menu():
     return ReplyKeyboardMarkup(
         keyboard=[
             [ADMIN_PAYMENT, ADMIN_TIME_SCHEDULE_BUTTON],
-            [ADMIN_SITE, ADMIN_SEND_MESSAGE]
+            [ADMIN_SITE, ADMIN_SEND_MESSAGE],
         ],
-        resize_keyboard=True
+        resize_keyboard=True,
     )

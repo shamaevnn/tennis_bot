@@ -7,13 +7,19 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0004_photo'),
+        ("base", "0004_photo"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='grouptrainingday',
-            name='pay_bonus_visitors',
-            field=models.ManyToManyField(blank=True, help_text='Платный отыгрыш', related_name='pay_bonus_visitors', to=settings.AUTH_USER_MODEL, verbose_name='Заплатили ₽ + отыгрыш'),
+            model_name="grouptrainingday",
+            name="pay_bonus_visitors",
+            field=models.ManyToManyField(
+                blank=True,
+                help_text="Платный отыгрыш",
+                related_name="pay_bonus_visitors",
+                to=settings.AUTH_USER_MODEL,
+                verbose_name="Заплатили ₽ + отыгрыш",
+            ),
         ),
     ]

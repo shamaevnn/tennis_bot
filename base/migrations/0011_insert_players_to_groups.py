@@ -4,11 +4,11 @@ from django.db import migrations
 
 
 def insert_players_from_users(apps, schema_editor):
-    Player = apps.get_model('base', 'Player')
-    TrainingGroup = apps.get_model('base', 'TrainingGroup')
+    Player = apps.get_model("base", "Player")
+    TrainingGroup = apps.get_model("base", "TrainingGroup")
 
     for group in TrainingGroup.objects.all().iterator():
-        users_tg_ids = list(group.users.all().values_list('id', flat=True))
+        users_tg_ids = list(group.users.all().values_list("id", flat=True))
         players = Player.objects.filter(tg_id__in=users_tg_ids)
         group.players.add(*players)
 
@@ -16,7 +16,7 @@ def insert_players_from_users(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0010_traininggroup_players'),
+        ("base", "0010_traininggroup_players"),
     ]
 
     operations = [

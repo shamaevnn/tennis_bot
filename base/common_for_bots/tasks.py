@@ -12,14 +12,26 @@ from tennis_bot.settings import TELEGRAM_TOKEN, DEBUG, ADMIN_TELEGRAM_TOKEN
 logger = get_task_logger(__name__)
 
 
-def send_message(chat_id: int, text: str, reply_markup=None, tg_token=TELEGRAM_TOKEN, parse_mode='HTML'):
+def send_message(
+    chat_id: int,
+    text: str,
+    reply_markup=None,
+    tg_token=TELEGRAM_TOKEN,
+    parse_mode="HTML",
+):
     bot = telegram.Bot(tg_token)
     try:
         if not DEBUG:
             if reply_markup is not None:
-                if reply_markup.get('inline_keyboard'):
-                    reply_markup = InlineKeyboardMarkup([[InlineKeyboardButton(**button)
-                                                          for button in reply_markup.get('inline_keyboard')[0]]])
+                if reply_markup.get("inline_keyboard"):
+                    reply_markup = InlineKeyboardMarkup(
+                        [
+                            [
+                                InlineKeyboardButton(**button)
+                                for button in reply_markup.get("inline_keyboard")[0]
+                            ]
+                        ]
+                    )
 
         m = bot.send_message(
             chat_id=chat_id,
@@ -42,14 +54,14 @@ def send_message(chat_id: int, text: str, reply_markup=None, tg_token=TELEGRAM_T
 
 @app.task(ignore_result=True)
 def broadcast_message(
-        chat_ids: List[int],
-        message: str,
-        reply_markup=None,
-        tg_token=TELEGRAM_TOKEN,
-        sleep_between=0.4,
-        parse_mode="HTML"
+    chat_ids: List[int],
+    message: str,
+    reply_markup=None,
+    tg_token=TELEGRAM_TOKEN,
+    sleep_between=0.4,
+    parse_mode="HTML",
 ):
-    """ It's used to broadcast message to big amount of players """
+    """It's used to broadcast message to big amount of players"""
     logger.info(f"Going to send message: '{message}' to {len(chat_ids)} players")
 
     for chat_id in chat_ids:
@@ -70,12 +82,12 @@ def broadcast_message(
 
 
 def clear_broadcast_messages(
-        chat_ids: List[int],
-        message: str,
-        reply_markup=None,
-        tg_token=TELEGRAM_TOKEN,
-        sleep_between=0.4,
-        parse_mode="HTML"
+    chat_ids: List[int],
+    message: str,
+    reply_markup=None,
+    tg_token=TELEGRAM_TOKEN,
+    sleep_between=0.4,
+    parse_mode="HTML",
 ):
     if DEBUG:
         broadcast_message(
@@ -84,7 +96,7 @@ def clear_broadcast_messages(
             reply_markup=reply_markup,
             tg_token=tg_token,
             sleep_between=sleep_between,
-            parse_mode=parse_mode
+            parse_mode=parse_mode,
         )
     else:
         broadcast_message.delay(
@@ -93,18 +105,18 @@ def clear_broadcast_messages(
             reply_markup=reply_markup.to_dict() if reply_markup else None,
             tg_token=tg_token,
             sleep_between=sleep_between,
-            parse_mode=parse_mode
+            parse_mode=parse_mode,
         )
 
 
 def send_message_to_coaches(
-        text: str,
-        reply_markup: Optional[InlineKeyboardMarkup] = None,
-        tg_token: str = ADMIN_TELEGRAM_TOKEN,
-        parse_mode=ParseMode.HTML,
+    text: str,
+    reply_markup: Optional[InlineKeyboardMarkup] = None,
+    tg_token: str = ADMIN_TELEGRAM_TOKEN,
+    parse_mode=ParseMode.HTML,
 ):
     coaches = Player.coaches.all()
-    coach_tg_ids = list(coaches.values_list('tg_id', flat=True))
+    coach_tg_ids = list(coaches.values_list("tg_id", flat=True))
 
     clear_broadcast_messages(
         chat_ids=coach_tg_ids,

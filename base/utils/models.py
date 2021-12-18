@@ -15,4 +15,3 @@ class ModelwithTime(models.Model):
 
     class Meta:
         abstract = True
-

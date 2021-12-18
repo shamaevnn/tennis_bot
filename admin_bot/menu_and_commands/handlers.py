@@ -16,5 +16,7 @@ def start(update: Update, context: CallbackContext):
 
 
 def cancel(update: Update, context: CallbackContext):
-    update.message.reply_text(text=THIS_WAY_YEAH, reply_markup=construct_admin_main_menu())
+    update.message.reply_text(
+        text=THIS_WAY_YEAH, reply_markup=construct_admin_main_menu()
+    )
     return ConversationHandler.END

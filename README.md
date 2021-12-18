@@ -31,6 +31,6 @@ This bot was built based on [django-telegram-bot](https://github.com/ohld/django
  * `PostgreSql` 💾
 
 ## Summary
-This bot helps to automate routine tasks of the coach. With this bot, he doesn't have to manually track a lot of information from about 100 people and spend his time on this during trainings. 
+This bot helps to automate routine tasks of the coach. With this bot, he doesn't have to manually track a lot of information from about 100 people and spend his time on this during trainings.
 
 ## [Contributing](./CONTRIBUTING.md)

@@ -8,29 +8,90 @@ import uuid
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0007_alter_user_meta'),
+        ("base", "0007_alter_user_meta"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Player',
+            name="Player",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, primary_key=True, serialize=False, unique=True)),
-                ('first_name', models.CharField(max_length=32, null=True, verbose_name='Имя')),
-                ('last_name', models.CharField(max_length=32, null=True, verbose_name='Фамилия')),
-                ('phone_number', models.CharField(max_length=16, null=True, verbose_name='Номер телефона')),
-                ('tg_id', models.PositiveBigIntegerField(blank=True, null=True, verbose_name='telegram id')),
-                ('tg_username', models.CharField(blank=True, max_length=64, null=True)),
-                ('has_blocked_bot', models.BooleanField(default=False, verbose_name='заблокировал бота')),
-                ('deep_link', models.CharField(blank=True, max_length=64, null=True)),
-                ('status', models.CharField(choices=[('W', 'в ожидании'), ('G', 'групповые тренировки'), ('A', 'свободный график'), ('F', 'закончил')], default='W', max_length=1, verbose_name='статус')),
-                ('time_before_cancel', models.DurationField(default=datetime.timedelta(seconds=21600), help_text='ЧАСЫ:МИНУТЫ:СЕКУНДЫ', null=True, verbose_name='Время, за которое нужно предупредить')),
-                ('bonus_lesson', models.SmallIntegerField(blank=True, default=0, null=True, verbose_name='Количество отыгрышей')),
-                ('is_coach', models.BooleanField(default=False, verbose_name='Тренер ли')),
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        primary_key=True,
+                        serialize=False,
+                        unique=True,
+                    ),
+                ),
+                (
+                    "first_name",
+                    models.CharField(max_length=32, null=True, verbose_name="Имя"),
+                ),
+                (
+                    "last_name",
+                    models.CharField(max_length=32, null=True, verbose_name="Фамилия"),
+                ),
+                (
+                    "phone_number",
+                    models.CharField(
+                        max_length=16, null=True, verbose_name="Номер телефона"
+                    ),
+                ),
+                (
+                    "tg_id",
+                    models.PositiveBigIntegerField(
+                        blank=True, null=True, verbose_name="telegram id"
+                    ),
+                ),
+                ("tg_username", models.CharField(blank=True, max_length=64, null=True)),
+                (
+                    "has_blocked_bot",
+                    models.BooleanField(
+                        default=False, verbose_name="заблокировал бота"
+                    ),
+                ),
+                ("deep_link", models.CharField(blank=True, max_length=64, null=True)),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("W", "в ожидании"),
+                            ("G", "групповые тренировки"),
+                            ("A", "свободный график"),
+                            ("F", "закончил"),
+                        ],
+                        default="W",
+                        max_length=1,
+                        verbose_name="статус",
+                    ),
+                ),
+                (
+                    "time_before_cancel",
+                    models.DurationField(
+                        default=datetime.timedelta(seconds=21600),
+                        help_text="ЧАСЫ:МИНУТЫ:СЕКУНДЫ",
+                        null=True,
+                        verbose_name="Время, за которое нужно предупредить",
+                    ),
+                ),
+                (
+                    "bonus_lesson",
+                    models.SmallIntegerField(
+                        blank=True,
+                        default=0,
+                        null=True,
+                        verbose_name="Количество отыгрышей",
+                    ),
+                ),
+                (
+                    "is_coach",
+                    models.BooleanField(default=False, verbose_name="Тренер ли"),
+                ),
             ],
             options={
-                'verbose_name': 'игрок',
-                'verbose_name_plural': 'игроки',
+                "verbose_name": "игрок",
+                "verbose_name_plural": "игроки",
             },
         )
     ]

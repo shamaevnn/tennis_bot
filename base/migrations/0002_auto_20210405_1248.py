@@ -7,18 +7,28 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0001_initial'),
+        ("base", "0001_initial"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='grouptrainingday',
-            name='duration',
-            field=models.DurationField(default=datetime.timedelta(seconds=3600), help_text='ЧАСЫ:МИНУТЫ:СЕКУНДЫ', null=True, verbose_name='Продолжительность занятия'),
+            model_name="grouptrainingday",
+            name="duration",
+            field=models.DurationField(
+                default=datetime.timedelta(seconds=3600),
+                help_text="ЧАСЫ:МИНУТЫ:СЕКУНДЫ",
+                null=True,
+                verbose_name="Продолжительность занятия",
+            ),
         ),
         migrations.AlterField(
-            model_name='user',
-            name='time_before_cancel',
-            field=models.DurationField(default=datetime.timedelta(seconds=21600), help_text='ЧАСЫ:МИНУТЫ:СЕКУНДЫ', null=True, verbose_name='Время, за которое нужно предупредить'),
+            model_name="user",
+            name="time_before_cancel",
+            field=models.DurationField(
+                default=datetime.timedelta(seconds=21600),
+                help_text="ЧАСЫ:МИНУТЫ:СЕКУНДЫ",
+                null=True,
+                verbose_name="Время, за которое нужно предупредить",
+            ),
         ),
     ]

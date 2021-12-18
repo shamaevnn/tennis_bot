@@ -4,8 +4,8 @@ from django.db import migrations
 
 
 def insert_players(apps, schema_editor):
-    User = apps.get_model('base', 'User')
-    Player = apps.get_model('base', 'Player')
+    User = apps.get_model("base", "User")
+    Player = apps.get_model("base", "Player")
 
     for user in User.objects.all():
         Player.objects.create(
@@ -24,7 +24,7 @@ def insert_players(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0008_create_player_model'),
+        ("base", "0008_create_player_model"),
     ]
 
     operations = [

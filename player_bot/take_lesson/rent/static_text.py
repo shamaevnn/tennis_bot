@@ -1,4 +1,4 @@
-HOW_MANY_PEOPLE_WILL_COME = 'Сколько человек придет на занятие?'
+HOW_MANY_PEOPLE_WILL_COME = "Сколько человек придет на занятие?"
 TRAIN_RENT_INFO = """
 Аренда на {n_players} игроков будет стоить <b>{price}₽</b>
 
@@ -6,7 +6,7 @@ TRAIN_RENT_INFO = """
 ⏰Время: <b>{start_time} — {end_time}</b>
 """
 
-RENT_COURT = 'Арендовать корт'
+RENT_COURT = "Арендовать корт"
 
 WILL_SAY_TO_COACH_ABOUT_RENTING = """
 Сообщу тренеру, что ты хочешь арендовать корт за <b>{price}₽</b> на {n_players} игроков

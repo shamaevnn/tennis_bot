@@ -1,11 +1,9 @@
 import django
 import os
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'tennis_bot.settings')
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "tennis_bot.settings")
 django.setup()
-from telegram.ext import (
-    Updater
-)
+from telegram.ext import Updater
 
 import telegram
 
@@ -28,5 +26,5 @@ def main():
 
 bot = telegram.Bot(PARENT_TELEGRAM_TOKEN)
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

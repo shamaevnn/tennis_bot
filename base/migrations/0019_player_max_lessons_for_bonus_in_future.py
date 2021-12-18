@@ -6,13 +6,15 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0018_player_parent'),
+        ("base", "0018_player_parent"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='player',
-            name='max_lessons_for_bonus_in_future',
-            field=models.PositiveSmallIntegerField(default=3, verbose_name='Ограничение на кол-во тренировок за отыгрыши'),
+            model_name="player",
+            name="max_lessons_for_bonus_in_future",
+            field=models.PositiveSmallIntegerField(
+                default=3, verbose_name="Ограничение на кол-во тренировок за отыгрыши"
+            ),
         ),
     ]

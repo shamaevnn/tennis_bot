@@ -18,14 +18,21 @@ from django.contrib import admin
 from django.urls import path
 from django.views.decorators.csrf import csrf_exempt
 
-from base.views import home_redirect, TelegramBotWebhookView, TelegramAdminBotWebhookView
+from base.views import (
+    home_redirect,
+    TelegramBotWebhookView,
+    TelegramAdminBotWebhookView,
+)
 
-handler404 = 'base.views.my_custom_page_not_found_view'
-handler500 = 'base.views.my_custom_error_view'
+handler404 = "base.views.my_custom_page_not_found_view"
+handler500 = "base.views.my_custom_error_view"
 
 urlpatterns = [
-    url(r'^tgadmin/', admin.site.urls),
-    url(r'^$', home_redirect, name='home'),
-    path('super_secter_webhook/', csrf_exempt(TelegramBotWebhookView.as_view())),
-    path('super_secter_admin_webhook/', csrf_exempt(TelegramAdminBotWebhookView.as_view())),
+    url(r"^tgadmin/", admin.site.urls),
+    url(r"^$", home_redirect, name="home"),
+    path("super_secter_webhook/", csrf_exempt(TelegramBotWebhookView.as_view())),
+    path(
+        "super_secter_admin_webhook/",
+        csrf_exempt(TelegramAdminBotWebhookView.as_view()),
+    ),
 ]

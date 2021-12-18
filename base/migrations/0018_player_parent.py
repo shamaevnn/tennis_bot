@@ -7,13 +7,20 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0017_alter_user'),
+        ("base", "0017_alter_user"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='player',
-            name='parent',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='children', to='base.player', verbose_name='Родитель'),
+            model_name="player",
+            name="parent",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.PROTECT,
+                related_name="children",
+                to="base.player",
+                verbose_name="Родитель",
+            ),
         ),
     ]

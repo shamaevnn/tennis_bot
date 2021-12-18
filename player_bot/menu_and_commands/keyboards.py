@@ -14,8 +14,13 @@ def construct_main_menu(player: Optional[Player] = None):
     payment_button = []
     if player and player.status == Player.STATUS_TRAINING:
         today_date = date.today()
-        player_payment = Payment.objects.filter(player=player, player__status=player.status, fact_amount=0,
-                                              year=today_date.year-2020, month=today_date.month)
+        player_payment = Payment.objects.filter(
+            player=player,
+            player__status=player.status,
+            fact_amount=0,
+            year=today_date.year - 2020,
+            month=today_date.month,
+        )
         if player_payment.exists():
             payment_button = [NO_PAYMENT_BUTTON]
 
@@ -23,7 +28,7 @@ def construct_main_menu(player: Optional[Player] = None):
         [
             payment_button,
             [MY_DATA_BUTTON, HELP_BUTTON],
-            [SKIP_LESSON_BUTTON, TAKE_LESSON_BUTTON]
+            [SKIP_LESSON_BUTTON, TAKE_LESSON_BUTTON],
         ],
-        resize_keyboard=True
+        resize_keyboard=True,
     )

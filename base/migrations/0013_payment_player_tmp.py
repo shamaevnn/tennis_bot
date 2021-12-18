@@ -5,8 +5,8 @@ import django.db.models.deletion
 
 
 def insert_data_from_users_to_players(apps, schema_editor):
-    Player = apps.get_model('base', 'Player')
-    Payment = apps.get_model('base', 'Payment')
+    Player = apps.get_model("base", "Player")
+    Payment = apps.get_model("base", "Payment")
 
     for payment in Payment.objects.filter(player__isnull=False).iterator():
         player_tmp = Player.objects.filter(tg_id=payment.player.id).first()
@@ -17,14 +17,19 @@ def insert_data_from_users_to_players(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0012_alertslog_player_tmp'),
+        ("base", "0012_alertslog_player_tmp"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='payment',
-            name='player_tmp',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to='base.player', verbose_name='игрок'),
+            model_name="payment",
+            name="player_tmp",
+            field=models.ForeignKey(
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                to="base.player",
+                verbose_name="игрок",
+            ),
         ),
-        migrations.RunPython(insert_data_from_users_to_players)
+        migrations.RunPython(insert_data_from_users_to_players),
     ]

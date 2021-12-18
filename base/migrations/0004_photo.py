@@ -4,7 +4,7 @@ from django.db import migrations, models
 
 
 def insert_data_in_photo(apps, schema_editor):
-    Photo = apps.get_model('base', 'Photo')
+    Photo = apps.get_model("base", "Photo")
     Photo.objects.update_or_create(
         url="https://perfum-online.by/image/data/1news/that-to-do-%D1%87%D1%82%D0%BE%D0%B1-not-to-miss-drills.jpg",
         text="Знаю, что лень идти, а надо. Сегодня тренировка:",
@@ -158,22 +158,45 @@ def insert_data_in_photo(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0003_traininggroup_order'),
+        ("base", "0003_traininggroup_order"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Photo',
+            name="Photo",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('url', models.TextField(blank=True, null=True, verbose_name='Ссылка на картинку')),
-                ('telegram_id', models.CharField(blank=True, max_length=256, null=True, verbose_name='id картинки на сервере телеграма')),
-                ('text', models.TextField(blank=True, null=True, verbose_name='Текстовое описание')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "url",
+                    models.TextField(
+                        blank=True, null=True, verbose_name="Ссылка на картинку"
+                    ),
+                ),
+                (
+                    "telegram_id",
+                    models.CharField(
+                        blank=True,
+                        max_length=256,
+                        null=True,
+                        verbose_name="id картинки на сервере телеграма",
+                    ),
+                ),
+                (
+                    "text",
+                    models.TextField(
+                        blank=True, null=True, verbose_name="Текстовое описание"
+                    ),
+                ),
             ],
-            options={
-                'verbose_name': 'фотография',
-                'verbose_name_plural': 'фотографии'
-            },
+            options={"verbose_name": "фотография", "verbose_name_plural": "фотографии"},
         ),
-        migrations.RunPython(insert_data_in_photo)
+        migrations.RunPython(insert_data_in_photo),
     ]

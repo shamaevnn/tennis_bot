@@ -6,13 +6,17 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0019_player_max_lessons_for_bonus_in_future'),
+        ("base", "0019_player_max_lessons_for_bonus_in_future"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='payment',
-            name='year',
-            field=models.CharField(choices=[('0', '2020'), ('1', '2021'), ('2', '2022')], max_length=1, verbose_name='год'),
+            model_name="payment",
+            name="year",
+            field=models.CharField(
+                choices=[("0", "2020"), ("1", "2021"), ("2", "2022")],
+                max_length=1,
+                verbose_name="год",
+            ),
         ),
     ]

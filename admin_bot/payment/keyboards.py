@@ -52,7 +52,8 @@ def choose_year_to_group_payment_keyboard(year: Union[str, int], month: Union[st
     buttons = [
         [
             InlineKeyboardButton(static_text.YEAR_2020, callback_data=f'{manage_data.PAYMENT_YEAR}0'),
-            InlineKeyboardButton(static_text.YEAR_2021, callback_data=f'{manage_data.PAYMENT_YEAR}1')
+            InlineKeyboardButton(static_text.YEAR_2021, callback_data=f'{manage_data.PAYMENT_YEAR}1'),
+            InlineKeyboardButton(static_text.YEAR_2022, callback_data=f'{manage_data.PAYMENT_YEAR}2'),
         ], [
             InlineKeyboardButton(
                 static_text.TO_GROUPS, callback_data=f'{manage_data.PAYMENT_YEAR_MONTH}{year - 2020}|{month}'

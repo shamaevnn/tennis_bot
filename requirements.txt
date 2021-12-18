@@ -3,6 +3,7 @@ python-dotenv
 Django
 django-cors-headers
 whitenoise
+django-redis
 
 ipython
 prompt-toolkit

@@ -7,14 +7,11 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v2
       with:
           fetch-depth: 0
-
     - id: deploy
       name: Deploy to dokku
       uses: idoberko2/dokku-deploy-github-action@v1
@@ -23,3 +20,13 @@ jobs:
           dokku-host: 'vladlen82.fvds.ru'
           app-name: 'tennisbot'
           git-push-flags: '--force'
+
+  on-success:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.push.conclusion == 'success' }}
+    steps:
+    - name: Success alert
+      uses: fjogeleit/http-request-action@master
+      with:
+        url: 'https://api.telegram.org/bot${{ secrets.ALERTING_TELEGRAM_TOKEN }}/sendMessage?chat_id=350490234&text=Привет'
+        method: 'GET'

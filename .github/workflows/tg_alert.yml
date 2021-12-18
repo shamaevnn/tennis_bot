@@ -11,6 +11,7 @@ jobs:
     - name: Success alert
       env:
         ALERTING_TELEGRAM_TOKEN: ${{ secrets.ALERTING_TELEGRAM_TOKEN }}
-        TEXT: "Successfully deployed"
+        TEXT: Successfully_deployed
+        LOG_CHAT_ID: 350490234
       run: |
-        echo "${TEXT}" && curl -X GET https://api.telegram.org/bot$ALERTING_TELEGRAM_TOKEN/sendMessage?chat_id=350490234&text=123
+        echo "${TEXT}" && curl -X GET "https://api.telegram.org/bot$ALERTING_TELEGRAM_TOKEN/sendMessage?chat_id=$LOG_CHAT_ID&text=$TEXT"

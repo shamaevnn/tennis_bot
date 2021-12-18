@@ -1,19 +1,29 @@
 from __future__ import annotations
 
+import logging
+import random
 import re
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Union, Iterator
 from uuid import uuid4
 
 import telegram
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-from django.db.models import Q, F, Case, When, Sum, IntegerField
+from django.db.models import (
+    Q,
+    F,
+    Case,
+    When,
+    Sum,
+    IntegerField,
+    QuerySet,
+)
 from django.utils import timezone
 from datetime import datetime, date, timedelta
 
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
-from telegram import Update
+from telegram import Update, Bot, ParseMode
 from telegram.ext import CallbackContext
 
 from base.utils.db_managers import GetOrNoneManager, CoachPlayerManager
@@ -26,6 +36,7 @@ from tennis_bot.settings import (
     TARIF_SECTION,
     TARIF_FEW,
     TELEGRAM_TOKEN,
+    ADMIN_CHAT_ID,
 )
 
 
@@ -322,6 +333,27 @@ class GroupTrainingDay(ModelwithTime):
             self.group, self.date, self.start_time
         )
 
+    @property
+    def start_dttm(self):
+        return datetime.combine(self.date, self.start_time)
+
+    @classmethod
+    def get_tr_days_for_alerting_about_coming_train(cls) -> Iterator[GroupTrainingDay]:
+        HOURS_BETWEEN_NOW_AND_COMING_TRAINING = 5
+        now = datetime.now()
+        available_tr_days: QuerySet[GroupTrainingDay] = (
+            cls.objects.select_related("group")
+            .prefetch_related(
+                "absent", "visitors", "pay_visitors", "pay_bonus_visitors"
+            )
+            .filter(is_available=True)
+        )
+        for tr_day in available_tr_days.iterator():
+            if tr_day.start_dttm > now and tr_day.start_dttm - now < timedelta(
+                hours=HOURS_BETWEEN_NOW_AND_COMING_TRAINING
+            ):
+                yield tr_day
+
     def create_tr_days_for_future(self):
         period = (
             8
@@ -480,16 +512,34 @@ class Photo(models.Model):
         verbose_name = "фотография"
         verbose_name_plural = "фотографии"
 
-    def check_if_telegram_id_is_present(self):
-        return True if self.telegram_id else False
+    @staticmethod
+    def get_random_photo(photos: QuerySet[Photo]) -> Photo:
+        return random.choice(photos)
 
-    def save_telegram_id(self, tg_token=TELEGRAM_TOKEN):
-        bot = telegram.Bot(tg_token)
-        photo_message = bot.send_photo(
-            350490234, photo=self.url, disable_notification=True
-        ).to_dict()
-        self.telegram_id = photo_message["photo"][-1]["file_id"]
-        self.save()
+    def send_to_player(self, chat_id: Union[int, str], text: str, bot: Bot) -> bool:
+        success = True
+        try:
+            bot.send_photo(
+                chat_id=chat_id,
+                photo=self.telegram_id,
+                caption=text,
+                parse_mode=ParseMode.HTML,
+            )
+        except Exception as e:
+            success = False
+            logging.error(
+                f"Error while sending photo {self.telegram_id} to {chat_id}:\n{e}"
+            )
+        return success
+
+    def save(self, **kwargs):
+        if not self.telegram_id:
+            bot = telegram.Bot(TELEGRAM_TOKEN)
+            photo_message = bot.send_photo(
+                ADMIN_CHAT_ID, photo=self.url, disable_notification=True
+            ).to_dict()
+            self.telegram_id = photo_message["photo"][-1]["file_id"]
+        super().save(**kwargs)
 
 
 """раздел с сигналами, в отедльном файле что-то не пошло"""

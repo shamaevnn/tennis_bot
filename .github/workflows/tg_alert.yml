@@ -9,12 +9,7 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
     - name: Success alert
-      id: successAlert
       env:
         ALERTING_TELEGRAM_TOKEN: ${{ secrets.ALERTING_TELEGRAM_TOKEN }}
-      uses: fjogeleit/http-request-action@master
-      with:
-        url: "https://api.telegram.org/bot$ALERTING_TELEGRAM_TOKEN/sendMessage?chat_id=350490234&text=hello"
-        method: 'GET'
-    - name: Show Response
-      run: echo ${{ steps.successAlert.outputs.response }}
+      run: |
+        curl -X GET https://api.telegram.org/bot$ALERTING_TELEGRAM_TOKEN/sendMessage?chat_id=350490234&text=hello

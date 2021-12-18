@@ -1,3 +1,5 @@
+name: "telegram alert about result of deploy"
+
 on:
   workflow_run:
     workflows: ["deploy"]
@@ -11,7 +13,18 @@ jobs:
     - name: Success alert
       env:
         ALERTING_TELEGRAM_TOKEN: ${{ secrets.ALERTING_TELEGRAM_TOKEN }}
-        TEXT: "$GITHUB_REPOSITORY successfully deployed."
+        TEXT: "Successfully deployed 👍✅"
         LOG_CHAT_ID: 350490234
       run: |
         curl -X GET "https://api.telegram.org/bot$ALERTING_TELEGRAM_TOKEN/sendMessage?chat_id=$LOG_CHAT_ID&text=$TEXT"
+  on-failure:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    steps:
+      - name: Failure alert
+        env:
+          ALERTING_TELEGRAM_TOKEN: ${{ secrets.ALERTING_TELEGRAM_TOKEN }}
+          TEXT: "Failed to deploy 👎❌"
+          LOG_CHAT_ID: 350490234
+        run: |
+          curl -X GET "https://api.telegram.org/bot$ALERTING_TELEGRAM_TOKEN/sendMessage?chat_id=$LOG_CHAT_ID&text=$TEXT"

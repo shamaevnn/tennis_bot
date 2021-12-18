@@ -1,4 +1,4 @@
-name: CI
+name: deploy
 
 on:
   push:
@@ -20,13 +20,3 @@ jobs:
           dokku-host: 'vladlen82.fvds.ru'
           app-name: 'tennisbot'
           git-push-flags: '--force'
-
-  on-success:
-    runs-on: ubuntu-latest
-    if: ${{ github.event.push.conclusion == 'success' }}
-    steps:
-    - name: Success alert
-      uses: fjogeleit/http-request-action@master
-      with:
-        url: 'https://api.telegram.org/bot${{ secrets.ALERTING_TELEGRAM_TOKEN }}/sendMessage?chat_id=350490234&text=Привет'
-        method: 'GET'

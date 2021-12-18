@@ -1,0 +1,15 @@
+on:
+  workflow_run:
+    workflows: ["deploy"]
+    types: [completed]
+
+jobs:
+  on-success:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+    - name: Success alert
+      uses: fjogeleit/http-request-action@master
+      with:
+        url: 'https://api.telegram.org/bot${{ secrets.ALERTING_TELEGRAM_TOKEN }}/sendMessage?chat_id=350490234&text=Привет'
+        method: 'GET'

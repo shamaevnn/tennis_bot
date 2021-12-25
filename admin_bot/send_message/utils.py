@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import List, Tuple, Union
 
 from base.models import TrainingGroup, Player
 from .manage_data import (
@@ -33,7 +33,7 @@ def handle_selecting_groups_to_send_message_to(
 
 
 def get_text_and_player_ids_to_send_message_to(
-    group_ids: List[str],
+    group_ids: List[Union[str, int]],
 ) -> Tuple[str, List]:
     list_of_group_ids = list(set([int(x) for x in group_ids if x]))
     if int(ALL_GROUPS) in list_of_group_ids:

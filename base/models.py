@@ -227,6 +227,15 @@ class TrainingGroup(ModelwithTime):
         return "{}, max_players: {}".format(self.name, self.max_players)
 
     @classmethod
+    def get_banda_groups(cls) -> QuerySet[TrainingGroup]:
+        banda_groups = TrainingGroup.objects.filter(
+            status=TrainingGroup.STATUS_GROUP,
+            max_players__gt=1,
+            name__iregex=r"БАНДА",
+        ).order_by("order")
+        return banda_groups
+
+    @classmethod
     def _get_or_create_ind_or_rent_group(
         cls, player: Player, status: str
     ) -> TrainingGroup:

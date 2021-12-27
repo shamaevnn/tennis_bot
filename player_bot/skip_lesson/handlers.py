@@ -79,7 +79,7 @@ def skip_lesson(update: Update, context: CallbackContext):
         )
         bot_edit_message(context.bot, text, update)
 
-        skip_lesson_main_menu_button(context.bot, update)
+        skip_lesson_main_menu_button(update, context)
     else:
         text, admin_text = handle_skipping_train(training_day, player, date_info)
 

@@ -1,6 +1,8 @@
 import django
 import os
 
+from player_bot.errors.handlers import send_stacktrace_to_tg_chat
+
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "tennis_bot.settings")
 django.setup()
 from telegram.ext import (
@@ -159,6 +161,9 @@ def setup_dispatcher(dp):
 
     # календарь
     dp.add_handler(CallbackQueryHandler(inline_calendar_handler))
+
+    # handling errors
+    dp.add_error_handler(send_stacktrace_to_tg_chat)
 
     return dp
 

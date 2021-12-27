@@ -6,7 +6,7 @@ from telegram.ext import CallbackContext
 
 from admin_bot.ind_train.keyboards import permission4ind_train_keyboard
 from base.common_for_bots.static_text import from_eng_to_rus_day_week
-from base.common_for_bots.tasks import clear_broadcast_messages, send_message_to_coaches
+from base.common_for_bots.tasks import broadcast_messages, send_message_to_coaches
 from base.common_for_bots.utils import create_calendar, bot_edit_message, DT_BOT_FORMAT
 from base.models import Player, TrainingGroup, GroupTrainingDay
 from player_bot.calendar.manage_data import CLNDR_ACTION_TAKE_IND

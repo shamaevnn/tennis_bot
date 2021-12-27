@@ -3,7 +3,7 @@ from telegram.ext import CallbackContext
 
 import player_bot.take_lesson.group.manage_data
 from base.common_for_bots.static_text import DATE_INFO
-from base.common_for_bots.tasks import clear_broadcast_messages, send_message_to_coaches
+from base.common_for_bots.tasks import broadcast_messages, send_message_to_coaches
 from base.common_for_bots.utils import (
     get_time_info_from_tr_day,
     get_actual_players_without_absent,

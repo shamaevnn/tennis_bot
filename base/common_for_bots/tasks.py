@@ -53,7 +53,7 @@ def send_message(
 
 
 @app.task(ignore_result=True)
-def broadcast_message(
+def _broadcast_message(
     chat_ids: List[int],
     message: str,
     reply_markup=None,
@@ -81,7 +81,7 @@ def broadcast_message(
     logger.info("Broadcast finished!")
 
 
-def clear_broadcast_messages(
+def broadcast_messages(
     chat_ids: List[int],
     message: str,
     reply_markup=None,
@@ -90,7 +90,7 @@ def clear_broadcast_messages(
     parse_mode="HTML",
 ):
     if DEBUG:
-        broadcast_message(
+        _broadcast_message(
             chat_ids=chat_ids,
             message=message,
             reply_markup=reply_markup,
@@ -99,7 +99,7 @@ def clear_broadcast_messages(
             parse_mode=parse_mode,
         )
     else:
-        broadcast_message.delay(
+        _broadcast_message.delay(
             chat_ids=chat_ids,
             message=message,
             reply_markup=reply_markup.to_dict() if reply_markup else None,
@@ -118,7 +118,7 @@ def send_message_to_coaches(
     coaches = Player.coaches.all()
     coach_tg_ids = list(coaches.values_list("tg_id", flat=True))
 
-    clear_broadcast_messages(
+    broadcast_messages(
         chat_ids=coach_tg_ids,
         message=text,
         reply_markup=reply_markup,

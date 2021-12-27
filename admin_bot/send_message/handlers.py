@@ -6,7 +6,7 @@ from admin_bot.send_message import static_text
 from base.common_for_bots.static_text import UP_TO_YOU
 from base.models import TrainingGroup
 from base.common_for_bots.utils import bot_edit_message
-from base.common_for_bots.tasks import clear_broadcast_messages
+from base.common_for_bots.tasks import broadcast_messages
 from .manage_data import SEND_MESSAGE, CONFIRM_SENDING
 from .utils import get_text_and_player_ids_to_send_message_to
 
@@ -57,7 +57,7 @@ def receive_text_and_send(update: Update, context: CallbackContext):
         update.message.reply_text(text=UP_TO_YOU)
     else:
         player_ids = context.user_data["player_ids"]
-        clear_broadcast_messages(chat_ids=player_ids, message=text)
+        broadcast_messages(chat_ids=player_ids, message=text)
         update.message.reply_text(text=static_text.IS_SENT)
 
     del context.user_data["player_ids"]

@@ -37,6 +37,7 @@ from tennis_bot.settings import (
     TARIF_FEW,
     TELEGRAM_TOKEN,
     ADMIN_CHAT_ID,
+    HOST,
 )
 
 
@@ -113,6 +114,14 @@ class Player(models.Model):
 
     def __str__(self):
         return "{} {} -- {}".format(self.first_name, self.last_name, self.phone_number)
+
+    @property
+    def tg_name(self) -> str:
+        return f"@{self.tg_username}" if self.tg_username else f"{self.tg_id}"
+
+    @property
+    def get_link_to_django_admin(self) -> str:
+        return f"{HOST}player/{self.id}/change/"
 
     def count_not_self_group_trainings_in_future(self):
         """

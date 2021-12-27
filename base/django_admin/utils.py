@@ -5,6 +5,7 @@ from base.common_for_bots.utils import (
     get_players_for_tr_day,
 )
 from base.common_for_bots.tasks import clear_broadcast_messages
+from base.models import GroupTrainingDay, Player
 from player_bot.menu_and_commands.keyboards import construct_main_menu
 from base.django_admin.static_text import (
     CANCEL_TRAIN_PLUS_BONUS_LESSON_2,
@@ -12,11 +13,14 @@ from base.django_admin.static_text import (
 )
 
 
-def send_alert_about_changing_tr_day_status(tr_day, new_is_available):
+def send_alert_about_changing_tr_day_status(tr_day: GroupTrainingDay, new_is_available):
     if not new_is_available:
         text = CANCEL_TRAIN_PLUS_BONUS_LESSON_2.format(tr_day.date, tr_day.start_time)
         players = get_actual_players_without_absent(tr_day)
-        players.update(bonus_lesson=F("bonus_lesson") + 1)
+        player_ids = players.values("id")
+        Player.objects.filter(id__in=player_ids).update(
+            bonus_lesson=F("bonus_lesson") + 1
+        )
     else:
         text = TRAIN_IS_AVAILABLE_CONGRATS.format(tr_day.date, tr_day.start_time)
 

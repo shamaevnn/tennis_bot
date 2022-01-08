@@ -1,7 +1,7 @@
 from datetime import datetime
-from typing import Tuple
+from typing import Tuple, Iterator
 
-from django.db.models import ExpressionWrapper, F, DurationField, Q
+from django.db.models import Q
 
 from player_bot.skip_lesson.static_text import (
     PLAYER_CANCELLED_IND_TRAIN,
@@ -26,30 +26,31 @@ from player_bot.skip_lesson.keyboards import (
 )
 
 
-def select_tr_days_for_skipping(player: Player, **filters):
+def select_tr_days_for_skipping(
+    player: Player, **filters
+) -> Iterator[GroupTrainingDay]:
     now = moscow_datetime(datetime.now())
     available_grouptraining_days = (
-        GroupTrainingDay.objects.annotate(
-            diff=ExpressionWrapper(
-                F("start_time") + F("date") - now, output_field=DurationField()
-            )
-        )
-        .filter(
+        GroupTrainingDay.objects.filter(
             Q(group__players__in=[player])
             | Q(visitors__in=[player])
             | Q(pay_visitors__in=[player])
             | Q(pay_bonus_visitors__in=[player]),
             date__gte=now.date(),
-            diff__gt=player.time_before_cancel,
             **filters,
         )
         .exclude(absent__in=[player])
         .select_related("group")
         .order_by("id")
-        .distinct("id")
+        .iterator()
     )
 
-    return available_grouptraining_days
+    for tr_day in available_grouptraining_days:
+        if (
+            tr_day.start_dttm > now
+            and tr_day.start_dttm - now > player.time_before_cancel
+        ):
+            yield tr_day
 
 
 def make_group_name_group_players_info_for_skipping(
@@ -79,13 +80,14 @@ def make_group_name_group_players_info_for_skipping(
 
 
 def calendar_skipping(player: Player, purpose, date_my):
-    training_days = select_tr_days_for_skipping(player, date=date_my)
-    if training_days.exists():
-        if training_days.count() > 1:
+    training_days = list(set(select_tr_days_for_skipping(player, date=date_my)))
+    if len(training_days):
+        # несколько тренировок в один день
+        if len(training_days) > 1:
             markup = construct_menu_skipping_much_lesson(training_days)
             text = "Выбери время"
         else:
-            training_day = training_days.first()
+            training_day = training_days[0]
             group_name, group_players = make_group_name_group_players_info_for_skipping(
                 training_day
             )
@@ -98,11 +100,14 @@ def calendar_skipping(player: Player, purpose, date_my):
             "Нет тренировки в этот день, выбери другой.\n"
             "✅ -- дни, доступные для отмены."
         )
+
         markup = create_calendar(
             purpose,
             date_my.year,
             date_my.month,
-            list(select_tr_days_for_skipping(player).values_list("date", flat=True)),
+            dates_to_highlight=[
+                tr_day.date for tr_day in select_tr_days_for_skipping(player)
+            ],
         )
     return text, markup
 
@@ -118,23 +123,22 @@ def handle_skipping_train(training_day: GroupTrainingDay, player: Player, date_i
             ATTENTION, player.first_name, player.last_name, date_info
         )
         return text, admin_text
+    elif tr_day_status == GroupTrainingDay.INDIVIDUAL_TRAIN:
+        training_day.delete()
+        admin_text = PLAYER_CANCELLED_IND_TRAIN.format(
+            ATTENTION, player.first_name, player.last_name, date_info
+        )
+        return text, admin_text
 
     if (
-        datetime.combine(training_day.date, training_day.start_time)
-        - moscow_datetime(datetime.now())
-        < player.time_before_cancel
+            datetime.combine(training_day.date, training_day.start_time)
+            - moscow_datetime(datetime.now())
+            < player.time_before_cancel
     ):
         text = CANT_CANCEL_LESSON_TOO_LATE.format(
             round(player.time_before_cancel.seconds / 3600)
         )
         admin_text = ""
-        return text, admin_text
-
-    if tr_day_status == GroupTrainingDay.INDIVIDUAL_TRAIN:
-        training_day.delete()
-        admin_text = PLAYER_CANCELLED_IND_TRAIN.format(
-            ATTENTION, player.first_name, player.last_name, date_info
-        )
         return text, admin_text
 
     if player in training_day.visitors.all():

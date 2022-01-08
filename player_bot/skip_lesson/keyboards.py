@@ -1,3 +1,5 @@
+from typing import List
+
 from telegram import (
     InlineKeyboardButton as inlinebutt,
     InlineKeyboardMarkup as inlinemark,
@@ -16,13 +18,13 @@ from base.common_for_bots.manage_data import CLNDR_ACTION_BACK
 from base.common_for_bots.static_text import BACK_BUTTON
 
 
-def construct_menu_skipping_much_lesson(tr_days):
+def construct_menu_skipping_much_lesson(tr_days: List[GroupTrainingDay]):
     """
     Make a menu when one day contains two or more lessons for skipping
     """
     buttons = []
     row = []
-    date_info = tr_days.first().date
+    date_info = tr_days[0].date
     for tr_day in tr_days:
         time_tlg, _, _, _, _, _, _ = get_time_info_from_tr_day(tr_day)
         row.append(

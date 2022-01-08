@@ -1,7 +1,7 @@
 from base.common_for_bots.static_text import ATTENTION, ATTENTION_2
 
 PLAYER_CANCELLED_IND_TRAIN = "{}\n{} {} отменил индивидуальную тренировку\n{}"
-PLAYER_CANCELLED_RENT_COURT = "{}\n{} {} отменил индивидуальную тренировку\n{}"
+PLAYER_CANCELLED_RENT_COURT = "{}\n{} {} отменил аренду корта\n{}"
 PLAYER_SKIPPED_TRAIN_FOR_BONUS = "{} {} пропускает тренировку за <b>отыгрыш</b>\n{}"
 PLAYER_SKIPPED_TRAIN_FOR_MONEY = "{} {} пропускает тренировку за <b>оплату</b>\n{}"
 PLAYER_SKIPPED_TRAIN_FOR_PAY_BONUS = (

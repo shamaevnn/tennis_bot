@@ -45,9 +45,9 @@ def process_calendar_selection(update: Update, context: CallbackContext):
     curr = datetime(int(year), int(month), 1)
 
     if purpose == CLNDR_ACTION_SKIP:
-        highlight_dates = list(
-            select_tr_days_for_skipping(player).values_list("date", flat=True)
-        )
+        highlight_dates = [
+            tr_day.date for tr_day in select_tr_days_for_skipping(player)
+        ]
     elif purpose == CLNDR_ACTION_TAKE_GROUP:
         training_days = get_potential_days_for_group_training(player)
         highlight_dates = list(training_days.values_list("date", flat=True))

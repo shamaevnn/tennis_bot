@@ -29,16 +29,16 @@ from player_bot.skip_lesson.utils import (
 @check_status_decor
 def skip_lesson_main_menu_button(update: Update, context: CallbackContext):
     player, _ = Player.get_player_and_created(update, context)
-    available_grouptraining_dates = select_tr_days_for_skipping(player)
-    if available_grouptraining_dates.exists():
+    available_grouptraining_dates = list(select_tr_days_for_skipping(player))
+    if len(available_grouptraining_dates):
         context.bot.send_message(
             player.tg_id,
             "Выбери дату тренировки для отмены.\n" "✅ -- дни, доступные для отмены.",
             reply_markup=create_calendar(
                 CLNDR_ACTION_SKIP,
-                dates_to_highlight=list(
-                    available_grouptraining_dates.values_list("date", flat=True)
-                ),
+                dates_to_highlight=[
+                    tr_day.date for tr_day in select_tr_days_for_skipping(player)
+                ],
             ),
         )
     else:
@@ -66,33 +66,32 @@ def skip_lesson(update: Update, context: CallbackContext):
     player = Player.from_update(update)
 
     tr_day_id = update.callback_query.data[len(SHOW_INFO_ABOUT_SKIPPING_DAY) :]
-    training_day = GroupTrainingDay.objects.get(id=tr_day_id)
+    tr_day = GroupTrainingDay.objects.select_related('group').get(id=tr_day_id)
 
     time_tlg, _, _, date_tlg, day_of_week, _, _ = get_time_info_from_tr_day(
-        training_day
+        tr_day
     )
     date_info = DATE_INFO.format(date_tlg, day_of_week, time_tlg)
 
-    if not training_day.is_available:
+    if not tr_day.is_available:
         text = "{} в {} ❌нет тренировки❌, т.к. она отменена тренером, поэтому ее нельзя пропустить.".format(
             date_tlg, time_tlg
         )
         bot_edit_message(context.bot, text, update)
 
         skip_lesson_main_menu_button(update, context)
-    else:
-        text, admin_text = handle_skipping_train(training_day, player, date_info)
+        return
 
-        send_message_to_coaches(
-            text=admin_text,
-        )
-
-        n_players_left_for_this_lesson = get_actual_players_without_absent(
-            training_day
-        ).count()
-        if n_players_left_for_this_lesson == 1:
+    if tr_day.status == GroupTrainingDay.GROUP_ADULT_TRAIN:
+        n_players_left_for_this_lesson = get_actual_players_without_absent(tr_day).count()
+        if n_players_left_for_this_lesson == 2:
             send_message_to_coaches(
-                text=ONLY_ONE_LEFT.format(training_day.group.name, date_info),
+                text=ONLY_ONE_LEFT.format(tr_day.group.name, date_info),
             )
 
-        bot_edit_message(context.bot, text, update)
+    text, admin_text = handle_skipping_train(tr_day, player, date_info)
+    send_message_to_coaches(
+        text=admin_text,
+    )
+
+    bot_edit_message(context.bot, text, update)

@@ -1,7 +1,7 @@
 import calendar
 
 from datetime import date, datetime
-from typing import Optional
+from typing import Optional, List
 
 from django.db.models import QuerySet
 from pytz import timezone
@@ -86,7 +86,10 @@ def get_time_info_from_tr_day(tr_day: GroupTrainingDay):
 
 
 def create_calendar(
-    purpose_of_calendar: str, year=None, month=None, dates_to_highlight=None
+    purpose_of_calendar: str,
+    year=None,
+    month=None,
+    dates_to_highlight: Optional[List[date]] = None,
 ):
     """
     Create an inline keyboard with the provided year and month

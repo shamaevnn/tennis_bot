@@ -40,22 +40,22 @@ class HandleSkippingTrainTestCases(TestCase):
         self.tr_day_pay_visitor = CreateData.tr_day_for_group(self.not_my_group_2)
         self.tr_day_pay_bonus_visitor = CreateData.tr_day_for_group(self.not_my_group_3)
         self.tr_day_individual_1 = CreateData.tr_day_for_group(
-            self.individual_group, is_individual=True
+            self.individual_group, status=GroupTrainingDay.INDIVIDUAL_TRAIN
         )
         self.tr_day_individual_2 = GroupTrainingDay.objects.create(
             group=self.individual_group,
             start_time=time(14, 30),
             date=(datetime.today() + timedelta(days=2)).date(),
-            is_individual=True,
+            status=GroupTrainingDay.INDIVIDUAL_TRAIN,
         )
         self.tr_day_rent_court = CreateData.tr_day_for_group(
-            self.renting_group, tr_day_status=GroupTrainingDay.RENT_COURT_STATUS
+            self.renting_group, status=GroupTrainingDay.RENT_COURT_STATUS
         )
         self.tr_day_rent_court_2 = GroupTrainingDay.objects.create(
             group=self.renting_group,
             start_time=time(14, 30),
             date=(datetime.today() + timedelta(days=2)).date(),
-            tr_day_status=GroupTrainingDay.RENT_COURT_STATUS,
+            status=GroupTrainingDay.RENT_COURT_STATUS,
         )
 
         self.tr_day_visitor.visitors.add(self.me)

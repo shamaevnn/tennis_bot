@@ -144,8 +144,7 @@ class GroupTrainingDayForm(forms.ModelForm):
             "pay_bonus_visitors",
             "date",
             "is_available",
-            "is_individual",
-            "tr_day_status",
+            "status",
             "start_time",
             "duration",
         ]

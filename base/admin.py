@@ -140,11 +140,10 @@ class GroupTrainingDayAdmin(admin.ModelAdmin):
         "date",
         "start_time",
         "duration",
-        "tr_day_status",
-        "is_individual",
+        "status",
         "is_available",
     )
-    list_filter = ("group", "date", "tr_day_status", "is_individual", "is_available")
+    list_filter = ("group", "date", "status", "is_available")
     filter_horizontal = ("visitors", "pay_visitors", "pay_bonus_visitors", "absent")
     date_hierarchy = "date"
     actions = [make_trday_unavailable, make_trday_available]

@@ -62,12 +62,19 @@ def make_group_name_group_players_info_for_skipping(
     all_players = "\n".join(
         (f"{x['first_name']} {x['last_name']}" for x in all_players)
     )
-    if not tr_day.is_individual:
-        group_name = f"{tr_day.group.name}\n"
-        group_players = f"Присутствующие:\n{all_players}\n"
-    else:
+
+    tr_day_status = tr_day.status
+
+    if tr_day_status == GroupTrainingDay.INDIVIDUAL_TRAIN:
         group_name = "🧞‍♂индивидуальная тренировка🧞‍♂️\n"
         group_players = ""
+    elif tr_day_status == GroupTrainingDay.RENT_COURT_STATUS:
+        group_name = "💸 аренда корта ️💸\n"
+        group_players = ""
+    else:
+        group_name = f"{tr_day.group.name}\n"
+        group_players = f"Присутствующие:\n{all_players}\n"
+
     return group_name, group_players
 
 
@@ -103,7 +110,9 @@ def calendar_skipping(player: Player, purpose, date_my):
 def handle_skipping_train(training_day: GroupTrainingDay, player: Player, date_info):
     text = OKAY_TRAIN_CANCELLED.format(date_info)
 
-    if training_day.tr_day_status == GroupTrainingDay.RENT_COURT_STATUS:
+    tr_day_status = training_day.status
+
+    if tr_day_status == GroupTrainingDay.RENT_COURT_STATUS:
         training_day.delete()
         admin_text = PLAYER_CANCELLED_RENT_COURT.format(
             ATTENTION, player.first_name, player.last_name, date_info
@@ -121,35 +130,36 @@ def handle_skipping_train(training_day: GroupTrainingDay, player: Player, date_i
         admin_text = ""
         return text, admin_text
 
-    if training_day.is_individual:
+    if tr_day_status == GroupTrainingDay.INDIVIDUAL_TRAIN:
         training_day.delete()
         admin_text = PLAYER_CANCELLED_IND_TRAIN.format(
             ATTENTION, player.first_name, player.last_name, date_info
         )
+        return text, admin_text
+
+    if player in training_day.visitors.all():
+        player.bonus_lesson += 1
+        training_day.visitors.remove(player)
+        admin_text = PLAYER_SKIPPED_TRAIN_FOR_BONUS.format(
+            player.first_name, player.last_name, date_info
+        )
+    elif player in training_day.pay_visitors.all():
+        # в этом случае не должно поменяться кол-во отыгрышей
+        training_day.pay_visitors.remove(player)
+        admin_text = PLAYER_SKIPPED_TRAIN_FOR_MONEY.format(
+            player.first_name, player.last_name, date_info
+        )
+    elif player in training_day.pay_bonus_visitors.all():
+        player.bonus_lesson += 1
+        training_day.pay_bonus_visitors.remove(player)
+        admin_text = PLAYER_SKIPPED_TRAIN_FOR_PAY_BONUS.format(
+            player.first_name, player.last_name, date_info
+        )
     else:
-        if player in training_day.visitors.all():
-            player.bonus_lesson += 1
-            training_day.visitors.remove(player)
-            admin_text = PLAYER_SKIPPED_TRAIN_FOR_BONUS.format(
-                player.first_name, player.last_name, date_info
-            )
-        elif player in training_day.pay_visitors.all():
-            # в этом случае не должно поменяться кол-во отыгрышей
-            training_day.pay_visitors.remove(player)
-            admin_text = PLAYER_SKIPPED_TRAIN_FOR_MONEY.format(
-                player.first_name, player.last_name, date_info
-            )
-        elif player in training_day.pay_bonus_visitors.all():
-            player.bonus_lesson += 1
-            training_day.pay_bonus_visitors.remove(player)
-            admin_text = PLAYER_SKIPPED_TRAIN_FOR_PAY_BONUS.format(
-                player.first_name, player.last_name, date_info
-            )
-        else:
-            player.bonus_lesson += 1
-            training_day.absent.add(player)
-            admin_text = PLAYER_SKIPPED_TRAIN_IN_HIS_GROUP.format(
-                player.first_name, player.last_name, date_info
-            )
-        player.save()
+        player.bonus_lesson += 1
+        training_day.absent.add(player)
+        admin_text = PLAYER_SKIPPED_TRAIN_IN_HIS_GROUP.format(
+            player.first_name, player.last_name, date_info
+        )
+    player.save()
     return text, admin_text

@@ -42,7 +42,7 @@ def select_ind_time(update: Update, context: CallbackContext):
         date=date_dt,
         start_time=st_time_obj,
         duration=duration,
-        is_individual=True,
+        status=GroupTrainingDay.INDIVIDUAL_TRAIN,
     )
 
     text = (

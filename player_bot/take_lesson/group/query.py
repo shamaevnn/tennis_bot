@@ -8,9 +8,7 @@ from base.models import GroupTrainingDay, TrainingGroup, Player
 
 def get_potential_days_for_group_training(player: Player, **filters):
     potential_free_places = (
-        GroupTrainingDay.objects.tr_day_is_my_available(
-            group__status=TrainingGroup.STATUS_GROUP, is_individual=False
-        )
+        GroupTrainingDay.objects.available_adult_train()
         .annotate(
             Count("absent", distinct=True),
             Count("group__players", distinct=True),

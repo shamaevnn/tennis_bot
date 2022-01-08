@@ -7,7 +7,7 @@ from admin_bot.view_schedule import static_text
 from admin_bot.view_schedule.manage_data import SHOW_GROUPDAY_INFO
 from admin_bot.view_schedule.utils import schedule_players_info
 from base.models import GroupTrainingDay, TrainingGroup
-from base.common_for_bots.utils import bot_edit_message, get_time_info_from_tr_day
+from base.common_for_bots.utils import bot_edit_message, get_time_info_from_tr_day, get_actual_players_without_absent
 
 
 def show_trainingroupday_info(update, context: CallbackContext):
@@ -17,23 +17,22 @@ def show_trainingroupday_info(update, context: CallbackContext):
         .prefetch_related("visitors", "pay_visitors", "pay_bonus_visitors")
         .get(id=tr_day_id)
     )
+    tr_day_status = tr_day.status
 
     availability = f"{static_text.NO_TRAIN}\n" if not tr_day.is_available else ""
-    is_individual = (
-        f"{static_text.INDIVIDUAL_TRAIN}\n"
-        if tr_day.is_individual
-        else f"{static_text.GROUP_TRAIN}️\n"
-    )
-    affiliation = (
-        f"{static_text.MY_TRAIN}\n\n"
-        if tr_day.tr_day_status == GroupTrainingDay.MY_TRAIN_STATUS
-        else f"{static_text.RENT}\n\n"
-    )
+
+    if tr_day_status == GroupTrainingDay.INDIVIDUAL_TRAIN:
+        status = static_text.INDIVIDUAL_TRAIN
+    elif tr_day_status == GroupTrainingDay.RENT_COURT_STATUS:
+        status = static_text.RENT
+    else:
+        status = static_text.GROUP_TRAIN
 
     group_name = f"{tr_day.group.name}\n"
 
-    if not tr_day.is_individual:
-        group_players = f"{static_text.PLAYERS_FROM_GROUP}:\n{schedule_players_info(tr_day.group.players.all().difference(tr_day.absent.all()))}\n"
+    if tr_day_status == GroupTrainingDay.GROUP_ADULT_TRAIN:
+        players = get_actual_players_without_absent(tr_day)
+        group_players = f"{static_text.PLAYERS_FROM_GROUP}:\n{schedule_players_info(players)}\n"
         visitors = (
             f"\n{static_text.HAVE_COME_FROM_OTHERS}:\n{schedule_players_info(tr_day.visitors)}\n"
             if tr_day.visitors.exists()
@@ -67,7 +66,7 @@ def show_trainingroupday_info(update, context: CallbackContext):
 
     time_tlg, _, _, date_tlg, day_of_week, _, _ = get_time_info_from_tr_day(tr_day)
 
-    general_info = f"<b>{date_tlg} ({day_of_week})\n{time_tlg}</b>\n{availability}{is_individual}{affiliation}"
+    general_info = f"<b>{date_tlg} ({day_of_week})\n{time_tlg}</b>\n{availability}{status}\n\n"
     players_info = f"{group_name}{group_level}{group_players}{visitors}{pay_visitors}{pay_bonus_visitors}{absents}"
     text = f"{general_info}{players_info}"
 

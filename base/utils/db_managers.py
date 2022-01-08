@@ -4,12 +4,12 @@ from django.db.models import Manager
 
 
 class ModelwithTimeManager(models.Manager):
-    def tr_day_is_my_available(self, *args, **kwargs):
+    def available_adult_train(self, *args, **kwargs):
         from base.models import GroupTrainingDay
 
         return self.filter(
             is_available=True,
-            tr_day_status=GroupTrainingDay.MY_TRAIN_STATUS,
+            status=GroupTrainingDay.GROUP_ADULT_TRAIN,
             *args,
             **kwargs
         )

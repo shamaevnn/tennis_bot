@@ -273,12 +273,14 @@ class TrainingGroup(ModelwithTime):
 
 
 class GroupTrainingDay(ModelwithTime):
-    MY_TRAIN_STATUS = "M"
+    GROUP_ADULT_TRAIN = "M"
+    INDIVIDUAL_TRAIN = "I"
     RENT_COURT_STATUS = "R"
 
     TR_DAY_STATUSES = (
-        (MY_TRAIN_STATUS, "моя тренировка"),
-        (RENT_COURT_STATUS, "аренда"),
+        (GROUP_ADULT_TRAIN, "групповая тренировка для взрослых"),
+        (INDIVIDUAL_TRAIN, "индивидуальная тренировка"),
+        (RENT_COURT_STATUS, "аренда корта"),
     )
 
     group = models.ForeignKey(
@@ -331,15 +333,12 @@ class GroupTrainingDay(ModelwithTime):
         verbose_name="Заплатили ₽ + отыгрыш",
     )
 
-    tr_day_status = models.CharField(
+    status = models.CharField(
         max_length=1,
-        default=MY_TRAIN_STATUS,
+        default=GROUP_ADULT_TRAIN,
         help_text="Моя тренировка или аренда",
         choices=TR_DAY_STATUSES,
         verbose_name="Статус",
-    )
-    is_individual = models.BooleanField(
-        default=False, help_text="индивидуальная ли тренировка"
     )
 
     class Meta:
@@ -391,7 +390,7 @@ class GroupTrainingDay(ModelwithTime):
                 date=dat,
                 start_time=self.start_time,
                 duration=self.duration,
-                is_individual=self.is_individual,
+                status=self.status,
             )
             for dat in dates
         ]

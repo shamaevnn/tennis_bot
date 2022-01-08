@@ -1,5 +1,5 @@
 from django.test import TestCase
-from base.models import TrainingGroup
+from base.models import TrainingGroup, GroupTrainingDay
 from base.utils.for_tests import CreateData
 from player_bot.take_lesson.group.query import get_potential_days_for_group_training
 
@@ -16,10 +16,10 @@ class BaseTestCases(TestCase):
         # нельзя записаться на индивидуальную тренировку
         group = CreateData.group(name="ASdrqw", status=TrainingGroup.STATUS_4IND)
 
-        tr_day = CreateData.tr_day_for_group(group=group, is_individual=True)
+        ind_tr_day = CreateData.tr_day_for_group(group=group, status=GroupTrainingDay.INDIVIDUAL_TRAIN)
 
         days = get_potential_days_for_group_training(player=self.me_training_in_group)
-        self.assertNotIn(tr_day, days)
+        self.assertNotIn(ind_tr_day, days)
 
     def test_no_1_max_players(self):
         # нельзя записаться в группу, если там максимум 1 игрок.

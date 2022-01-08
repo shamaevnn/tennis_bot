@@ -12,23 +12,33 @@ def update_tr_day_status_for_tr_days(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0020_alter_payment_year'),
+        ("base", "0020_alter_payment_year"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='grouptrainingday',
-            name='tr_day_status',
-            field=models.CharField(choices=[('M', 'групповая тренировка для взрослых'), ('I', 'индивидуальная тренировка'), ('R', 'аренда корта')], default='M', help_text='Моя тренировка или аренда', max_length=1, verbose_name='Статус'),
+            model_name="grouptrainingday",
+            name="tr_day_status",
+            field=models.CharField(
+                choices=[
+                    ("M", "групповая тренировка для взрослых"),
+                    ("I", "индивидуальная тренировка"),
+                    ("R", "аренда корта"),
+                ],
+                default="M",
+                help_text="Моя тренировка или аренда",
+                max_length=1,
+                verbose_name="Статус",
+            ),
         ),
         migrations.RenameField(
-            model_name='grouptrainingday',
-            old_name='tr_day_status',
-            new_name='status',
+            model_name="grouptrainingday",
+            old_name="tr_day_status",
+            new_name="status",
         ),
         migrations.RunPython(update_tr_day_status_for_tr_days),
         migrations.RemoveField(
-            model_name='grouptrainingday',
-            name='is_individual',
+            model_name="grouptrainingday",
+            name="is_individual",
         ),
     ]

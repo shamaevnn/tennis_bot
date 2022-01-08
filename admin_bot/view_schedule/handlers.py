@@ -7,7 +7,11 @@ from admin_bot.view_schedule import static_text
 from admin_bot.view_schedule.manage_data import SHOW_GROUPDAY_INFO
 from admin_bot.view_schedule.utils import schedule_players_info
 from base.models import GroupTrainingDay, TrainingGroup
-from base.common_for_bots.utils import bot_edit_message, get_time_info_from_tr_day, get_actual_players_without_absent
+from base.common_for_bots.utils import (
+    bot_edit_message,
+    get_time_info_from_tr_day,
+    get_actual_players_without_absent,
+)
 
 
 def show_trainingroupday_info(update, context: CallbackContext):
@@ -32,7 +36,9 @@ def show_trainingroupday_info(update, context: CallbackContext):
 
     if tr_day_status == GroupTrainingDay.GROUP_ADULT_TRAIN:
         players = get_actual_players_without_absent(tr_day)
-        group_players = f"{static_text.PLAYERS_FROM_GROUP}:\n{schedule_players_info(players)}\n"
+        group_players = (
+            f"{static_text.PLAYERS_FROM_GROUP}:\n{schedule_players_info(players)}\n"
+        )
         visitors = (
             f"\n{static_text.HAVE_COME_FROM_OTHERS}:\n{schedule_players_info(tr_day.visitors)}\n"
             if tr_day.visitors.exists()
@@ -66,7 +72,9 @@ def show_trainingroupday_info(update, context: CallbackContext):
 
     time_tlg, _, _, date_tlg, day_of_week, _, _ = get_time_info_from_tr_day(tr_day)
 
-    general_info = f"<b>{date_tlg} ({day_of_week})\n{time_tlg}</b>\n{availability}{status}\n\n"
+    general_info = (
+        f"<b>{date_tlg} ({day_of_week})\n{time_tlg}</b>\n{availability}{status}\n\n"
+    )
     players_info = f"{group_name}{group_level}{group_players}{visitors}{pay_visitors}{pay_bonus_visitors}{absents}"
     text = f"{general_info}{players_info}"
 

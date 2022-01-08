@@ -30,7 +30,7 @@ def select_tr_days_for_skipping(
     player: Player, **filters
 ) -> Iterator[GroupTrainingDay]:
     now = moscow_datetime(datetime.now())
-    available_grouptraining_days = (
+    tr_days_of_player = (
         GroupTrainingDay.objects.filter(
             Q(group__players__in=[player])
             | Q(visitors__in=[player])
@@ -45,7 +45,7 @@ def select_tr_days_for_skipping(
         .iterator()
     )
 
-    for tr_day in available_grouptraining_days:
+    for tr_day in tr_days_of_player:
         if (
             tr_day.start_dttm > now
             and tr_day.start_dttm - now > player.time_before_cancel

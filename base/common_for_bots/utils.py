@@ -15,7 +15,7 @@ from base.common_for_bots.manage_data import (
 )
 from base.common_for_bots.static_text import (
     from_digit_to_month,
-    from_eng_to_rus_day_week,
+    from_eng_to_rus_day_week, DATE_INFO,
 )
 from base.models import GroupTrainingDay, Player
 
@@ -83,6 +83,11 @@ def get_time_info_from_tr_day(tr_day: GroupTrainingDay):
         start_time,
         end_time,
     )
+
+
+def get_dttm_info_for_tr_day(tr_day: GroupTrainingDay) -> str:
+    time_tlg, _, _, date_tlg, day_of_week, _, _ = get_time_info_from_tr_day(tr_day)
+    return DATE_INFO.format(date_tlg, day_of_week, time_tlg)
 
 
 def create_calendar(

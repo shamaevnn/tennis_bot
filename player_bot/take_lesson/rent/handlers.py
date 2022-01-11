@@ -131,7 +131,7 @@ def take_rent(update: Update, context: CallbackContext):
         date=date_dt,
         start_time=st_time_obj.time(),
         duration=duration,
-        tr_day_status=GroupTrainingDay.RENT_COURT_STATUS,
+        status=GroupTrainingDay.RENT_COURT_STATUS,
     )
     time_tlg, _, _, date_tlg, day_of_week, _, _ = get_time_info_from_tr_day(tr_day)
     date_info = DATE_INFO.format(date_tlg, day_of_week, time_tlg)

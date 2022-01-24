@@ -13,6 +13,7 @@ from admin_bot.ind_train.manage_data import (
 from base.common_for_bots.static_text import DATE_INFO, ATTENTION
 from base.models import GroupTrainingDay, Player
 from base.common_for_bots.utils import bot_edit_message, get_time_info_from_tr_day
+from player_bot.menu_and_commands.keyboards import construct_main_menu
 from player_bot.take_lesson.individual.static_text import (
     COACH_CONFIRMED_TRAIN,
     COACH_CANCELLED_TRAIN,
@@ -49,7 +50,10 @@ def permission_for_ind_train(update: Update, context: CallbackContext):
 
         tennis_bot = telegram.Bot(TELEGRAM_TOKEN)
         tennis_bot.send_message(
-            chat_id=player.tg_id, text=player_text, parse_mode=ParseMode.HTML
+            chat_id=player.tg_id,
+            text=player_text,
+            reply_markup=construct_main_menu(player),
+            parse_mode=ParseMode.HTML,
         )
     else:
         admin_text = static_text.TRAIN_IS_ALREADY_CANCELLED

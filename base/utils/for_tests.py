@@ -12,11 +12,22 @@ class CreateData:
         return "".join(random.choices(string.ascii_letters, k=length))
 
     @classmethod
-    def player(cls, tg_id: int, first_name: Optional[str] = None, **kwargs) -> Player:
+    def player(
+        cls,
+        tg_id: int,
+        first_name: Optional[str] = None,
+        last_name: Optional[str] = None,
+        **kwargs
+    ) -> Player:
         if first_name is None:
             first_name = cls._get_random_string(length=10)
 
-        player = Player.objects.create(tg_id=tg_id, first_name=first_name, **kwargs)
+        if last_name is None:
+            last_name = cls._get_random_string(length=10)
+
+        player = Player.objects.create(
+            tg_id=tg_id, first_name=first_name, last_name=last_name, **kwargs
+        )
         return player
 
     @classmethod

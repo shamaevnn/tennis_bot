@@ -112,7 +112,9 @@ def calendar_skipping(player: Player, purpose, date_my):
     return text, markup
 
 
-def handle_skipping_train(training_day: GroupTrainingDay, player: Player, date_info):
+def handle_skipping_train(
+    training_day: GroupTrainingDay, player: Player, date_info: str
+):
     text = OKAY_TRAIN_CANCELLED.format(date_info)
 
     tr_day_status = training_day.status
@@ -131,9 +133,9 @@ def handle_skipping_train(training_day: GroupTrainingDay, player: Player, date_i
         return text, admin_text
 
     if (
-            datetime.combine(training_day.date, training_day.start_time)
-            - moscow_datetime(datetime.now())
-            < player.time_before_cancel
+        datetime.combine(training_day.date, training_day.start_time)
+        - moscow_datetime(datetime.now())
+        < player.time_before_cancel
     ):
         text = CANT_CANCEL_LESSON_TOO_LATE.format(
             round(player.time_before_cancel.seconds / 3600)

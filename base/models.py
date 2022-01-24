@@ -347,7 +347,7 @@ class GroupTrainingDay(ModelwithTime):
         verbose_name_plural = "тренировочные дни"
 
     def __str__(self):
-        return "Группа: {}, дата тренировки {}, время начала: {}".format(
+        return "Группа: {}, дата {}, начало в: {}".format(
             self.group, self.date, self.start_time
         )
 

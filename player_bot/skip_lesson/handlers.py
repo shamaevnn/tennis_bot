@@ -66,11 +66,11 @@ def skip_lesson(update: Update, context: CallbackContext):
     player = Player.from_update(update)
 
     tr_day_id = update.callback_query.data[len(SHOW_INFO_ABOUT_SKIPPING_DAY) :]
-    tr_day = GroupTrainingDay.objects.select_related('group').get(id=tr_day_id)
-
-    time_tlg, _, _, date_tlg, day_of_week, _, _ = get_time_info_from_tr_day(
-        tr_day
+    tr_day: GroupTrainingDay = GroupTrainingDay.objects.select_related("group").get(
+        id=tr_day_id
     )
+
+    time_tlg, _, _, date_tlg, day_of_week, _, _ = get_time_info_from_tr_day(tr_day)
     date_info = DATE_INFO.format(date_tlg, day_of_week, time_tlg)
 
     if not tr_day.is_available:
@@ -83,7 +83,10 @@ def skip_lesson(update: Update, context: CallbackContext):
         return
 
     if tr_day.status == GroupTrainingDay.GROUP_ADULT_TRAIN:
-        n_players_left_for_this_lesson = get_actual_players_without_absent(tr_day).count()
+        # отправляем тренеру сообщение, что в группе остался 1 игрок
+        n_players_left_for_this_lesson = get_actual_players_without_absent(
+            tr_day
+        ).count()
         if n_players_left_for_this_lesson == 2:
             send_message_to_coaches(
                 text=ONLY_ONE_LEFT.format(tr_day.group.name, date_info),

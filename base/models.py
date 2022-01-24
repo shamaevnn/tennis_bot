@@ -373,27 +373,30 @@ class GroupTrainingDay(ModelwithTime):
                 yield tr_day
 
     def create_tr_days_for_future(self):
+        NUMBER_OF_WEEKS_IN_2_MONTHS = 8
+        NUMBER_OF_WEEKS_IN_SEASON = 26  # 6 месяцев
+
         period = (
-            8
+            NUMBER_OF_WEEKS_IN_2_MONTHS
             if self.group.status
             in (TrainingGroup.STATUS_4IND, TrainingGroup.STATUS_RENT)
-            else 24
+            else NUMBER_OF_WEEKS_IN_SEASON
         )
-        date = self.date + timedelta(days=7)
-        dates = [date]
+        init_date = self.date + timedelta(days=7)
+        instances = []
         for _ in range(period):
-            date += timedelta(days=7)
-            dates.append(date)
-        instances = [
-            GroupTrainingDay(
-                group=self.group,
-                date=dat,
-                start_time=self.start_time,
-                duration=self.duration,
-                status=self.status,
+            instances.append(
+                GroupTrainingDay(
+                    group=self.group,
+                    date=init_date,
+                    start_time=self.start_time,
+                    duration=self.duration,
+                    status=self.status,
+                )
             )
-            for dat in dates
-        ]
+            init_date += timedelta(days=7)
+
+        print(instances)
         GroupTrainingDay.objects.bulk_create(instances)
 
 

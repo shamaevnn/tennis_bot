@@ -10,6 +10,7 @@ class ModelwithTimeManager(models.Manager):
         return self.filter(
             is_available=True,
             status=GroupTrainingDay.GROUP_ADULT_TRAIN,
+            is_deleted=False,
             *args,
             **kwargs
         )

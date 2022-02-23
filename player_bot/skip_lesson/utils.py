@@ -40,6 +40,7 @@ def select_tr_days_for_skipping(
             **filters,
         )
         .exclude(absent__in=[player])
+        .exclude(is_deleted=True)
         .select_related("group")
         .order_by("id")
         .iterator()
@@ -120,16 +121,18 @@ def handle_skipping_train(
     tr_day_status = training_day.status
 
     if tr_day_status == GroupTrainingDay.RENT_COURT_STATUS:
-        training_day.delete()
+        training_day.is_deleted = True
         admin_text = PLAYER_CANCELLED_RENT_COURT.format(
             ATTENTION, player.first_name, player.last_name, date_info
         )
+        training_day.save()
         return text, admin_text
     elif tr_day_status == GroupTrainingDay.INDIVIDUAL_TRAIN:
-        training_day.delete()
+        training_day.is_deleted = True
         admin_text = PLAYER_CANCELLED_IND_TRAIN.format(
             ATTENTION, player.first_name, player.last_name, date_info
         )
+        training_day.save()
         return text, admin_text
 
     if (

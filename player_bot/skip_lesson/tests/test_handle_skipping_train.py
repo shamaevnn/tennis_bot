@@ -53,7 +53,7 @@ class HandleSkippingTrainTestCases(TestCase):
             self.tr_day_individual_1, self.me, self.date_info
         )
         # проверяем, что тренировка удалилась
-        self.assertNotIn(self.tr_day_individual_1, GroupTrainingDay.objects.all())
+        self.assertTrue(self.tr_day_individual_1.is_deleted)
 
         # создались нужные тексты для тренера и игроков
         self.assertEqual(player_text, self.success_cancel_text)
@@ -65,8 +65,8 @@ class HandleSkippingTrainTestCases(TestCase):
         )
 
         # другие индивидуальные тренировки не удаляются
-        self.assertIn(self.tr_day_individual_2, GroupTrainingDay.objects.all())
-        self.assertIn(self.tr_day_individual_3, GroupTrainingDay.objects.all())
+        self.assertFalse(self.tr_day_individual_2.is_deleted)
+        self.assertFalse(self.tr_day_individual_3.is_deleted)
 
     def test_rent_group(self):
         self.renting_group = TrainingGroup.get_or_create_rent_group(self.me)
@@ -86,7 +86,7 @@ class HandleSkippingTrainTestCases(TestCase):
         text, admin_text = handle_skipping_train(
             self.tr_day_rent_court, self.me, self.date_info
         )
-        self.assertNotIn(self.tr_day_rent_court, GroupTrainingDay.objects.all())
+        self.assertTrue(self.tr_day_rent_court.is_deleted)
 
         # создались нужные тексты для тренера и игроков
         self.assertEqual(text, self.success_cancel_text)
@@ -98,7 +98,7 @@ class HandleSkippingTrainTestCases(TestCase):
         )
 
         # другая аренда не удаляется
-        self.assertIn(self.tr_day_rent_court_2, GroupTrainingDay.objects.all())
+        self.assertFalse(self.tr_day_rent_court_2.is_deleted)
 
     def test_my_group(self):
         self.my_group = CreateData.group()

@@ -46,7 +46,8 @@ def permission_for_ind_train(update: Update, context: CallbackContext):
             player_text = COACH_CANCELLED_TRAIN.format(
                 attention=ATTENTION, date_info=date_info
             )
-            tr_day.delete()
+            tr_day.is_deleted = True
+            tr_day.save()
 
         tennis_bot = telegram.Bot(TELEGRAM_TOKEN)
         tennis_bot.send_message(

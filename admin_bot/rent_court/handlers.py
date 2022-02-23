@@ -47,7 +47,8 @@ def permission_for_rent_court(update: Update, context: CallbackContext):
             player_text = COACH_CANCELLED_RENT_COURT.format(
                 attention=ATTENTION, date_info=date_info
             )
-            tr_day.delete()
+            tr_day.is_deleted = True
+            tr_day.save()
 
         tennis_bot = Bot(TELEGRAM_TOKEN)
         tennis_bot.send_message(

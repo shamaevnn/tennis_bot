@@ -150,6 +150,13 @@ class GroupTrainingDayAdmin(admin.ModelAdmin):
     ordering = ["date", "start_time"]
     change_form_template = "admin/tennis_bot/GroupTrainingDay/submit_line.html"
 
+    def get_queryset(self, request):
+        return (
+            super(GroupTrainingDayAdmin, self)
+            .get_queryset(request)
+            .filter(is_deleted=False)
+        )
+
     def get_object(self, request, object_id, from_field=None):
         obj = super().get_object(request, object_id, from_field=from_field)
         # Cache object for use in formfield_for_manytomany

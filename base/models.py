@@ -340,6 +340,7 @@ class GroupTrainingDay(ModelwithTime):
         choices=TR_DAY_STATUSES,
         verbose_name="Статус",
     )
+    is_deleted = models.BooleanField(default=False)
 
     class Meta:
         ordering = ["-date"]

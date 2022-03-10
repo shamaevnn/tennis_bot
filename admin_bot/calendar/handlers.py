@@ -61,7 +61,7 @@ def inline_calendar_handler(update: Update, context: CallbackContext):
     if selected:
         if purpose == CLNDR_ADMIN_VIEW_SCHEDULE:
             tr_days = (
-                GroupTrainingDay.objects.filter(date=date_my)
+                GroupTrainingDay.objects.filter(date=date_my, is_deleted=False)
                 .select_related("group")
                 .order_by("start_time")
             )

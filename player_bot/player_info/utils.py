@@ -1,6 +1,7 @@
 from django.db.models import QuerySet
 
 from base.models import GroupTrainingDay, Player, TrainingGroup
+from tennis_bot.settings import BALLS_PRICE_FOR_1_TRAIN_PER_WEEK
 
 
 def balls_lessons_payment(year: int, month: int, player: Player):
@@ -16,7 +17,9 @@ def balls_lessons_payment(year: int, month: int, player: Player):
             .distinct()
             .count()
         )
-        balls_this_month: int = tr_days_num_this_month
+        should_pay_balls = BALLS_PRICE_FOR_1_TRAIN_PER_WEEK * round(
+            tr_days_num_this_month / 4
+        )
 
         group: TrainingGroup = TrainingGroup.objects.filter(
             players__in=[player], status=TrainingGroup.STATUS_GROUP
@@ -26,16 +29,14 @@ def balls_lessons_payment(year: int, month: int, player: Player):
         tr_days_num_this_month: int = (
             tr_days_this_month.filter(visitors__in=[player]).distinct().count()
         )
-        balls_this_month: int = 0
+        should_pay_balls: int = 0
         tarif: int = Player.get_tarif_by_status(player.status)
     else:
         tarif: int = 0
         tr_days_num_this_month: int = 0
-        balls_this_month: int = 0
+        should_pay_balls: int = 0
 
     should_pay_this_month = tr_days_num_this_month * tarif
-    should_pay_balls = 100 * round(balls_this_month / 4)
-
     return should_pay_this_month, should_pay_balls
 
 

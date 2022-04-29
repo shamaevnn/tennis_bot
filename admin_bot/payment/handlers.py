@@ -24,8 +24,11 @@ from base.models import Payment, TrainingGroup, Player, GroupTrainingDay
 from base.common_for_bots.utils import moscow_datetime, bot_edit_message
 
 from base.common_for_bots.static_text import from_digit_to_month, UP_TO_YOU
-from tennis_bot.settings import TARIF_SECTION, TARIF_FEW
-
+from tennis_bot.settings import (
+    TARIF_SECTION,
+    TARIF_FEW,
+    BALLS_PRICE_FOR_1_TRAIN_PER_WEEK,
+)
 
 START_CHANGE_PAYMENT, CONFIRM_OR_CANCEL = range(2)
 
@@ -145,7 +148,7 @@ def group_payment(update: Update, context: CallbackContext):
         elif group.status == TrainingGroup.STATUS_FEW:
             should_pay = n_lessons * TARIF_FEW
 
-        should_pay_balls = 100 * round(n_lessons / 4)
+        should_pay_balls = BALLS_PRICE_FOR_1_TRAIN_PER_WEEK * round(n_lessons / 4)
         title = f"{group.name}\n"
         help_info = static_text.FIRST_LAST_NAME_FACT_NUMBER_OF_VISITS
 

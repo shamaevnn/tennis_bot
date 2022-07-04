@@ -1,6 +1,6 @@
 python-dotenv
 
-Django==3.2.0
+Django==3.2.12
 django-cors-headers
 whitenoise
 django-redis

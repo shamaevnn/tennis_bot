@@ -39,40 +39,30 @@ def get_text_and_player_ids_to_send_message_to(
     if int(ALL_GROUPS) in list_of_group_ids:
         # pressed 'send to all groups'
         text = SENDING_TO_ALL_GROUPS_TYPE_TEXT
-
-        banda_groups = TrainingGroup.objects.filter(
-            status=TrainingGroup.STATUS_GROUP, max_players__gt=1
-        ).distinct()
-        player_ids = list(
-            set(
-                Player.objects.filter(traininggroup__in=banda_groups).values_list(
+        player_ids = list(set(
+            Player.objects.filter(status=Player.STATUS_TRAINING).values_list(
                     "tg_id", flat=True
-                )
-            )
+            ))
         )
     elif int(SEND_TO_ALL) in list_of_group_ids:
         # pressed 'send to all'
         text = WILL_SEND_TO_ALL_TYPE_TEXT
-        player_ids = list(
-            set(
-                Player.objects.filter(
-                    status__in=[
-                        Player.STATUS_TRAINING,
-                        Player.STATUS_ARBITRARY,
-                        Player.STATUS_IND_TRAIN,
-                    ]
-                ).values_list("tg_id", flat=True)
-            )
+        player_ids = list(set(
+            Player.objects.filter(
+                status__in=[
+                    Player.STATUS_TRAINING,
+                    Player.STATUS_ARBITRARY,
+                    Player.STATUS_IND_TRAIN,
+                ]
+            ).values_list("tg_id", flat=True))
         )
     elif int(SEND_TO_ARBITRARY_SCHEDULE) in list_of_group_ids:
         # pressed 'send to free view_schedule'
         text = WILL_SEND_TO_FREE_SCHEDULE
-        player_ids = list(
-            set(
-                Player.objects.filter(status=Player.STATUS_ARBITRARY).values_list(
-                    "tg_id", flat=True
-                )
-            )
+        player_ids = list(set(
+            Player.objects.filter(status=Player.STATUS_ARBITRARY).values_list(
+                "tg_id", flat=True
+            ))
         )
     else:
         group_names = "\n".join(
@@ -82,13 +72,11 @@ def get_text_and_player_ids_to_send_message_to(
                 )
             )
         )
-        text = f"{WILL_SEND_TO_THE_FOLLOWING_GROUPS}\n{group_names}\n{TYPE_TEXT_OF_MESSAGE}"
-        player_ids = list(
-            set(
-                Player.objects.filter(traininggroup__in=list_of_group_ids).values_list(
-                    "tg_id", flat=True
-                )
-            )
+        text = f"{WILL_SEND_TO_THE_FOLLOWING_GROUPS}\n<b>{group_names}</b>\n{TYPE_TEXT_OF_MESSAGE}"
+        player_ids = list(set(
+            Player.objects.filter(traininggroup__in=list_of_group_ids).values_list(
+                "tg_id", flat=True
+            ))
         )
 
     return text, player_ids

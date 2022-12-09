@@ -8,9 +8,7 @@ WILL_SEND_TO_ALL_TYPE_TEXT = f"Отправлю сообщение вообще 
 WILL_SEND_TO_FREE_SCHEDULE = (
     f"Отправлю сообщение тем, кто ходит по свободному графику.{TYPE_TEXT_OF_MESSAGE}"
 )
-WILL_SEND_TO_THE_FOLLOWING_GROUPS = (
-    f"Отправлю сообщение следующим группам:{TYPE_TEXT_OF_MESSAGE}"
-)
+WILL_SEND_TO_THE_FOLLOWING_GROUPS = "Отправлю сообщение следующим группам:"
 OR_PRESS_CANCEL = " Или нажми /cancel для отмены."
 CANCEL_COMMAND = "/cancel"
 IS_SENT = "Отправлено."

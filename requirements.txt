@@ -6,8 +6,7 @@ whitenoise
 django-redis
 
 ipython
-prompt-toolkit
-python-telegram-bot
+python-telegram-bot==13.11
 
 redis
 celery
@@ -28,4 +27,3 @@ uvloop
 httptools
 
 pytz
-arrow

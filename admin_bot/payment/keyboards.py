@@ -78,6 +78,9 @@ def choose_year_to_group_payment_keyboard(
             InlineKeyboardButton(
                 static_text.YEAR_2022, callback_data=f"{manage_data.PAYMENT_YEAR}2"
             ),
+            InlineKeyboardButton(
+                static_text.YEAR_2023, callback_data=f"{manage_data.PAYMENT_YEAR}3"
+            ),
         ],
         [
             InlineKeyboardButton(

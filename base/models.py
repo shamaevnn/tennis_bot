@@ -433,8 +433,9 @@ class Payment(models.Model):
     YEAR_2020 = "0"
     YEAR_2021 = "1"
     YEAR_2022 = "2"
+    YEAR_2023 = "3"
 
-    YEARS = ((YEAR_2020, "2020"), (YEAR_2021, "2021"), (YEAR_2022, "2022"))
+    YEARS = ((YEAR_2020, "2020"), (YEAR_2021, "2021"), (YEAR_2022, "2022"), (YEAR_2023, "2023"))
 
     player = models.ForeignKey(
         Player, on_delete=models.SET_NULL, verbose_name="игрок", null=True

@@ -24,3 +24,4 @@ CANCEL_TRAIN_PLUS_BONUS_LESSON = (
 ONLY_ONE_LEFT = (
     f"{ATTENTION_2}\n" "На тренировке в группе {} остался только один игрок\n" "{}"
 )
+CANT_SKIP_UNAVAILABLE_LESSON = "Занятие отменено тренером, его нельзя пропустить."

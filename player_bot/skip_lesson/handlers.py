@@ -93,8 +93,9 @@ def skip_lesson(update: Update, context: CallbackContext):
             )
 
     text, admin_text = handle_skipping_train(tr_day, player, date_info)
-    send_message_to_coaches(
-        text=admin_text,
-    )
+    if admin_text:
+        send_message_to_coaches(
+            text=admin_text,
+        )
 
     bot_edit_message(context.bot, text, update)

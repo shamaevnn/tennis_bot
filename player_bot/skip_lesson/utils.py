@@ -11,7 +11,7 @@ from player_bot.skip_lesson.static_text import (
     PLAYER_SKIPPED_TRAIN_IN_HIS_GROUP,
     CANT_CANCEL_LESSON_TOO_LATE,
     OKAY_TRAIN_CANCELLED,
-    PLAYER_CANCELLED_RENT_COURT,
+    PLAYER_CANCELLED_RENT_COURT, CANT_SKIP_UNAVAILABLE_LESSON,
 )
 from base.common_for_bots.static_text import ATTENTION
 from base.models import GroupTrainingDay, Player
@@ -41,6 +41,7 @@ def select_tr_days_for_skipping(
         )
         .exclude(absent__in=[player])
         .exclude(is_deleted=True)
+        .exclude(is_available=False)
         .select_related("group")
         .order_by("id")
         .iterator()
@@ -117,7 +118,6 @@ def handle_skipping_train(
     training_day: GroupTrainingDay, player: Player, date_info: str
 ):
     text = OKAY_TRAIN_CANCELLED.format(date_info)
-
     tr_day_status = training_day.status
 
     if tr_day_status == GroupTrainingDay.RENT_COURT_STATUS:
@@ -144,6 +144,9 @@ def handle_skipping_train(
             round(player.time_before_cancel.seconds / 3600)
         )
         admin_text = ""
+        return text, admin_text
+    elif not training_day.is_available:
+        text, admin_text = CANT_SKIP_UNAVAILABLE_LESSON, ""
         return text, admin_text
 
     if player in training_day.visitors.all():

@@ -55,7 +55,11 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.postgres",
     # 3rd party apps
+    "drf_yasg",
     "django_celery_beat",
+    "rest_framework",
+
+    # local apps
     "base",
     "player_bot",
     "tennis_bot",

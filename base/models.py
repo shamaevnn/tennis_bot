@@ -458,10 +458,16 @@ class Payment(models.Model):
         verbose_name_plural = "оплата"
 
     def save(self, *args, **kwargs):
+        """
+        Подсчитваем сколько теоритечески в данный месяц должен заплатить игрок.
+        Учитываем посещения и пропуски
+        """
         year = int(self.year) + 2020
         month = int(self.month)
         begin_day_month = date(year, month, 1)
 
+        # тренировки игрока в текущем месяце
+        # те, которые пропустил, не считаются
         base_query = GroupTrainingDay.objects.filter(
             Q(visitors__in=[self.player]) | Q(group__players__in=[self.player]),
             date__gte=begin_day_month,
@@ -470,14 +476,17 @@ class Payment(models.Model):
             date__month=month,
         ).exclude(absent__in=[self.player])
 
-        self.n_fact_visiting = base_query.distinct().count()
-
-        payment = 0
+        player_in_section = False
         for x in self.player.traininggroup_set.all().iterator():
             if x.status == TrainingGroup.STATUS_SECTION:
-                payment = TARIF_SECTION
-        if not payment:
-            payment = (
+                player_in_section = True
+
+        # если занимается в секции, то фиксированная сумма за месяц
+        # иначе сумируем стоимость каждого занятия
+        if player_in_section:
+            payment_sum = TARIF_SECTION
+        else:
+            payment_sum = (
                 base_query.annotate(gr_status=F("group__status"))
                 .annotate(
                     tarif=Case(
@@ -491,8 +500,8 @@ class Payment(models.Model):
                 .aggregate(sigma=Sum("tarif"))["sigma"]
             )
 
-        self.theory_amount = payment
-
+        self.n_fact_visiting = base_query.distinct().count()
+        self.theory_amount = payment_sum
         super(Payment, self).save(*args, **kwargs)
 
     def __str__(self):

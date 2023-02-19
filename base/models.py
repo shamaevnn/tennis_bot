@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import random
 import re
-from typing import Optional, Tuple, Union, Iterator
+from typing import Optional, Tuple, Union, Iterator, List
 from uuid import uuid4
 
 import telegram
@@ -456,6 +456,14 @@ class Payment(models.Model):
         ordering = ["year"]
         verbose_name = "оплата"
         verbose_name_plural = "оплата"
+
+    @classmethod
+    def available_years(cls) -> List[int]:
+        return [int(year[0]) for year in cls.YEARS]
+
+    @classmethod
+    def available_months(cls) -> List[int]:
+        return [int(month[0]) for month in cls.MONTHS]
 
     def save(self, *args, **kwargs):
         """

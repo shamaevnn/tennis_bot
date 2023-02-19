@@ -55,6 +55,12 @@ def year_payment(update: Update, context: CallbackContext):
 
 
 def month_payment(update: Update, context: CallbackContext):
+    """
+    Показывает список групп
+    При нажатии на группу можно посмотреть, кто из игроков сколько заплатил
+    Также есть отдельная кнопка "Не заплатили" с group_id = 0
+    В ней список из тех, кто не заплатил и сколько не заплатил
+    """
     year, month = update.callback_query.data[
         len(manage_data.PAYMENT_YEAR_MONTH) :
     ].split("|")
@@ -72,7 +78,7 @@ def month_payment(update: Update, context: CallbackContext):
         choose_group_text=static_text.CHOOSE_GROUP,
     )
 
-    groups = TrainingGroup.objects.filter(name__iregex=r"БАНДА").order_by("order")
+    groups = TrainingGroup.objects.filter(status=TrainingGroup.STATUS_GROUP).order_by("order")
     markup = construct_menu_groups(
         groups, f"{manage_data.PAYMENT_YEAR_MONTH_GROUP}{year}|{month}|"
     )

@@ -18,7 +18,7 @@ def check_if_players_not_in_payments(group_id, payments, year, month):
 def have_not_paid_players_info(payments_values: QuerySet[Dict]):
     return "\n".join(
         (
-            f"<b>{x['id']}</b>. {x['player__last_name']} {x['player__first_name']} -- {x['n_fact_visiting']} ({x['group_name']})"
+            f"<b>{x['id']}</b>. {x['player__last_name']} {x['player__first_name']} — {x['n_fact_visiting']} ({x['group_name']})"
             for x in payments_values
         )
     )
@@ -27,7 +27,7 @@ def have_not_paid_players_info(payments_values: QuerySet[Dict]):
 def payment_players_info(payments: QuerySet[Payment]):
     return "\n".join(
         (
-            f"<b>{x['id']}</b>. {x['player__last_name']} {x['player__first_name']} -- {x['fact_amount']}₽, {x['n_fact_visiting']}"
+            f"<b>{x['id']}</b>. {x['player__last_name']} {x['player__first_name']} — {x['fact_amount']}₽, {x['n_fact_visiting']}"
             for x in payments.values(
                 "player__first_name",
                 "player__last_name",

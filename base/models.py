@@ -113,7 +113,7 @@ class Player(models.Model):
         verbose_name_plural = "игроки"
 
     def __str__(self):
-        return "{} {} -- {}".format(self.first_name, self.last_name, self.phone_number)
+        return "{} {} — {}".format(self.first_name, self.last_name, self.phone_number)
 
     @property
     def tg_name(self) -> str:

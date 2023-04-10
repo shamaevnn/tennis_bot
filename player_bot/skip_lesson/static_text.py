@@ -1,4 +1,10 @@
-from base.common_for_bots.static_text import ATTENTION, ATTENTION_2
+from base.common_for_bots.static_text import (
+    ATTENTION, ATTENTION_2,
+    DAYS_AVAILABLE_TO_GROUP_CANCEL,
+    DAYS_AVAILABLE_TO_GROUP_TRAIN
+    )
+
+
 
 PLAYER_CANCELLED_IND_TRAIN = "{}\n{} {} отменил индивидуальную тренировку\n{}"
 PLAYER_CANCELLED_RENT_COURT = "{}\n{} {} отменил аренду корта\n{}"
@@ -25,3 +31,18 @@ ONLY_ONE_LEFT = (
     f"{ATTENTION_2}\n" "На тренировке в группе {} остался только один игрок\n" "{}"
 )
 CANT_SKIP_UNAVAILABLE_LESSON = "Занятие отменено тренером, его нельзя пропустить."
+
+CHOOSE_DATE_TO_CANCEL = f"Выбери дату тренировки для отмены.\n {DAYS_AVAILABLE_TO_GROUP_CANCEL}"
+
+TRAIN_CANCELLED_BY_COACH_TEMPLATE = "{} в {} ❌нет тренировки❌, т.к. она отменена тренером, поэтому ее нельзя пропустить."
+NO_LESSONS_TO_SKIP = "Пока что нечего пропускать."
+INDIVIDUAL_TRAIN_DECOR_TEXT = "🧞‍♂индивидуальная тренировка🧞‍♂️\n"
+RENT_COURT_DECOR_TEXT = "💸 аренда корта ️💸\n"
+ATTENDING_INFO_TEMPLATE = "Присутствующие:\n{}\n"
+
+SELECT_TIME_TEXT = "Выбери время"
+
+NO_TRAIN_ON_THIS_DAY = (
+    f"Нет тренировки в этот день, выбери другой.\n"
+    f"{DAYS_AVAILABLE_TO_GROUP_TRAIN}"
+)

@@ -16,7 +16,9 @@ from player_bot.take_lesson.group.utils import (
     handle_taking_group_lesson,
     handle_choosing_type_of_payment_for_pay_visiting_when_have_bonus_lessons,
 )
-from tennis_bot.settings import ADMIN_TELEGRAM_TOKEN
+from player_bot.take_lesson.group.static_text import THIS_TRAIN_IS_PAID
+from player_bot.skip_lesson.static_text import ATTENDING_INFO_TEMPLATE
+
 
 
 def select_group_time(update: Update, context: CallbackContext):
@@ -41,15 +43,15 @@ def select_group_time(update: Update, context: CallbackContext):
         and tr_day.group.max_players < 6
         and tr_day.group.available_for_additional_lessons
     ):
-        text = f"⚠️ATTENTION⚠️\n" f"<b>Это занятие платное!</b>\n\n"
+        text = THIS_TRAIN_IS_PAID
 
     all_players = "\n".join(
         (f"{x['first_name']} {x['last_name']}" for x in all_players)
     )
     text += (
-        f"{tr_day.group.name} -- {TrainingGroup.GROUP_LEVEL_DICT[tr_day.group.level]}\n"
+        f"{tr_day.group.name} — {TrainingGroup.GROUP_LEVEL_DICT[tr_day.group.level]}\n"
         f"{DATE_INFO.format(date_tlg, day_of_week, time_tlg)}"
-        f"👥Присутствующие:\n{all_players}\n\n"
+        f"👥{ATTENDING_INFO_TEMPLATE.format(all_players)}"
         f'Свободные места: {n_free_places if n_free_places > 0 else "есть за деньги"}'
     )
 

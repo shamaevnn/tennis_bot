@@ -19,6 +19,11 @@ CONFIRM = "Подтвердить"
 THIS_WAY_YEAH = "Вот так вот значит, да?"
 ATTENTION = "⚠️ATTENTION⚠️"
 ATTENTION_2 = "❌ATTENTION❌"
+
+DAYS_AVAILABLE_TO_GROUP_TRAIN = "✅ — дни, доступные для групповых тренировок."
+DAYS_AVAILABLE_TO_GROUP_CANCEL = "✅ — дни, доступные для отмены."
+PAYMENT_REQUISITES = "Реквизиты: 2202200316376548, Сергей Николаевич Ю."
+
 from_eng_to_rus_day_week = {
     "Sunday": "воскресенье",
     "Monday": "понедельник",
@@ -28,3 +33,4 @@ from_eng_to_rus_day_week = {
     "Friday": "пятница",
     "Saturday": "суббота",
 }
+

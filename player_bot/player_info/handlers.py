@@ -8,7 +8,7 @@ from base.models import Payment, TrainingGroup, Player
 from player_bot.menu_and_commands.keyboards import construct_main_menu
 from base.common_for_bots.utils import moscow_datetime
 from player_bot.player_info.static_text import ( 
-                                            GAME_COUNT_INFO_TEMPLATE, INTRO_INFO_TEMPLATE, GROUP_INFO_TEMPLATE, 
+                                            BONUS_LESSON_COUNT_INFO, INTRO_INFO_TEMPLATE, GROUP_INFO_TEMPLATE, 
                                             NO_PAYMENT_BUTTON, MY_DATA_BUTTON,
                                             SHOULD_PAY_INFO_TEMPLATE, SUCCESS_PAYMENT
                                         )
@@ -68,7 +68,7 @@ def player_main_info(update: Update, context: CallbackContext):
         else ""
     )
 
-    number_of_add_games = GAME_COUNT_INFO_TEMPLATE.format(
+    number_of_add_games = BONUS_LESSON_COUNT_INFO.format(
         player.bonus_lesson
     )
 

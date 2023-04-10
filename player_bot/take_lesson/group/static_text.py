@@ -14,9 +14,39 @@ NO_AVAILABLE_TRAIN_THIS_DAY = (
     f"{DAYS_AVAILABLE_TO_GROUP_TRAIN}"
 )
 
-SIGNED_TO_TRAIN_TEMPLATE_PAYMENT =  (
-            f"Записал тебя на тренировку\n"
-            f"{ATTENTION}\n"
-            "Не забудь заплатить <b>{}₽</b>\n{}"
-            )
+ADMIN_TEXT_GROUP_TRAIN =(
+ f"{ATTENTION}\n"
+  "{} {} придёт на гр. тренировку "
+ "<b>не за счет отыгрышей, не забудь взять {}₽.</b>\n"
+ "{}"
+)
 
+ADMIN_TEXT_SINGLE_TRAIN_BONUSS = (
+ f"{ATTENTION}\n"
+  "{} {} придёт на гр. тренировку "
+ "<b>не за счет отыгрышей, не забудь взять {}₽.</b>\n"
+ "{}"
+)
+
+
+ADMIN_TEXT_SINGLE_TRAIN_PAY_BONUSS = (
+      f"{ATTENTION}\n"
+      "{} {} придёт "
+      "<b>за счёт платных отыгрышей, не забудь взять {}₽.</b>\n{}"
+)
+
+ADMIN_TEXT_SINGLE_TRAIN_DOP_TIME = (
+      f"{ATTENTION}\n"
+      "{} {} придёт "
+      "<b>в дополнительное время, не забудь взять {}₽.</b>\n{}"
+)
+
+
+PLAYER_VISIT_GROUP_TRAIN_BONUSS = "{} {} придёт на гр. тренировку за отыгрыш.\n{}"
+
+PLAYER_WRITTEN_TO_TRAIN_SHORT="Записал тебя на тренировку.\n{}"
+PLAYER_WRITTEN_TO_TRAIN = (
+    "Записал тебя на тренировку"
+    f"{ATTENTION}\n"
+    "Не забудь заплатить <b>{}₽</b>\n"
+    "{}")

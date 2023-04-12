@@ -8,12 +8,12 @@ COACH_CANCELLED_TRAIN = """
 {date_info}
 """
 
-PLAYER_MESSAGE = (
+WILL_SAY_TO_COACH_ABOUT_IND_TRAIN = (
     "Сообщу тренеру, что ты хочешь прийти на индивидуальное занятие"
     " <b>{} ({}) </b>\n"
     "Время: <b>{} — {}</b>")
 
-ADMIN_MESSAGE = (
+PLAYER_WANTS_IND_TRAIN = (
   "<b>{} {} — {}</b>\n"
   "Хочет прийти на индивидуальное занятие <b>{} ({}) </b>"
   "в <b>{} — {}</b>\n"

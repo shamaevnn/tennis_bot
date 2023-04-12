@@ -20,8 +20,8 @@ THIS_WAY_YEAH = "Вот так вот значит, да?"
 ATTENTION = "⚠️ATTENTION⚠️"
 ATTENTION_2 = "❌ATTENTION❌"
 
-DAYS_AVAILABLE_TO_GROUP_TRAIN = "✅ — дни, доступные для групповых тренировок."
-DAYS_AVAILABLE_TO_GROUP_CANCEL = "✅ — дни, доступные для отмены."
+DAYS_AVAILABLE_FOR_GROUP_TRAIN = "✅ — дни, доступные для групповых тренировок."
+DAYS_AVAILABLE_FOR_GROUP_CANCEL = "✅ — дни, доступные для отмены."
 PAYMENT_REQUISITES = "Реквизиты: \n\n2202200316376548\n\n Сергей Николаевич Ю."
 
 from_eng_to_rus_day_week = {

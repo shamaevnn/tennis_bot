@@ -1,4 +1,4 @@
-from base.common_for_bots.static_text import ATTENTION, DAYS_AVAILABLE_TO_GROUP_TRAIN
+from base.common_for_bots.static_text import ATTENTION, DAYS_AVAILABLE_FOR_GROUP_TRAIN
 from tennis_bot.settings import TARIF_ARBITRARY
 
 
@@ -22,11 +22,11 @@ NO_GAMES_IN_MOMENT = (
     f"{ATTENTION}\n"
     f"В данный момент у тебя нет отыгрышей.\n"
     f"<b> Занятие будет стоить {TARIF_ARBITRARY}₽ </b>\n"
-    f"{DAYS_AVAILABLE_TO_GROUP_TRAIN}"
+    f"{DAYS_AVAILABLE_FOR_GROUP_TRAIN}"
 )
 
 YOU_SACRIFICE_ONE_GAME = (
     f"<b>Пожертвуешь одним отыгрышем.</b>\n"
-    f"{DAYS_AVAILABLE_TO_GROUP_TRAIN}"
+    f"{DAYS_AVAILABLE_FOR_GROUP_TRAIN}"
 )
 

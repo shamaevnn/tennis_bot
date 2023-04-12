@@ -11,7 +11,7 @@ from base.common_for_bots.utils import create_calendar, bot_edit_message, DT_BOT
 from base.models import Player, TrainingGroup, GroupTrainingDay
 from player_bot.calendar.manage_data import CLNDR_ACTION_TAKE_IND
 from player_bot.take_lesson.individual import manage_data
-from player_bot.take_lesson.individual.static_text import ADMIN_MESSAGE, PLAYER_MESSAGE
+from player_bot.take_lesson.individual.static_text import PLAYER_WANTS_IND_TRAIN, WILL_SAY_TO_COACH_ABOUT_IND_TRAIN
 from player_bot.take_lesson.static_text import CHOOSE_DATE_OF_TRAIN
 
 
@@ -45,7 +45,7 @@ def select_ind_time(update: Update, context: CallbackContext):
         status=GroupTrainingDay.INDIVIDUAL_TRAIN,
     )
 
-    text = PLAYER_MESSAGE.format(day_dt,day_of_week,start_time,end_time)
+    text = WILL_SAY_TO_COACH_ABOUT_IND_TRAIN.format(day_dt,day_of_week,start_time,end_time)
       
     bot_edit_message(context.bot, text, update)
 
@@ -54,7 +54,7 @@ def select_ind_time(update: Update, context: CallbackContext):
         tr_day_id=tr_day.id,
     )
 
-    text = ADMIN_MESSAGE.format(player.first_name,player.last_name,player.phone_number,day_dt,day_of_week,start_time,end_time) 
+    text = PLAYER_WANTS_IND_TRAIN.format(player.first_name,player.last_name,player.phone_number,day_dt,day_of_week,start_time,end_time) 
       
 
     send_message_to_coaches(

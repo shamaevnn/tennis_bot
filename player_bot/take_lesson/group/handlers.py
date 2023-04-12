@@ -3,7 +3,7 @@ from telegram.ext import CallbackContext
 
 import player_bot.take_lesson.group.manage_data
 from base.common_for_bots.static_text import DATE_INFO
-from base.common_for_bots.tasks import broadcast_messages, send_message_to_coaches
+from base.common_for_bots.tasks import send_message_to_coaches
 from base.common_for_bots.utils import (
     get_time_info_from_tr_day,
     get_actual_players_without_absent,
@@ -51,7 +51,7 @@ def select_group_time(update: Update, context: CallbackContext):
     text += (
         f"{tr_day.group.name} — {TrainingGroup.GROUP_LEVEL_DICT[tr_day.group.level]}\n"
         f"{DATE_INFO.format(date_tlg, day_of_week, time_tlg)}"
-        f"👥{ATTENDING_INFO_TEMPLATE.format(all_players)}"
+        f"{ATTENDING_INFO_TEMPLATE.format(all_players)}"
         f'Свободные места: {n_free_places if n_free_places > 0 else "есть за деньги"}'
     )
 

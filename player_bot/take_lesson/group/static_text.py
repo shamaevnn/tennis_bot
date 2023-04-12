@@ -1,4 +1,4 @@
-from base.common_for_bots.static_text import ATTENTION, DAYS_AVAILABLE_TO_GROUP_TRAIN
+from base.common_for_bots.static_text import ATTENTION, DAYS_AVAILABLE_FOR_GROUP_TRAIN
 
 
 CANT_TAKE_LESSON_MAX_IN_FUTURE = """
@@ -11,7 +11,7 @@ CHOOSE_TRAIN_TIME_TEMPLATE = "Выбери время занятия на {} ({}
 
 NO_AVAILABLE_TRAIN_THIS_DAY = (
     "Нет доступных тренировок в этот день, выбери другой.\n"
-    f"{DAYS_AVAILABLE_TO_GROUP_TRAIN}"
+    f"{DAYS_AVAILABLE_FOR_GROUP_TRAIN}"
 )
 
 ADMIN_TEXT_GROUP_TRAIN =(
@@ -44,7 +44,7 @@ ADMIN_TEXT_SINGLE_TRAIN_DOP_TIME = (
 
 PLAYER_VISIT_GROUP_TRAIN_BONUSS = "{} {} придёт на гр. тренировку за отыгрыш.\n{}"
 
-PLAYER_WRITTEN_TO_TRAIN_SHORT="Записал тебя на тренировку.\n{}"
+PLAYER_WRITTEN_TO_TRAIN_SHORT = "Записал тебя на тренировку.\n{}"
 PLAYER_WRITTEN_TO_TRAIN = (
     "Записал тебя на тренировку"
     f"{ATTENTION}\n"

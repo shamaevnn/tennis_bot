@@ -17,7 +17,7 @@ def back_to_payment_groups_when_changing_payment_keyboard(
     buttons = [
         [
             InlineKeyboardButton(
-                text=f"{int(year) + 2020} -- {from_digit_to_month[int(month)]}",
+                text=f"{int(year) + 2020} — {from_digit_to_month[int(month)]}",
                 callback_data=f"{manage_data.PAYMENT_YEAR_MONTH}{year}|{month}",
             )
         ]

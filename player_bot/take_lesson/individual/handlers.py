@@ -11,6 +11,7 @@ from base.common_for_bots.utils import create_calendar, bot_edit_message, DT_BOT
 from base.models import Player, TrainingGroup, GroupTrainingDay
 from player_bot.calendar.manage_data import CLNDR_ACTION_TAKE_IND
 from player_bot.take_lesson.individual import manage_data
+from player_bot.take_lesson.individual.static_text import PLAYER_WANTS_IND_TRAIN, WILL_SAY_TO_COACH_ABOUT_IND_TRAIN
 from player_bot.take_lesson.static_text import CHOOSE_DATE_OF_TRAIN
 
 
@@ -44,11 +45,8 @@ def select_ind_time(update: Update, context: CallbackContext):
         status=GroupTrainingDay.INDIVIDUAL_TRAIN,
     )
 
-    text = (
-        f"Сообщу тренеру, что ты хочешь прийти на индивидуальное занятие"
-        f" <b>{day_dt} ({day_of_week}) </b>\n"
-        f"Время: <b>{start_time} — {end_time}</b>"
-    )
+    text = WILL_SAY_TO_COACH_ABOUT_IND_TRAIN.format(day_dt,day_of_week,start_time,end_time)
+      
     bot_edit_message(context.bot, text, update)
 
     markup = permission4ind_train_keyboard(
@@ -56,12 +54,8 @@ def select_ind_time(update: Update, context: CallbackContext):
         tr_day_id=tr_day.id,
     )
 
-    text = (
-        f"<b>{player.first_name} {player.last_name} — {player.phone_number}</b>\n"
-        f"Хочет прийти на индивидуальное занятие <b>{day_dt} ({day_of_week}) </b>"
-        f" в <b>{start_time} — {end_time}</b>\n"
-        f"<b>Разрешить?</b>"
-    )
+    text = PLAYER_WANTS_IND_TRAIN.format(player.first_name,player.last_name,player.phone_number,day_dt,day_of_week,start_time,end_time) 
+      
 
     send_message_to_coaches(
         text=text,

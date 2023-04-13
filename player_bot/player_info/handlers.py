@@ -7,8 +7,13 @@ from telegram.ext import ConversationHandler, CallbackContext
 from base.models import Payment, TrainingGroup, Player
 from player_bot.menu_and_commands.keyboards import construct_main_menu
 from base.common_for_bots.utils import moscow_datetime
-from player_bot.player_info.static_text import NO_PAYMENT_BUTTON, SUCCESS_PAYMENT
-from base.common_for_bots.static_text import from_digit_to_month
+from player_bot.player_info.static_text import ( 
+                                            BONUS_LESSON_COUNT_INFO, INTRO_INFO_TEMPLATE, GROUP_INFO_TEMPLATE, 
+                                            NO_PAYMENT_BUTTON, MY_DATA_BUTTON,
+                                            SHOULD_PAY_INFO_TEMPLATE, SUCCESS_PAYMENT
+                                        )
+
+from base.common_for_bots.static_text import PAYMENT_REQUISITES, from_digit_to_month
 from player_bot.registration.utils import check_status_decor
 from player_bot.player_info.utils import balls_lessons_payment, group_players_info
 
@@ -47,7 +52,7 @@ def player_main_info(update: Update, context: CallbackContext):
     else:
         payment_status = ""
 
-    intro = f"В данный момент ты {from_player_to_intro[player.status]}\n\n"
+    intro =  INTRO_INFO_TEMPLATE.format(from_player_to_intro[player.status])
 
     group = (
         TrainingGroup.objects.filter(players__in=[player])
@@ -58,12 +63,12 @@ def player_main_info(update: Update, context: CallbackContext):
     teammates = group.players.all() if group else Player.objects.none()
 
     group_info = (
-        "Твоя группа -- {}:\n{}\n\n".format(group.name, group_players_info(teammates))
+        GROUP_INFO_TEMPLATE.format(group.name, group_players_info(teammates))
         if teammates
         else ""
     )
 
-    number_of_add_games = "Количество отыгрышей: <b>{}</b>\n\n".format(
+    number_of_add_games = BONUS_LESSON_COUNT_INFO.format(
         player.bonus_lesson
     )
 
@@ -80,14 +85,15 @@ def player_main_info(update: Update, context: CallbackContext):
     )
 
     should_pay_info = (
-        "В этом месяце ({}) <b>нужно заплатить {} ₽ + {} ₽ за мячи.</b>\n"
-        "В следующем месяце ({}) <b>нужно заплатить {} ₽ + {} ₽ за мячи</b>.".format(
+        SHOULD_PAY_INFO_TEMPLATE.format(
             from_digit_to_month[today.month],
             should_pay_this_month,
             balls_this_month,
             from_digit_to_month[next_month.month],
             should_pay_money_next,
             balls_next_month,
+            PAYMENT_REQUISITES
+            
         )
     )
 

@@ -12,6 +12,15 @@ from player_bot.skip_lesson.static_text import (
     CANT_CANCEL_LESSON_TOO_LATE,
     OKAY_TRAIN_CANCELLED,
     PLAYER_CANCELLED_RENT_COURT, CANT_SKIP_UNAVAILABLE_LESSON,
+    ATTENDING_INFO_TEMPLATE,
+    NO_LESSONS_TO_SKIP,
+    CANCEL_TRAIN_PLUS_BONUS_LESSON,
+    INDIVIDUAL_TRAIN_DECOR_TEXT,
+    NO_TRAIN_ON_THIS_DAY,
+    RENT_COURT_DECOR_TEXT,
+    SELECT_TIME_TEXT,
+    TRAIN_CANCELLED_BY_COACH_TEMPLATE,
+    
 )
 from base.common_for_bots.static_text import ATTENTION
 from base.models import GroupTrainingDay, Player
@@ -69,14 +78,14 @@ def make_group_name_group_players_info_for_skipping(
     tr_day_status = tr_day.status
 
     if tr_day_status == GroupTrainingDay.INDIVIDUAL_TRAIN:
-        group_name = "🧞‍♂индивидуальная тренировка🧞‍♂️\n"
+        group_name = INDIVIDUAL_TRAIN_DECOR_TEXT
         group_players = ""
     elif tr_day_status == GroupTrainingDay.RENT_COURT_STATUS:
-        group_name = "💸 аренда корта ️💸\n"
+        group_name = RENT_COURT_DECOR_TEXT
         group_players = ""
     else:
         group_name = f"{tr_day.group.name}\n"
-        group_players = f"Присутствующие:\n{all_players}\n"
+        group_players = ATTENDING_INFO_TEMPLATE.format(all_players)
 
     return group_name, group_players
 
@@ -87,7 +96,7 @@ def calendar_skipping(player: Player, purpose, date_my):
         # несколько тренировок в один день
         if len(training_days) > 1:
             markup = construct_menu_skipping_much_lesson(training_days)
-            text = "Выбери время"
+            text = SELECT_TIME_TEXT
         else:
             training_day = training_days[0]
             group_name, group_players = make_group_name_group_players_info_for_skipping(
@@ -98,10 +107,7 @@ def calendar_skipping(player: Player, purpose, date_my):
                 training_day, purpose, group_name, group_players
             )
     else:
-        text = (
-            "Нет тренировки в этот день, выбери другой.\n"
-            "✅ -- дни, доступные для отмены."
-        )
+        text = NO_TRAIN_ON_THIS_DAY
 
         markup = create_calendar(
             purpose,

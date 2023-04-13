@@ -24,7 +24,7 @@ def select_groups_where_should_send(update: Update, context: CallbackContext):
         )
 
         if len(group_ids) == 2 and group_ids[-1] == "-1":
-            # ['', '-1'] -- just pressed confirm
+            # ['', '-1'] — just pressed confirm
             text = static_text.CHOOSE_GROUP_AFTER_THAT_CONFIRM
         bot_edit_message(context.bot, text, update, markup)
         return GROUP_IDS

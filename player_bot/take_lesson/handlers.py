@@ -22,7 +22,9 @@ from player_bot.take_lesson.static_text import (
 )
 from player_bot.take_lesson.group.query import get_potential_days_for_group_training
 from player_bot.registration.utils import check_status_decor
+from player_bot.take_lesson.static_text import NO_GAMES_IN_MOMENT, YOU_SACRIFICE_ONE_GAME
 from tennis_bot.settings import TARIF_ARBITRARY
+
 
 
 @check_status_decor
@@ -42,17 +44,9 @@ def take_lesson(update: Update, context: CallbackContext):
     tr_type = update.callback_query.data[len(manage_data.SELECT_TRAINING_TYPE) :]
     if tr_type == manage_data.TRAINING_GROUP:
         if player.bonus_lesson > 0:
-            text = (
-                "<b>Пожертвуешь одним отыгрышем.</b>\n"
-                "✅ -- дни, доступные для групповых тренировок."
-            )
+            text = YOU_SACRIFICE_ONE_GAME
         else:
-            text = (
-                f"⚠️ATTENTION⚠️\n"
-                f"В данный момент у тебя нет отыгрышей.\n"
-                f"<b> Занятие будет стоить {TARIF_ARBITRARY}₽ </b>\n"
-                f"✅ -- дни, доступные для групповых тренировок."
-            )
+            text = NO_GAMES_IN_MOMENT
         training_days = get_potential_days_for_group_training(player).filter(
             date__gte=moscow_datetime(datetime.now()).date()
         )

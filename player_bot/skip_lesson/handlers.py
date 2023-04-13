@@ -18,12 +18,19 @@ from player_bot.skip_lesson.manage_data import (
 )
 from player_bot.calendar.manage_data import CLNDR_ACTION_SKIP
 from player_bot.registration.utils import check_status_decor
-from player_bot.skip_lesson.static_text import ONLY_ONE_LEFT
+from player_bot.skip_lesson.static_text import (
+    ONLY_ONE_LEFT, 
+    CHOOSE_DATE_TO_CANCEL,
+    TRAIN_CANCELLED_BY_COACH_TEMPLATE,
+    NO_LESSONS_TO_SKIP
+    )
 from player_bot.skip_lesson.utils import (
     select_tr_days_for_skipping,
     make_group_name_group_players_info_for_skipping,
     handle_skipping_train,
 )
+
+
 
 
 @check_status_decor
@@ -33,7 +40,7 @@ def skip_lesson_main_menu_button(update: Update, context: CallbackContext):
     if len(available_grouptraining_dates):
         context.bot.send_message(
             player.tg_id,
-            "Выбери дату тренировки для отмены.\n" "✅ -- дни, доступные для отмены.",
+            CHOOSE_DATE_TO_CANCEL,
             reply_markup=create_calendar(
                 CLNDR_ACTION_SKIP,
                 dates_to_highlight=[
@@ -44,7 +51,7 @@ def skip_lesson_main_menu_button(update: Update, context: CallbackContext):
     else:
         context.bot.send_message(
             chat_id=player.tg_id,
-            text="Пока что нечего пропускать.",
+            text=NO_LESSONS_TO_SKIP,
             reply_markup=construct_main_menu(player),
         )
 
@@ -74,7 +81,7 @@ def skip_lesson(update: Update, context: CallbackContext):
     date_info = DATE_INFO.format(date_tlg, day_of_week, time_tlg)
 
     if not tr_day.is_available:
-        text = "{} в {} ❌нет тренировки❌, т.к. она отменена тренером, поэтому ее нельзя пропустить.".format(
+        text = TRAIN_CANCELLED_BY_COACH_TEMPLATE.format(
             date_tlg, time_tlg
         )
         bot_edit_message(context.bot, text, update)

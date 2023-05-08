@@ -116,7 +116,7 @@ class HandleSkippingTrainTestCases(TestCase):
             ),
         )
         self.assertIn(self.me, self.tr_day.absent.all())
-        self.assertEqual(self.me.bonus_lesson, current_bonus_lessons + 1)
+        self.assertEqual(self.me.bonus_lesson, current_bonus_lessons)
 
     def test_visitor(self):
         self.not_my_group_1 = CreateData.group()
@@ -137,7 +137,7 @@ class HandleSkippingTrainTestCases(TestCase):
             ),
         )
         self.assertNotIn(self.me, self.tr_day_visitor.visitors.all())
-        self.assertEqual(self.me.bonus_lesson, current_bonus_lessons + 1)
+        self.assertEqual(self.me.bonus_lesson, current_bonus_lessons+1)
 
     def test_pay_visitor(self):
         self.not_my_group_2 = CreateData.group()
@@ -159,7 +159,7 @@ class HandleSkippingTrainTestCases(TestCase):
             ),
         )
         self.assertNotIn(self.me, self.tr_day_pay_visitor.pay_visitors.all())
-        self.assertEqual(self.me.bonus_lesson, current_bonus_lessons)
+        self.assertEqual(self.me.bonus_lesson, current_bonus_lessons+1)
 
     def test_pay_bonus_visitor(self):
         self.not_my_group_3 = CreateData.group()
@@ -182,4 +182,4 @@ class HandleSkippingTrainTestCases(TestCase):
         self.assertNotIn(
             self.me, self.tr_day_pay_bonus_visitor.pay_bonus_visitors.all()
         )
-        self.assertEqual(self.me.bonus_lesson, current_bonus_lessons + 1)
+        self.assertEqual(self.me.bonus_lesson, current_bonus_lessons)

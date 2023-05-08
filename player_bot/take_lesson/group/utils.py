@@ -53,17 +53,18 @@ def handle_taking_group_lesson(
     date_info = DATE_INFO.format(date_tlg, day_of_week, time_tlg)
 
     n_free_places = get_n_free_places(tr_day)
-    if n_free_places > 0:
-        tr_day.visitors.add(player)
+    if n_free_places > 0: 
         player_text = PLAYER_WRITTEN_TO_TRAIN_SHORT.format(date_info)
         player_markup = None
 
         if player.bonus_lesson > 0 and player.status == Player.STATUS_TRAINING:
+            tr_day.visitors.add(player)
             admin_text = PLAYER_VISIT_GROUP_TRAIN_BONUSS.format(player.first_name, player.last_name, 
                                                                 date_info)
             player.bonus_lesson -= 1
             player.save()
         else:
+            tr_day.pay_bonus_visitors.add(player)
             admin_text = ADMIN_TEXT_GROUP_TRAIN.format(player.first_name, player.last_name, TARIF_ARBITRARY, date_info)
 
     else:

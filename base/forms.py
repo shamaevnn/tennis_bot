@@ -9,7 +9,7 @@ from django.utils.safestring import mark_safe
 from base.models import TrainingGroup, GroupTrainingDay, Player
 from base.django_admin.utils import (
     send_alert_about_changing_tr_day_status,
-    send_alert_about_changing_tr_day_time,
+    send_alert_about_changing_tr_day_time
 )
 from player_bot.menu_and_commands.keyboards import construct_main_menu
 from base.common_for_bots.utils import (
@@ -95,7 +95,7 @@ class TrainingGroupForm(forms.ModelForm):
         if "players" in self.changed_data:
             tr_day = (
                 GroupTrainingDay.objects.filter(
-                    group__max_players__gt=1, group=self.instance, is_available=True
+                    group__max_players__gt=1, group=self.instance, available_status= GroupTrainingDay.AVAILABLE
                 )
                 .annotate(
                     start=ExpressionWrapper(
@@ -143,7 +143,7 @@ class GroupTrainingDayForm(forms.ModelForm):
             "pay_visitors",
             "pay_bonus_visitors",
             "date",
-            "is_available",
+            "available_status",
             "status",
             "start_time",
             "duration",
@@ -285,10 +285,10 @@ class GroupTrainingDayForm(forms.ModelForm):
                 send_alert_about_changing_tr_day_time(self.instance, text)
 
         if (
-            "is_available" in self.changed_data
+            "available_status" in self.changed_data
         ):  # если статут дня меняется, то отсылаем алерт об изменении
             send_alert_about_changing_tr_day_status(
-                self.instance, self.cleaned_data.get("is_available")
+                self.instance, self.cleaned_data.get("available_status")
             )
 
         if "visitors" in self.changed_data:

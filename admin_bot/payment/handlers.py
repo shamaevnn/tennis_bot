@@ -133,9 +133,15 @@ def group_payment(update: Update, context: CallbackContext):
 
         check_if_players_not_in_payments(group_id, payments, year, month)
 
+        
         paid_this_month = payments.aggregate(sigma=Sum("fact_amount"))
+        paid = 0;
+        #В некоторых случаях, может имезть значение None
+        if paid_this_month["sigma"] is not None:
+            paid = paid_this_month["sigma"]
+            
         this_month_payment_info = (
-            f'{static_text.TOTAL_PAID}: {paid_this_month["sigma"]}\n\n'
+            f'{static_text.TOTAL_PAID}: {paid}\n\n'
         )
 
         group = TrainingGroup.objects.get(id=group_id)
@@ -143,7 +149,7 @@ def group_payment(update: Update, context: CallbackContext):
             date__month=month,
             date__year=int(year) + 2020,
             group=group,
-            is_available=True,
+            available_status= GroupTrainingDay.AVAILABLE,
         ).count()
         n_lessons_info = f"{static_text.NUMBER_OF_TRAINS}: {n_lessons}\n"
         tarif_info = f"{static_text.TARIF}: {group.tarif_for_one_lesson}\n"

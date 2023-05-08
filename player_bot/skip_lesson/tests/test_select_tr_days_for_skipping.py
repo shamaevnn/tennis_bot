@@ -3,7 +3,7 @@ from datetime import timedelta, datetime
 from django.test import TestCase
 
 from base.common_for_bots.utils import moscow_datetime
-from base.models import TrainingGroup
+from base.models import GroupTrainingDay, TrainingGroup
 from base.utils.for_tests import CreateData
 from player_bot.skip_lesson.utils import select_tr_days_for_skipping
 
@@ -66,6 +66,6 @@ class SelectTrDaysForSkippingTestCases(TestCase):
 
     def test_cant_skip_unavailable_train(self):
         # нельзя пропустить занятие, если оно недоступно
-        group_tr_day = CreateData.tr_day_for_group(group=self.player_group, is_available=False)
+        group_tr_day = CreateData.tr_day_for_group(group=self.player_group, available_status= GroupTrainingDay.NOTAVAILABLE)
         tr_days_for_skipping = select_tr_days_for_skipping(self.player)
         self.assertNotIn(group_tr_day, tr_days_for_skipping)

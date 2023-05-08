@@ -49,8 +49,9 @@ def select_tr_days_for_skipping(
             **filters,
         )
         .exclude(absent__in=[player])
-        .exclude(is_deleted=True)
-        .exclude(is_available=False)
+        .exclude(is_deleted = True)
+        .exclude(available_status = GroupTrainingDay.NOTAVAILABLE)
+        .exclude(available_status = GroupTrainingDay.CANCELLED)
         .select_related("group")
         .order_by("id")
         .iterator()
@@ -151,10 +152,11 @@ def handle_skipping_train(
         )
         admin_text = ""
         return text, admin_text
-    elif not training_day.is_available:
+    elif not training_day.available_status == GroupTrainingDay.AVAILABLE:
         text, admin_text = CANT_SKIP_UNAVAILABLE_LESSON, ""
         return text, admin_text
 
+  
     if player in training_day.visitors.all():
         player.bonus_lesson += 1
         training_day.visitors.remove(player)
@@ -162,19 +164,19 @@ def handle_skipping_train(
             player.first_name, player.last_name, date_info
         )
     elif player in training_day.pay_visitors.all():
-        # в этом случае не должно поменяться кол-во отыгрышей
+        player.bonus_lesson += 1
         training_day.pay_visitors.remove(player)
         admin_text = PLAYER_SKIPPED_TRAIN_FOR_MONEY.format(
             player.first_name, player.last_name, date_info
         )
+
+    #В случае пропуска платного отыгрыша, отыгрыши не должны начисляться
     elif player in training_day.pay_bonus_visitors.all():
-        player.bonus_lesson += 1
         training_day.pay_bonus_visitors.remove(player)
         admin_text = PLAYER_SKIPPED_TRAIN_FOR_PAY_BONUS.format(
             player.first_name, player.last_name, date_info
         )
     else:
-        player.bonus_lesson += 1
         training_day.absent.add(player)
         admin_text = PLAYER_SKIPPED_TRAIN_IN_HIS_GROUP.format(
             player.first_name, player.last_name, date_info

@@ -80,7 +80,7 @@ def skip_lesson(update: Update, context: CallbackContext):
     time_tlg, _, _, date_tlg, day_of_week, _, _ = get_time_info_from_tr_day(tr_day)
     date_info = DATE_INFO.format(date_tlg, day_of_week, time_tlg)
 
-    if not tr_day.is_available:
+    if not tr_day.available_status ==GroupTrainingDay.AVAILABLE:
         text = TRAIN_CANCELLED_BY_COACH_TEMPLATE.format(
             date_tlg, time_tlg
         )

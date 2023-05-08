@@ -8,12 +8,11 @@ class ModelwithTimeManager(models.Manager):
         from base.models import GroupTrainingDay
 
         return self.filter(
-            is_available=True,
-            status=GroupTrainingDay.GROUP_ADULT_TRAIN,
+            status = GroupTrainingDay.GROUP_ADULT_TRAIN,
             is_deleted=False,
             *args,
             **kwargs
-        )
+        ).exclude(available_status= GroupTrainingDay.NOTAVAILABLE)
 
 
 class GetOrNoneManager(models.Manager):

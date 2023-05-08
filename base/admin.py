@@ -116,20 +116,29 @@ class TrainingGroupAdmin(admin.ModelAdmin):
 
 
 def make_trday_unavailable(modeladmin, request, queryset):
-    queryset.update(is_available=False)
-
-    for day in queryset:
-        send_alert_about_changing_tr_day_status(day, day.is_available)
+    change_available_state(request,queryset,GroupTrainingDay.NOTAVAILABLE)
 
 
 def make_trday_available(modeladmin, request, queryset):
-    queryset.update(is_available=True)
-    for day in queryset:
-        send_alert_about_changing_tr_day_status(day, day.is_available)
+    change_available_state(request,queryset,GroupTrainingDay.AVAILABLE)
 
 
+def make_trday_cancelled(modeladmin, request, queryset):
+    change_available_state(request,queryset,GroupTrainingDay.CANCELLED)
+  
+def change_available_state(request, queryset, _available_status):
+    #Исключает попадание дней имеющий данных статус
+    res = queryset.exclude(available_status = _available_status).all();
+    res.update(available_status = _available_status)
+   
+
+    for day in res:
+        send_alert_about_changing_tr_day_status(day, day.available_status)
+    
 make_trday_unavailable.short_description = "Сделать выбранные дни недоступными"
 make_trday_available.short_description = "Сделать выбранные дни доступными"
+
+make_trday_cancelled.short_description ="Отменить занятие в выбранные дни"
 
 
 @admin.register(GroupTrainingDay)
@@ -141,15 +150,18 @@ class GroupTrainingDayAdmin(admin.ModelAdmin):
         "start_time",
         "duration",
         "status",
-        "is_available",
+        "available_status",
+         
     )
-    list_filter = ("is_available", "status", "date", "group")
+    
+    list_filter = ("available_status", "status", "date", "group")
     filter_horizontal = ("visitors", "pay_visitors", "pay_bonus_visitors", "absent")
     date_hierarchy = "date"
-    actions = [make_trday_unavailable, make_trday_available]
+    actions = [make_trday_unavailable, make_trday_available,make_trday_cancelled]
     ordering = ["date", "start_time"]
     change_form_template = "admin/tennis_bot/GroupTrainingDay/submit_line.html"
-
+    
+   
     def get_queryset(self, request):
         return (
             super(GroupTrainingDayAdmin, self)

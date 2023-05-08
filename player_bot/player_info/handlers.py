@@ -8,7 +8,7 @@ from base.models import Payment, TrainingGroup, Player
 from player_bot.menu_and_commands.keyboards import construct_main_menu
 from base.common_for_bots.utils import moscow_datetime
 from player_bot.player_info.static_text import ( 
-                                            BONUS_LESSON_COUNT_INFO, INTRO_INFO_TEMPLATE, GROUP_INFO_TEMPLATE, 
+                                            BONUS_LESSON_COUNT_INFO, INTRO_INFO_TEMPLATE, GROUP_INFO_TEMPLATE, N_CANCELLED_LESSON_COUNT_INFO, 
                                             NO_PAYMENT_BUTTON, MY_DATA_BUTTON,
                                             SHOULD_PAY_INFO_TEMPLATE, SUCCESS_PAYMENT
                                         )
@@ -71,6 +71,7 @@ def player_main_info(update: Update, context: CallbackContext):
     number_of_add_games = BONUS_LESSON_COUNT_INFO.format(
         player.bonus_lesson
     )
+    cancelled_games = N_CANCELLED_LESSON_COUNT_INFO.format(player.n_cancelled_lessons);
 
     today = moscow_datetime(datetime.now()).date()
     number_of_days_in_month = monthrange(today.year, today.month)[1]
@@ -83,6 +84,7 @@ def player_main_info(update: Update, context: CallbackContext):
     should_pay_money_next, balls_next_month = balls_lessons_payment(
         next_month.year, next_month.month, player
     )
+    
 
     should_pay_info = (
         SHOULD_PAY_INFO_TEMPLATE.format(
@@ -97,7 +99,7 @@ def player_main_info(update: Update, context: CallbackContext):
         )
     )
 
-    text = intro + group_info + number_of_add_games + payment_status + should_pay_info
+    text = intro + group_info + number_of_add_games + cancelled_games + payment_status + should_pay_info
 
     update.message.reply_text(
         text=text, parse_mode="HTML", reply_markup=construct_main_menu(player)

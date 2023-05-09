@@ -196,13 +196,6 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 (
-                    "is_available",
-                    models.BooleanField(
-                        default=True,
-                        help_text="Будет ли в этот день тренировка у этой группы",
-                    ),
-                ),
-                (
                     "is_individual",
                     models.BooleanField(
                         default=False, help_text="индивидуальная ли тренировка"

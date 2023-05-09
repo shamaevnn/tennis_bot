@@ -302,11 +302,6 @@ class GroupTrainingDay(ModelwithTime):
         TrainingGroup, on_delete=models.PROTECT, verbose_name="Группа"
     )
     date = models.DateField(default=timezone.now, verbose_name="Дата Занятия")
-    is_available = models.BooleanField(
-        default=True,
-        help_text="Будет ли в этот день тренировка у этой группы",
-        verbose_name="Доступно",
-    )
     available_status = models.CharField(
         max_length=1,
         default=AVAILABLE,

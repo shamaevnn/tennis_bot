@@ -14,7 +14,7 @@ from django.shortcuts import redirect
 from django.utils.html import format_html
 
 from .models import TrainingGroup, Player, GroupTrainingDay, Payment, Photo, User
-from .django_admin.utils import change_tr_day_status, send_alert_changing_tr_day_status
+from .django_admin.utils import change_tr_day_available_status_and_send_alert, send_alert_changing_tr_day_status
 
 
 class PlayerTabularForm(forms.ModelForm):
@@ -116,7 +116,7 @@ class TrainingGroupAdmin(admin.ModelAdmin):
 
 
 def make_trday_unavailable(modeladmin, request, queryset):
-    change_available_state(request,queryset,GroupTrainingDay.NOTAVAILABLE)
+    change_available_state(request,queryset,GroupTrainingDay.NOT_AVAILABLE)
 
 
 def make_trday_available(modeladmin, request, queryset):
@@ -133,7 +133,7 @@ def change_available_state(request, queryset, new_available_status):
    
 
     for day in tr_days:
-        change_tr_day_status(day, day.available_status)
+        change_tr_day_available_status_and_send_alert(day, day.available_status)
         
     
 make_trday_unavailable.short_description = "Сделать выбранные дни недоступными"

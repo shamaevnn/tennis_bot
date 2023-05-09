@@ -283,7 +283,7 @@ class GroupTrainingDay(ModelwithTime):
     RENT_COURT_STATUS = "R"
     
     CANCELLED ="C"
-    NOTAVAILABLE = "N"
+    NOT_AVAILABLE = "N"
     AVAILABLE = "A"
 
     TR_DAY_STATUSES = (
@@ -294,7 +294,7 @@ class GroupTrainingDay(ModelwithTime):
 
     TR_DAY_AVALIABLE_STATUSES = (
         (AVAILABLE,"доступно"),
-        (NOTAVAILABLE,"недоступно"),
+        (NOT_AVAILABLE,"недоступно"),
         (CANCELLED,"отменено")        
     )
     

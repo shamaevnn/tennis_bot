@@ -40,9 +40,9 @@ class BaseTestCases(TestCase):
         self.assertNotIn(tr_day, days)
 
     def test_not_available(self):
-        # нельзя записаться в день, если available_status = GroupTrainingDay.NOTAVAILABLE
+        # нельзя записаться в день, если available_status = GroupTrainingDay.NOT_AVAILABLE
         group = CreateData.group()
-        tr_day = CreateData.tr_day_for_group(group, available_status = GroupTrainingDay.NOTAVAILABLE)
+        tr_day = CreateData.tr_day_for_group(group, available_status = GroupTrainingDay.NOT_AVAILABLE)
 
         days = get_potential_days_for_group_training(player=self.me_training_in_group)
         self.assertNotIn(tr_day, days)
@@ -98,7 +98,7 @@ class BaseTestCases(TestCase):
         self.assertNotIn(tr_day, days)
 
 
-class NotAvailableForAdditionalLessonsTestCases(TestCase):
+class NOT_AVAILABLEForAdditionalLessonsTestCases(TestCase):
     def setUp(self):
         self.me_training_in_group = CreateData.group_player(
             tg_id=350490234, first_name="Nikita"

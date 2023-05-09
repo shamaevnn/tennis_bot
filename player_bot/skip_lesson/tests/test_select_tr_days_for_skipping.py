@@ -66,7 +66,7 @@ class SelectTrDaysForSkippingTestCases(TestCase):
 
     def test_cant_skip_unavailable_train(self):
         # нельзя пропустить занятие, если оно недоступно
-        group_tr_day = CreateData.tr_day_for_group(group=self.player_group, available_status= GroupTrainingDay.NOTAVAILABLE)
+        group_tr_day = CreateData.tr_day_for_group(group=self.player_group, available_status= GroupTrainingDay.NOT_AVAILABLE)
         tr_days_for_skipping = select_tr_days_for_skipping(self.player)
         self.assertNotIn(group_tr_day, tr_days_for_skipping)
 

@@ -11,7 +11,7 @@ from base.django_admin.static_text import (
     CANCEL_TRAIN_PLUS_BONUS_LESSON_2,
     TRAIN_IS_AVAILABLE_CONGRATS,
 )
-from base.django_admin.change_available import change_players_on_available_status, get_text_about_the_available_status_change
+from base.utils.change_available_status import change_tr_day_available_status, get_text_about_the_available_status_change
 
 # Отправка уведомлений об изменении статуса
 def send_alert_changing_tr_day_status(tr_day: GroupTrainingDay, available_status):
@@ -23,8 +23,8 @@ def send_alert_changing_tr_day_status(tr_day: GroupTrainingDay, available_status
     )
 
 
-def change_tr_day_status(tr_day: GroupTrainingDay, available_status):
-    change_players_on_available_status(tr_day,available_status)
+def change_tr_day_available_status_and_send_alert(tr_day: GroupTrainingDay, available_status):
+    change_tr_day_available_status(tr_day,available_status)
     send_alert_changing_tr_day_status(tr_day,available_status);
         
  

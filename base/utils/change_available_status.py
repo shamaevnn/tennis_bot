@@ -8,8 +8,8 @@ from base.django_admin.static_text import (
 from base.models import GroupTrainingDay, Player
 
 
-def change_players_on_available_status(tr_day: GroupTrainingDay, available_status):
-    if available_status == GroupTrainingDay.NOTAVAILABLE:
+def change_tr_day_available_status(tr_day: GroupTrainingDay, available_status):
+    if available_status == GroupTrainingDay.NOT_AVAILABLE:
        
         players = get_actual_players_without_absent(tr_day)
         player_ids = players.values("id")
@@ -50,14 +50,14 @@ def get_text_about_the_available_status_change(tr_day: GroupTrainingDay, availab
     if available_status == GroupTrainingDay.AVAILABLE:
         text = TRAIN_IS_AVAILABLE_CONGRATS.format(date_info=date_info)
     
-    elif available_status == GroupTrainingDay.NOTAVAILABLE:
+    elif available_status == GroupTrainingDay.NOT_AVAILABLE:
         text = CANCEL_TRAIN_PLUS_BONUS_LESSON_2.format(date_info=date_info)
         
 
     elif available_status == GroupTrainingDay.CANCELLED:
         text = CANCEL_TRAIN_PLUS_BONUS_LESSON_2.format(date_info=date_info)
     
-    else :
+    else:
         raise ValueError(ERROR_UNKNOWN_AVAILABLE_STATUS.format(available_status))
     
     return text

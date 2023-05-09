@@ -8,7 +8,7 @@ from django.utils.safestring import mark_safe
 
 from base.models import TrainingGroup, GroupTrainingDay, Player
 from base.django_admin.utils import (
-    change_tr_day_status,
+    change_tr_day_available_status_and_send_alert,
     send_alert_changing_tr_day_status,
     send_alert_about_changing_tr_day_time
 )

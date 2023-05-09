@@ -10,8 +10,7 @@ from base.common_for_bots.utils import moscow_datetime
 from player_bot.player_info.static_text import ( 
                                             BONUS_LESSON_COUNT_INFO, INTRO_INFO_TEMPLATE, GROUP_INFO_TEMPLATE, N_CANCELLED_LESSON_COUNT_INFO, 
                                             NO_PAYMENT_BUTTON, MY_DATA_BUTTON,
-                                            SHOULD_PAY_INFO_TEMPLATE, SUCCESS_PAYMENT
-                                        )
+                                            SHOULD_PAY_INFO_TEMPLATE, SUCCESS_PAYMENT)
 
 from base.common_for_bots.static_text import PAYMENT_REQUISITES, from_digit_to_month
 from player_bot.registration.utils import check_status_decor

@@ -8,7 +8,8 @@ from django.utils.safestring import mark_safe
 
 from base.models import TrainingGroup, GroupTrainingDay, Player
 from base.django_admin.utils import (
-    send_alert_about_changing_tr_day_status,
+    change_tr_day_status,
+    send_alert_changing_tr_day_status,
     send_alert_about_changing_tr_day_time
 )
 from player_bot.menu_and_commands.keyboards import construct_main_menu
@@ -286,8 +287,8 @@ class GroupTrainingDayForm(forms.ModelForm):
 
         if (
             "available_status" in self.changed_data
-        ):  # если статут дня меняется, то отсылаем алерт об изменении
-            send_alert_about_changing_tr_day_status(
+        ):  # если статуc дня меняется, то отсылаем алерт об изменении
+            send_alert_changing_tr_day_status(
                 self.instance, self.cleaned_data.get("available_status")
             )
 

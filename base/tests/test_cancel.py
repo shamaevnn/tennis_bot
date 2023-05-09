@@ -18,9 +18,9 @@ class CancelLessonCase(TestCase):
         
     
         trday.available_status = GroupTrainingDay.AVAILABLE
-        utils.send_alert_about_changing_tr_day_status(trday,GroupTrainingDay.CANCELLED)
+        utils.schange_tr_day_status(trday,GroupTrainingDay.CANCELLED)
         
-        visitor=trday.visitors.first();
+        visitor = trday.visitors.first();
         self.assertEqual (visitor.bonus_lesson, 1)
     
     # если занятие не доступно то всем начисляется 1 отыгрышь
@@ -35,12 +35,12 @@ class CancelLessonCase(TestCase):
         
     
         trday.available_status = GroupTrainingDay.AVAILABLE
-        utils.send_alert_about_changing_tr_day_status(trday,GroupTrainingDay.NOTAVAILABLE)
+        utils.change_tr_day_status(trday,GroupTrainingDay.NOTAVAILABLE)
         
         visitor=trday.visitors.first();
         self.assertEqual (visitor.bonus_lesson, 1)
         
-    #если у ученика занятие по расписанию группы, то ему начисляется в личный кабинет одна "отмена". 
+    # если у ученика занятие по расписанию группы, то ему начисляется в личный кабинет одна "отмена". 
     def test_cancel_lesson_for_pay_visitor(self)-> None:
         
         player = CreateData.group_player(tg_id=350490234, first_name="Nikita")
@@ -52,14 +52,14 @@ class CancelLessonCase(TestCase):
         
         trday.pay_visitors.add(player)
         trday.available_status = GroupTrainingDay.AVAILABLE
-        utils.send_alert_about_changing_tr_day_status(trday,GroupTrainingDay.CANCELLED)
+        utils.change_tr_day_status(trday,GroupTrainingDay.CANCELLED)
         
         payVisitor=trday.pay_visitors.first();
         
         self.assertEqual (payVisitor.n_cancelled_lessons,1)
     
-    #У игрока 0 отыгрышей и он записался на занятие за отыгрыш:   
-    #в случае "отмены" занятия ни отмена, ни отыгрыш не добавляется. 
+    # У игрока 0 отыгрышей и он записался на занятие за отыгрыш:   
+    # в случае "отмены" занятия: ни отмена, ни отыгрыш не добавляется. 
 
     def test_cancel_lesson_for_pay_bonus_visitors(self)-> None:
         
@@ -72,7 +72,7 @@ class CancelLessonCase(TestCase):
         
     
         trday.available_status = GroupTrainingDay.AVAILABLE
-        utils.send_alert_about_changing_tr_day_status(trday,GroupTrainingDay.CANCELLED)
+        utils.change_tr_day_status(trday,GroupTrainingDay.CANCELLED)
         
         payVisitor = trday.pay_bonus_visitors.first()
     

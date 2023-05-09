@@ -136,7 +136,7 @@ def group_payment(update: Update, context: CallbackContext):
         
         paid_this_month = payments.aggregate(sigma=Sum("fact_amount"))
         paid = 0;
-        #В некоторых случаях, может имезть значение None
+        # в некоторых случаях paid_this_month["sigma"], может иметь значение None
         if paid_this_month["sigma"] is not None:
             paid = paid_this_month["sigma"]
             

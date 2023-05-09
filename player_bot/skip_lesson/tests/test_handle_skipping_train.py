@@ -116,7 +116,7 @@ class HandleSkippingTrainTestCases(TestCase):
             ),
         )
         self.assertIn(self.me, self.tr_day.absent.all())
-        self.assertEqual(self.me.bonus_lesson, current_bonus_lessons)
+        self.assertEqual(self.me.bonus_lesson, current_bonus_lessons+1)
 
     def test_visitor(self):
         self.not_my_group_1 = CreateData.group()

@@ -56,13 +56,14 @@ def handle_taking_group_lesson(
     if n_free_places > 0: 
         player_text = PLAYER_WRITTEN_TO_TRAIN_SHORT.format(date_info)
         player_markup = None
-
+        # Если пользователь имеет отыгрыши, то добавляем его в список пользователей за "отыгрыш"
         if player.bonus_lesson > 0 and player.status == Player.STATUS_TRAINING:
             tr_day.visitors.add(player)
             admin_text = PLAYER_VISIT_GROUP_TRAIN_BONUSS.format(player.first_name, player.last_name, 
                                                                 date_info)
             player.bonus_lesson -= 1
             player.save()
+         # Если пользователь не имеет отыгрышей, то добавляем его в список пользователей за платный "отыгрыш"
         else:
             tr_day.pay_bonus_visitors.add(player)
             admin_text = ADMIN_TEXT_GROUP_TRAIN.format(player.first_name, player.last_name, TARIF_ARBITRARY, date_info)

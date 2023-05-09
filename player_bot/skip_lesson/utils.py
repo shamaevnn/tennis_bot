@@ -156,13 +156,14 @@ def handle_skipping_train(
         text, admin_text = CANT_SKIP_UNAVAILABLE_LESSON, ""
         return text, admin_text
 
-  
+    # Игрок пропустил игру за отыгрыш, отыгрыш должен вернуться обратно
     if player in training_day.visitors.all():
         player.bonus_lesson += 1
         training_day.visitors.remove(player)
         admin_text = PLAYER_SKIPPED_TRAIN_FOR_BONUS.format(
             player.first_name, player.last_name, date_info
         )
+    # Игрок пропустил игру оплатив её, отыгрыш должен начислиться
     elif player in training_day.pay_visitors.all():
         player.bonus_lesson += 1
         training_day.pay_visitors.remove(player)
@@ -170,13 +171,15 @@ def handle_skipping_train(
             player.first_name, player.last_name, date_info
         )
 
-    #В случае пропуска платного отыгрыша, отыгрыши не должны начисляться
+    # В случае пропуска платного отыгрыша, отыгрыши не должны начисляться
     elif player in training_day.pay_bonus_visitors.all():
         training_day.pay_bonus_visitors.remove(player)
         admin_text = PLAYER_SKIPPED_TRAIN_FOR_PAY_BONUS.format(
             player.first_name, player.last_name, date_info
         )
     else:
+        # Игрок пропустил игру в своей группе, отыгрыш должен начислиться
+        player.bonus_lesson += 1
         training_day.absent.add(player)
         admin_text = PLAYER_SKIPPED_TRAIN_IN_HIS_GROUP.format(
             player.first_name, player.last_name, date_info

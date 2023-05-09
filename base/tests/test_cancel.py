@@ -18,6 +18,7 @@ class CancelLessonCase(TestCase):
         
     
         trday.available_status = GroupTrainingDay.AVAILABLE
+        trday.save();
         utils.schange_tr_day_status(trday,GroupTrainingDay.CANCELLED)
         
         visitor = trday.visitors.first();
@@ -33,11 +34,11 @@ class CancelLessonCase(TestCase):
         trday = CreateData.tr_day_for_group(group)
         trday.visitors.add(player)
         
-    
         trday.available_status = GroupTrainingDay.AVAILABLE
+        trday.save();
         utils.change_tr_day_status(trday,GroupTrainingDay.NOTAVAILABLE)
         
-        visitor=trday.visitors.first();
+        visitor = trday.visitors.first();
         self.assertEqual (visitor.bonus_lesson, 1)
         
     # если у ученика занятие по расписанию группы, то ему начисляется в личный кабинет одна "отмена". 
@@ -52,9 +53,10 @@ class CancelLessonCase(TestCase):
         
         trday.pay_visitors.add(player)
         trday.available_status = GroupTrainingDay.AVAILABLE
+        trday.save();
         utils.change_tr_day_status(trday,GroupTrainingDay.CANCELLED)
         
-        payVisitor=trday.pay_visitors.first();
+        payVisitor = trday.pay_visitors.first();
         
         self.assertEqual (payVisitor.n_cancelled_lessons,1)
     
@@ -72,6 +74,7 @@ class CancelLessonCase(TestCase):
         
     
         trday.available_status = GroupTrainingDay.AVAILABLE
+        trday.save();
         utils.change_tr_day_status(trday,GroupTrainingDay.CANCELLED)
         
         payVisitor = trday.pay_bonus_visitors.first()

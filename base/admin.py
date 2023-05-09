@@ -126,13 +126,13 @@ def make_trday_available(modeladmin, request, queryset):
 def make_trday_cancelled(modeladmin, request, queryset):
     change_available_state(request,queryset,GroupTrainingDay.CANCELLED)
   
-def change_available_state(request, queryset, _available_status):
-    #Исключает попадание дней имеющих данный статус
-    res = queryset.exclude(available_status = _available_status).all();
-    res.update(available_status = _available_status)
+def change_available_state(request, queryset, new_available_status):
+    # Исключает попадание дней имеющих данный статус
+    tr_days = queryset.exclude(available_status = new_available_status).all()
+    tr_days.update(available_status = new_available_status)
    
 
-    for day in res:
+    for day in tr_days:
         change_tr_day_status(day, day.available_status)
         
     

@@ -4,12 +4,7 @@ from django.db import migrations, models
 
 def set_avialable_state(apps, schema_editor):
     model = apps.get_model('base','grouptrainingday')
-    
-    for mm in model.objects.all():
-       if not mm.is_available:
-            mm.available_status = 'N'
-         
-       mm.save()
+    model.objects.filter(is_available=False).update(available_status='N')
        
 class Migration(migrations.Migration):
 
@@ -28,7 +23,7 @@ class Migration(migrations.Migration):
             name='n_cancelled_lessons',
             field=models.SmallIntegerField(default=0, verbose_name='Количество отмен'),
         ),
-        #migrations.RunPython(set_avialable_state),
-        #migrations.RunSQL("ALTER TABLE base_grouptrainingday DROP COLUMN is_available")
+        migrations.RunPython(set_avialable_state),
+        migrations.RunSQL("ALTER TABLE base_grouptrainingday DROP COLUMN is_available")
         
     ]

@@ -15,6 +15,7 @@ from player_bot.take_lesson.group.manage_data import (
 )
 from player_bot.take_lesson.group.static_text import (
     ADMIN_TEXT_GROUP_TRAIN,
+    ADMIN_TEXT_GROUP_TRAIN_PAY_BONUSS,
     ADMIN_TEXT_SINGLE_TRAIN_DOP_TIME,
     ADMIN_TEXT_SINGLE_TRAIN_PAY_BONUSS,
     CANT_TAKE_LESSON_MAX_IN_FUTURE,
@@ -56,22 +57,34 @@ def handle_taking_group_lesson(
     date_info = DATE_INFO.format(date_tlg, day_of_week, time_tlg)
 
     n_free_places = get_n_free_places(tr_day)
+
     if n_free_places > 0:
-        tr_day.visitors.add(player)
         player_text = PLAYER_WRITTEN_TO_TRAIN_SHORT.format(date_info)
         player_markup = None
 
         if player.bonus_lesson > 0 and player.status == Player.STATUS_TRAINING:
+            # Если пользователь имеет отыгрыши, то добавляем его в список пользователей за "отыгрыш"
+            tr_day.visitors.add(player)
+
             admin_text = PLAYER_VISIT_GROUP_TRAIN_BONUSS.format(
                 player.first_name, player.last_name, date_info
             )
             player.bonus_lesson -= 1
             player.save()
-        else:
-            admin_text = ADMIN_TEXT_GROUP_TRAIN.format(
+
+        elif player.bonus_lesson == 0 and player.status == Player.STATUS_TRAINING:
+            # Если пользователь не имеет отыгрышей, то добавляем его в список пользователей за платный "отыгрыш"
+            tr_day.pay_bonus_visitors.add(player)
+            admin_text = ADMIN_TEXT_GROUP_TRAIN_PAY_BONUSS.format(
                 player.first_name, player.last_name, TARIF_ARBITRARY, date_info
             )
 
+        else:
+            # Во всех остальных случаях, добавляем в обычную тренеровку и выводим стандартный текст
+            tr_day.visitors.add(player)
+            admin_text = ADMIN_TEXT_GROUP_TRAIN.format(
+                player.first_name, player.last_name, TARIF_ARBITRARY, date_info
+            )
     else:
         if (
             tr_day.group.max_players - n_free_places < 6

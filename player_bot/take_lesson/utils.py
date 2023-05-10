@@ -61,7 +61,7 @@ def get_available_start_times_for_given_duration_and_date(
 
     exist_tr_days: QuerySet[Dict] = (
         GroupTrainingDay.objects.filter(
-            is_available=True,
+            available_status= GroupTrainingDay.AVAILABLE,
             is_deleted=False,
             date=tr_day_date,
         )

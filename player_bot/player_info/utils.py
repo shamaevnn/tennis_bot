@@ -6,13 +6,14 @@ from tennis_bot.settings import BALLS_PRICE_FOR_1_TRAIN_PER_WEEK
 
 def balls_lessons_payment(year: int, month: int, player: Player):
     tr_days_this_month: QuerySet[GroupTrainingDay] = GroupTrainingDay.objects.filter(
-        date__year=year, date__month=month, is_available=True
+        date__year=year, date__month=month, available_status= GroupTrainingDay.AVAILABLE, 
     )
 
     if player.status == Player.STATUS_TRAINING:
         tr_days_num_this_month: int = (
             tr_days_this_month.filter(
-                group__players__in=[player], group__status=TrainingGroup.STATUS_GROUP
+                group__players__in = [player], 
+                group__status = TrainingGroup.STATUS_GROUP
             )
             .distinct()
             .count()
@@ -22,9 +23,11 @@ def balls_lessons_payment(year: int, month: int, player: Player):
         )
 
         group: TrainingGroup = TrainingGroup.objects.filter(
-            players__in=[player], status=TrainingGroup.STATUS_GROUP
+            players__in=[player], 
+            status=TrainingGroup.STATUS_GROUP,
         ).first()
         tarif: int = group.tarif_for_one_lesson if group else 0
+        
     elif player.status == Player.STATUS_ARBITRARY:
         tr_days_num_this_month: int = (
             tr_days_this_month.filter(visitors__in=[player]).distinct().count()

@@ -49,8 +49,9 @@ def select_tr_days_for_skipping(
             **filters,
         )
         .exclude(absent__in=[player])
-        .exclude(is_deleted=True)
-        .exclude(is_available=False)
+        .exclude(is_deleted = True)
+        .exclude(available_status = GroupTrainingDay.NOT_AVAILABLE)
+        .exclude(available_status = GroupTrainingDay.CANCELLED)
         .select_related("group")
         .order_by("id")
         .iterator()
@@ -151,29 +152,36 @@ def handle_skipping_train(
         )
         admin_text = ""
         return text, admin_text
-    elif not training_day.is_available:
+    elif  training_day.available_status != GroupTrainingDay.AVAILABLE:
         text, admin_text = CANT_SKIP_UNAVAILABLE_LESSON, ""
         return text, admin_text
 
+   
     if player in training_day.visitors.all():
+        # Игрок пропустил игру за отыгрыш, отыгрыш должен вернуться обратно
         player.bonus_lesson += 1
         training_day.visitors.remove(player)
         admin_text = PLAYER_SKIPPED_TRAIN_FOR_BONUS.format(
             player.first_name, player.last_name, date_info
         )
+   
     elif player in training_day.pay_visitors.all():
-        # в этом случае не должно поменяться кол-во отыгрышей
+        # Игрок пропустил игру оплатив её, отыгрыш должен начислиться
+        player.bonus_lesson += 1
         training_day.pay_visitors.remove(player)
         admin_text = PLAYER_SKIPPED_TRAIN_FOR_MONEY.format(
             player.first_name, player.last_name, date_info
         )
+
+   
     elif player in training_day.pay_bonus_visitors.all():
-        player.bonus_lesson += 1
+        # В случае пропуска платного отыгрыша, отыгрыши не должны начисляться
         training_day.pay_bonus_visitors.remove(player)
         admin_text = PLAYER_SKIPPED_TRAIN_FOR_PAY_BONUS.format(
             player.first_name, player.last_name, date_info
         )
     else:
+        # Игрок пропустил игру в своей группе, отыгрыш должен начислиться
         player.bonus_lesson += 1
         training_day.absent.add(player)
         admin_text = PLAYER_SKIPPED_TRAIN_IN_HIS_GROUP.format(

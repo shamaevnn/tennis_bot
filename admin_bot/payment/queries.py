@@ -2,7 +2,7 @@ from typing import Union
 
 from django.db.models import Sum, Count, Q, ExpressionWrapper, F, IntegerField, QuerySet
 
-from base.models import Payment, TrainingGroup, Player
+from base.models import Payment, TrainingGroup, GroupTrainingDay, Player
 
 
 def get_total_paid_amount_for_month(year: int, month: int) -> int:
@@ -19,7 +19,7 @@ def get_total_should_pay_amount(year: Union[str, int], month: Union[str, int]) -
             count_tr_days=Count(
                 "grouptrainingday",
                 filter=Q(
-                    grouptrainingday__is_available=True,
+                    grouptrainingday__available_status=GroupTrainingDay.AVAILABLE,
                     grouptrainingday__date__month=month,
                     grouptrainingday__date__year=int(year) + 2020,
                 ),

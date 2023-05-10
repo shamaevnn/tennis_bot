@@ -20,15 +20,6 @@ class Migration(migrations.Migration):
             name="parent",
         ),
         migrations.AlterField(
-            model_name="grouptrainingday",
-            name="is_available",
-            field=models.BooleanField(
-                default=True,
-                help_text="Будет ли в этот день тренировка у этой группы",
-                verbose_name="Доступно",
-            ),
-        ),
-        migrations.AlterField(
             model_name="traininggroup",
             name="max_players",
             field=models.SmallIntegerField(default=6, verbose_name="Макс. игроков"),

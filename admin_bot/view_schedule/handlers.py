@@ -23,7 +23,7 @@ def show_trainingroupday_info(update, context: CallbackContext):
     )
     tr_day_status = tr_day.status
 
-    availability = f"{static_text.NO_TRAIN}\n" if not tr_day.is_available else ""
+    availability = f"{static_text.NO_TRAIN}\n" if not tr_day.available_status == GroupTrainingDay.AVAILABLE else ""
 
     if tr_day_status == GroupTrainingDay.INDIVIDUAL_TRAIN:
         status = static_text.INDIVIDUAL_TRAIN

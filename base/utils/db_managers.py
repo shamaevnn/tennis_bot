@@ -8,8 +8,8 @@ class ModelwithTimeManager(models.Manager):
         from base.models import GroupTrainingDay
 
         return self.filter(
-            is_available=True,
-            status=GroupTrainingDay.GROUP_ADULT_TRAIN,
+            available_status = GroupTrainingDay.AVAILABLE,
+            status = GroupTrainingDay.GROUP_ADULT_TRAIN,
             is_deleted=False,
             *args,
             **kwargs

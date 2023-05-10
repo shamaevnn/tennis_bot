@@ -11,7 +11,8 @@ from player_bot.skip_lesson.static_text import (
     PLAYER_SKIPPED_TRAIN_IN_HIS_GROUP,
     CANT_CANCEL_LESSON_TOO_LATE,
     OKAY_TRAIN_CANCELLED,
-    PLAYER_CANCELLED_RENT_COURT, CANT_SKIP_UNAVAILABLE_LESSON,
+    PLAYER_CANCELLED_RENT_COURT,
+    CANT_SKIP_UNAVAILABLE_LESSON,
     ATTENDING_INFO_TEMPLATE,
     NO_LESSONS_TO_SKIP,
     CANCEL_TRAIN_PLUS_BONUS_LESSON,
@@ -20,7 +21,6 @@ from player_bot.skip_lesson.static_text import (
     RENT_COURT_DECOR_TEXT,
     SELECT_TIME_TEXT,
     TRAIN_CANCELLED_BY_COACH_TEMPLATE,
-    
 )
 from base.common_for_bots.static_text import ATTENTION
 from base.models import GroupTrainingDay, Player

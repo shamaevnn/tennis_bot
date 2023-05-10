@@ -26,7 +26,5 @@ NO_GAMES_IN_MOMENT = (
 )
 
 YOU_SACRIFICE_ONE_GAME = (
-    f"<b>Пожертвуешь одним отыгрышем.</b>\n"
-    f"{DAYS_AVAILABLE_FOR_GROUP_TRAIN}"
+    f"<b>Пожертвуешь одним отыгрышем.</b>\n" f"{DAYS_AVAILABLE_FOR_GROUP_TRAIN}"
 )
-

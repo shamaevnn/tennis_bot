@@ -14,11 +14,15 @@ from player_bot.take_lesson.group.manage_data import (
     PAYMENT_MONEY,
 )
 from player_bot.take_lesson.group.static_text import (
-    ADMIN_TEXT_GROUP_TRAIN, ADMIN_TEXT_SINGLE_TRAIN_DOP_TIME, 
-    ADMIN_TEXT_SINGLE_TRAIN_PAY_BONUSS, 
-    CANT_TAKE_LESSON_MAX_IN_FUTURE, PLAYER_VISIT_GROUP_TRAIN_BONUSS, 
-    PLAYER_WRITTEN_TO_TRAIN, PLAYER_WRITTEN_TO_TRAIN_SHORT
-    )
+    ADMIN_TEXT_GROUP_TRAIN,
+    ADMIN_TEXT_GROUP_TRAIN_PAY_BONUSS,
+    ADMIN_TEXT_SINGLE_TRAIN_DOP_TIME,
+    ADMIN_TEXT_SINGLE_TRAIN_PAY_BONUSS,
+    CANT_TAKE_LESSON_MAX_IN_FUTURE,
+    PLAYER_VISIT_GROUP_TRAIN_BONUSS,
+    PLAYER_WRITTEN_TO_TRAIN,
+    PLAYER_WRITTEN_TO_TRAIN_SHORT,
+)
 
 from player_bot.take_lesson.static_text import (
     CHOOSE_TYPE_OF_PAYMENT,
@@ -54,26 +58,33 @@ def handle_taking_group_lesson(
 
     n_free_places = get_n_free_places(tr_day)
 
-    if n_free_places > 0: 
-        tr_day.visitors.add(player)
-
+    if n_free_places > 0:
         player_text = PLAYER_WRITTEN_TO_TRAIN_SHORT.format(date_info)
         player_markup = None
-       
+
         if player.bonus_lesson > 0 and player.status == Player.STATUS_TRAINING:
-             # Если пользователь имеет отыгрыши, то добавляем его в список пользователей за "отыгрыш"
+            # Если пользователь имеет отыгрыши, то добавляем его в список пользователей за "отыгрыш"
             tr_day.visitors.add(player)
 
-            admin_text = PLAYER_VISIT_GROUP_TRAIN_BONUSS.format(player.first_name, player.last_name, 
-                                                                date_info)
+            admin_text = PLAYER_VISIT_GROUP_TRAIN_BONUSS.format(
+                player.first_name, player.last_name, date_info
+            )
             player.bonus_lesson -= 1
             player.save()
-       
-        else:
+
+        elif player.bonus_lesson == 0 and player.status == Player.STATUS_TRAINING:
             # Если пользователь не имеет отыгрышей, то добавляем его в список пользователей за платный "отыгрыш"
             tr_day.pay_bonus_visitors.add(player)
-            admin_text = ADMIN_TEXT_GROUP_TRAIN.format(player.first_name, player.last_name, TARIF_ARBITRARY, date_info)
+            admin_text = ADMIN_TEXT_GROUP_TRAIN_PAY_BONUSS.format(
+                player.first_name, player.last_name, TARIF_ARBITRARY, date_info
+            )
 
+        else:
+            # Во всех остальных случаях, добавляем в обычную тренеровку и выводим стандартный текст
+            tr_day.visitors.add(player)
+            admin_text = ADMIN_TEXT_GROUP_TRAIN.format(
+                player.first_name, player.last_name, TARIF_ARBITRARY, date_info
+            )
     else:
         if (
             tr_day.group.max_players - n_free_places < 6
@@ -86,15 +97,17 @@ def handle_taking_group_lesson(
             )
             if player.bonus_lesson == 0:
                 tr_day.pay_visitors.add(player)
-                player_text = PLAYER_WRITTEN_TO_TRAIN.format(tarif,date_info);
-                  
-                admin_text = ADMIN_TEXT_GROUP_TRAIN.format(player.first_name,player.last_name,tarif,date_info)  
-                   
+                player_text = PLAYER_WRITTEN_TO_TRAIN.format(tarif, date_info)
+
+                admin_text = ADMIN_TEXT_GROUP_TRAIN.format(
+                    player.first_name, player.last_name, tarif, date_info
+                )
+
                 player_markup = None
             else:
                 player_text = CHOOSE_TYPE_OF_PAYMENT
                 player_markup = choose_type_of_payment_for_group_lesson_keyboard(
-                    payment_add_lesson = TARIF_PAYMENT_ADD_LESSON,
+                    payment_add_lesson=TARIF_PAYMENT_ADD_LESSON,
                     tr_day_id=tr_day.id,
                     tarif=tarif,
                 )
@@ -120,12 +133,13 @@ def handle_choosing_type_of_payment_for_pay_visiting_when_have_bonus_lessons(
         player.save()
 
         tr_day.pay_bonus_visitors.add(player)
-        player_text = PLAYER_WRITTEN_TO_TRAIN.format(TARIF_PAYMENT_ADD_LESSON,date_info)
-          
+        player_text = PLAYER_WRITTEN_TO_TRAIN.format(
+            TARIF_PAYMENT_ADD_LESSON, date_info
+        )
 
-        admin_text = ADMIN_TEXT_SINGLE_TRAIN_PAY_BONUSS.format(player.first_name,player.last_name,
-                                                               TARIF_PAYMENT_ADD_LESSON,date_info)
-         
+        admin_text = ADMIN_TEXT_SINGLE_TRAIN_PAY_BONUSS.format(
+            player.first_name, player.last_name, TARIF_PAYMENT_ADD_LESSON, date_info
+        )
 
     elif payment_choice == PAYMENT_MONEY:
         tr_day.pay_visitors.add(player)
@@ -133,10 +147,10 @@ def handle_choosing_type_of_payment_for_pay_visiting_when_have_bonus_lessons(
             TARIF_ARBITRARY if player.status == Player.STATUS_ARBITRARY else TARIF_GROUP
         )
 
-        player_text = PLAYER_WRITTEN_TO_TRAIN.format(tarif,date_info) 
-         
+        player_text = PLAYER_WRITTEN_TO_TRAIN.format(tarif, date_info)
 
-        admin_text = ADMIN_TEXT_SINGLE_TRAIN_DOP_TIME.format(player.first_name,player.last_name,tarif,date_info) 
-
+        admin_text = ADMIN_TEXT_SINGLE_TRAIN_DOP_TIME.format(
+            player.first_name, player.last_name, tarif, date_info
+        )
 
     return player_text, admin_text

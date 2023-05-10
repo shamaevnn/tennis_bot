@@ -7,11 +7,11 @@ from django.db.models import ExpressionWrapper, F, DateTimeField, Count
 from django.utils.safestring import mark_safe
 
 from base.models import TrainingGroup, GroupTrainingDay, Player
-from base.django_admin.utils import (
-    change_tr_day_available_status_and_send_alert,
-    send_alert_changing_tr_day_status,
-    send_alert_about_changing_tr_day_time
-)
+from .django_admin.utils import send_alert_about_changing_tr_day_time
+
+
+from .utils.change_available_status import change_tr_day_available_status_and_send_alert
+
 from player_bot.menu_and_commands.keyboards import construct_main_menu
 from base.common_for_bots.utils import (
     DT_BOT_FORMAT,
@@ -96,7 +96,9 @@ class TrainingGroupForm(forms.ModelForm):
         if "players" in self.changed_data:
             tr_day = (
                 GroupTrainingDay.objects.filter(
-                    group__max_players__gt=1, group=self.instance, available_status= GroupTrainingDay.AVAILABLE
+                    group__max_players__gt=1,
+                    group=self.instance,
+                    available_status=GroupTrainingDay.AVAILABLE,
                 )
                 .annotate(
                     start=ExpressionWrapper(
@@ -288,7 +290,7 @@ class GroupTrainingDayForm(forms.ModelForm):
         if (
             "available_status" in self.changed_data
         ):  # если статуc дня меняется, то отсылаем алерт об изменении
-            send_alert_changing_tr_day_status(
+            change_tr_day_available_status_and_send_alert(
                 self.instance, self.cleaned_data.get("available_status")
             )
 

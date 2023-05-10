@@ -16,6 +16,9 @@ from player_bot.menu_and_commands.keyboards import construct_main_menu
 
 
 def change_tr_day_available_status(tr_day: GroupTrainingDay, available_status):
+    if available_status == GroupTrainingDay.AVAILABLE:
+        return
+
     if available_status == GroupTrainingDay.NOT_AVAILABLE:
 
         players = get_actual_players_without_absent(tr_day)

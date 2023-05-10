@@ -31,7 +31,11 @@ from player_bot.take_lesson.individual.manage_data import SELECT_PRECISE_IND_TIM
 from player_bot.take_lesson.rent.manage_data import SELECT_PRECISE_RENT_TIME
 from player_bot.take_lesson.static_text import CHOOSE_DATE_OF_TRAIN
 from player_bot.take_lesson.utils import calendar_taking_rent_and_ind_lesson
-from player_bot.calendar.static_text import CHOOSE_DATE_COURT_RENT,CHOOSE_DATE_INDIVIDUAL_TRAINING, CHOOSE_DATE_OF_TRAIN_EXTENDENT
+from player_bot.calendar.static_text import (
+    CHOOSE_DATE_COURT_RENT,
+    CHOOSE_DATE_INDIVIDUAL_TRAINING,
+    CHOOSE_DATE_OF_TRAIN_EXTENDENT,
+)
 from player_bot.skip_lesson.static_text import CHOOSE_DATE_TO_CANCEL
 
 
@@ -82,15 +86,15 @@ def process_calendar_selection(update: Update, context: CallbackContext):
     elif action == CLNDR_ACTION_BACK:
         if purpose == CLNDR_ACTION_SKIP:
             text = CHOOSE_DATE_TO_CANCEL
-             
+
         elif purpose == CLNDR_ACTION_TAKE_GROUP:
             text = CHOOSE_DATE_OF_TRAIN_EXTENDENT
-            
+
         elif re.findall(rf"({CLNDR_ACTION_TAKE_IND})(\d.\d)", purpose):
             text = CHOOSE_DATE_INDIVIDUAL_TRAINING
         elif re.findall(rf"({CLNDR_ACTION_TAKE_RENT})(\d.\d)", purpose):
             text = CHOOSE_DATE_COURT_RENT
-            
+
         bot_edit_message(
             context.bot,
             text,

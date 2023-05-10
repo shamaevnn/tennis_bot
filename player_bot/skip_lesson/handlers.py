@@ -19,18 +19,16 @@ from player_bot.skip_lesson.manage_data import (
 from player_bot.calendar.manage_data import CLNDR_ACTION_SKIP
 from player_bot.registration.utils import check_status_decor
 from player_bot.skip_lesson.static_text import (
-    ONLY_ONE_LEFT, 
+    ONLY_ONE_LEFT,
     CHOOSE_DATE_TO_CANCEL,
     TRAIN_CANCELLED_BY_COACH_TEMPLATE,
-    NO_LESSONS_TO_SKIP
-    )
+    NO_LESSONS_TO_SKIP,
+)
 from player_bot.skip_lesson.utils import (
     select_tr_days_for_skipping,
     make_group_name_group_players_info_for_skipping,
     handle_skipping_train,
 )
-
-
 
 
 @check_status_decor
@@ -81,9 +79,7 @@ def skip_lesson(update: Update, context: CallbackContext):
     date_info = DATE_INFO.format(date_tlg, day_of_week, time_tlg)
 
     if not tr_day.is_available:
-        text = TRAIN_CANCELLED_BY_COACH_TEMPLATE.format(
-            date_tlg, time_tlg
-        )
+        text = TRAIN_CANCELLED_BY_COACH_TEMPLATE.format(date_tlg, time_tlg)
         bot_edit_message(context.bot, text, update)
 
         skip_lesson_main_menu_button(update, context)

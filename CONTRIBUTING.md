@@ -1,20 +1,31 @@
 # Contributing
 
 ## First start
-1. Create `.env` file.
-```bash
-cp .env_example .env # (uncomment one line with DATABASE_URL)
+1. Create virtual environment and install dependencies
+```{shell}
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
 ```
-2. Create two bots via @BotFather in Telegram and change `TELEGRAM_TOKEN`, `ADMIN_TELEGRAM_TOKEN` variables in `.env` file.
-3. Apply migraitons.
+2. Install `pre-commit` hooks to automatically format code
+```{shell}
+pre-commit install-hooks
+pre-commit install
+```
+3. Create `.env` file.
+```{shell}
+cp .env_example .env
+```
+4. Create two bots via @BotFather in Telegram and change `TELEGRAM_TOKEN`, `ADMIN_TELEGRAM_TOKEN` variables in `.env` file.
+5. Apply migraitons.
 ```bash
 python manage.py migrate
 ```
-4. Create superuser to get access to django admin panel.
+6. Create superuser to get access to django admin panel.
 ```bash
 python manage.py createsuperuser
 ```
-5. Visit [admin-panel](http://127.0.0.1:8000/tgadmin/) to check that everything is alright.
+7. Visit [admin-panel](http://127.0.0.1:8000/tgadmin/) to check that everything is alright.
 
 
 ## Running locally (manually).

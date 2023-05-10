@@ -33,4 +33,3 @@ from_eng_to_rus_day_week = {
     "Friday": "пятница",
     "Saturday": "суббота",
 }
-

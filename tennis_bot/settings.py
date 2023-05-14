@@ -58,7 +58,6 @@ INSTALLED_APPS = [
     "drf_yasg",
     "django_celery_beat",
     "rest_framework",
-
     # local apps
     "base",
     "player_bot",
@@ -185,7 +184,7 @@ ADMIN_CHAT_ID = 350490234
 # -----> TARIFS
 TARIF_IND = 1600
 TARIF_GROUP = 450
-TARIF_ARBITRARY = 700
+TARIF_ARBITRARY = 800
 
 TARIF_FEW = 400
 TARIF_SECTION = 4000

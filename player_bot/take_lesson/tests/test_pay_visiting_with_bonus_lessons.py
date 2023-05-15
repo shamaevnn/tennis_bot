@@ -41,7 +41,7 @@ class Tests(TestCase):
             f"Не забудь заплатить <b>{TARIF_PAYMENT_ADD_LESSON}₽</b>", player_text
         )
         self.assertIn(
-            f"b>за счёт платных отыгрышей, не забудь взять {TARIF_PAYMENT_ADD_LESSON}₽.</b>",
+            f"b> за счёт платных отыгрышей, не забудь взять {TARIF_PAYMENT_ADD_LESSON}₽.</b>",
             admin_text,
         )
 

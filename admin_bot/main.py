@@ -21,7 +21,11 @@ from tennis_bot.settings import ADMIN_TELEGRAM_TOKEN
 from admin_bot.go_to_site.handlers import redirect_to_site
 from admin_bot.calendar.handlers import inline_calendar_handler, show_coach_schedule
 from admin_bot.ind_train.handlers import permission_for_ind_train, save_many_ind_trains
-from admin_bot.view_schedule.handlers import show_trainingroupday_info
+from admin_bot.view_schedule.handlers import (
+    show_trainingroupday_info,
+    show_confirm_train_action,
+    train_action_handler,
+)
 from admin_bot.send_message import handlers as send_message_handlers
 from admin_bot.payment import handlers as payment_handlers
 from admin_bot.menu_and_commands.handlers import start, cancel
@@ -29,6 +33,8 @@ from admin_bot.send_message.manage_data import SEND_MESSAGE
 from admin_bot.view_schedule.manage_data import (
     SHOW_GROUPDAY_INFO,
     CLNDR_ADMIN_VIEW_SCHEDULE,
+    AVAILABLE_TRAIN_DAY_ACTION_CONFIRM,
+    AVAILABLE_TRAIN_DAY_ACTION,
 )
 from admin_bot.rent_court.handlers import permission_for_rent_court
 from admin_bot.rent_court.manage_data import PERMISSION_FOR_RENT_COURT
@@ -111,7 +117,7 @@ def setup_dispatcher(dp):
     # main menu
     dp.add_handler(
         MessageHandler(
-            Filters.regex(fr"^{ADMIN_TIME_SCHEDULE_BUTTON}$"), show_coach_schedule
+            Filters.regex(rf"^{ADMIN_TIME_SCHEDULE_BUTTON}$"), show_coach_schedule
         )
     )
     dp.add_handler(MessageHandler(Filters.regex(f"{ADMIN_SITE}"), redirect_to_site))
@@ -172,6 +178,19 @@ def setup_dispatcher(dp):
     dp.add_handler(
         CallbackQueryHandler(
             inline_calendar_handler, pattern="^{}".format(CLNDR_ADMIN_VIEW_SCHEDULE)
+        )
+    )
+
+    dp.add_handler(
+        CallbackQueryHandler(
+            train_action_handler, pattern="^{}".format(AVAILABLE_TRAIN_DAY_ACTION)
+        )
+    )
+
+    dp.add_handler(
+        CallbackQueryHandler(
+            show_confirm_train_action,
+            pattern="^{}".format(AVAILABLE_TRAIN_DAY_ACTION_CONFIRM),
         )
     )
 

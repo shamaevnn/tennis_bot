@@ -1,4 +1,6 @@
 BACK_BUTTON = "⬅️ назад"
+CANCEL_BUTTON = "❌ отменить занятие"
+AVAILABLE_BUTTON = "✅ сделать доступным"
 from_digit_to_month = {
     1: "Январь",
     2: "Февраль",

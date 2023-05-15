@@ -33,12 +33,7 @@ ADMIN_TEXT_SINGLE_TRAIN_PAY_BONUSS = (
     f"{ATTENTION}\n"
     "{} {} придёт "
     "<b> за счёт платных отыгрышей, не забудь взять {}₽.</b>\n{}"
-
-
-ADMIN_TEXT_GROUP_TRAIN_PAY_BONUSS = (
-    f"{ATTENTION}\n"
-    "{} {} придёт на гр. "
-    "<b> за счёт платных отыгрышей, не забудь взять {}₽.</b>\n{}"
+)
 
 
 ADMIN_TEXT_SINGLE_TRAIN_DOP_TIME = (

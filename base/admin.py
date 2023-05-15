@@ -131,11 +131,12 @@ def make_trday_cancelled(modeladmin, request, queryset):
 
 
 def change_available_state(request, queryset, new_available_status):
-    # исключает попадание дней имеющих данный статус
+    # Исключает попадание дней имеющих данный статус
     tr_days = queryset.exclude(available_status=new_available_status).all()
+    tr_days.update(available_status=new_available_status)
 
     for day in tr_days:
-        change_tr_day_available_status_and_send_alert(day, new_available_status)
+        change_tr_day_available_status_and_send_alert(day, day.available_status)
 
 
 make_trday_unavailable.short_description = "Сделать выбранные дни недоступными"

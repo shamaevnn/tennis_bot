@@ -15,8 +15,7 @@ from base.common_for_bots.manage_data import (
 )
 from base.common_for_bots.static_text import (
     from_digit_to_month,
-    from_eng_to_rus_day_week,
-    DATE_INFO,
+    from_eng_to_rus_day_week, DATE_INFO,
 )
 from base.models import GroupTrainingDay, Player
 
@@ -171,11 +170,6 @@ def create_calendar(
 def create_callback_data(purpose, action, year, month, day):
     """Create the callback data associated to each button"""
     return ";".join([purpose, action, str(year), str(month), str(day)])
-
-
-def create_callback_data_time(purpose, action, year, month, day, time):
-    """Create the callback data associated to each button"""
-    return ";".join([purpose, action, str(year), str(month), str(day), str(time)])
 
 
 def separate_callback_data(data):

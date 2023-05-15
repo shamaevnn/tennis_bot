@@ -15,7 +15,7 @@ from player_bot.take_lesson.group.manage_data import (
 )
 from player_bot.take_lesson.group.static_text import (
     ADMIN_TEXT_GROUP_TRAIN,
-    ADMIN_TEXT_GROUP_TRAIN_PAY_BONUSS,
+    ADMIN_TEXT_SINGLE_TRAIN_BONUSS,
     ADMIN_TEXT_SINGLE_TRAIN_DOP_TIME,
     ADMIN_TEXT_SINGLE_TRAIN_PAY_BONUSS,
     CANT_TAKE_LESSON_MAX_IN_FUTURE,
@@ -75,7 +75,7 @@ def handle_taking_group_lesson(
         elif player.bonus_lesson == 0 and player.status == Player.STATUS_TRAINING:
             # Если пользователь не имеет отыгрышей, то добавляем его в список пользователей за платный "отыгрыш"
             tr_day.pay_bonus_visitors.add(player)
-            admin_text = ADMIN_TEXT_GROUP_TRAIN_PAY_BONUSS.format(
+            admin_text = ADMIN_TEXT_SINGLE_TRAIN_BONUSS.format(
                 player.first_name, player.last_name, TARIF_ARBITRARY, date_info
             )
 

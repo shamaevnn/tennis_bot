@@ -5,6 +5,7 @@ from telegram.ext import CallbackContext
 
 from admin_bot.calendar.keyboards import day_buttons_coach_info
 from admin_bot.calendar.static_text import TRAIN_DAYS, NO_TRAINS_THIS_DAY
+from admin_bot.view_schedule.keyboards import show_grouptrainingday_confirm_keyboard
 from base.models import GroupTrainingDay
 from base.common_for_bots.utils import (
     bot_edit_message,
@@ -75,6 +76,8 @@ def inline_calendar_handler(update: Update, context: CallbackContext):
                 text = NO_TRAINS_THIS_DAY
                 markup = create_calendar(purpose, date_my.year, date_my.month)
             bot_edit_message(context.bot, text, update, markup)
+
+    pass
 
 
 def show_coach_schedule(update: Update, context: CallbackContext):

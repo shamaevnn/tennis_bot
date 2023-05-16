@@ -13,6 +13,7 @@ def day_buttons_coach_info(tr_days: QuerySet[GroupTrainingDay], button_text: str
     row = []
     for day in tr_days:
         time_tlg, _, _, _, _, _, _ = get_time_info_from_tr_day(day)
+        t = f"{button_text}{day.id}"
         row.append(
             InlineKeyboardButton(
                 text=day.group.name, callback_data=f"{button_text}{day.id}"

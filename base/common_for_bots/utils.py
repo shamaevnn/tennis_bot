@@ -173,9 +173,9 @@ def create_callback_data(purpose, action, year, month, day):
     return ";".join([purpose, action, str(year), str(month), str(day)])
 
 
-def create_callback_data_time(purpose, action, year, month, day, time):
+def create_callback_data_id(purpose, action, id):
     """Create the callback data associated to each button"""
-    return ";".join([purpose, action, str(year), str(month), str(day), str(time)])
+    return ";".join([purpose, action, str(id)])
 
 
 def separate_callback_data(data):

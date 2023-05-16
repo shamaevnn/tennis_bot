@@ -35,3 +35,5 @@ from_eng_to_rus_day_week = {
     "Friday": "пятница",
     "Saturday": "суббота",
 }
+
+ERROR_UNKNOWN_AVAILABLE_STATUS = "Неизвестный статус тренировки {available_status}"

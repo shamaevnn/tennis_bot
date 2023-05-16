@@ -89,22 +89,22 @@ class Player(models.Model):
     deep_link = models.CharField(max_length=64, **nb)
 
     status = models.CharField(
-        max_length = 1, choices = STATUSES, default = STATUS_WAITING, verbose_name = "статус"
+        max_length=1, choices=STATUSES, default=STATUS_WAITING, verbose_name="статус"
     )
     time_before_cancel = models.DurationField(
         null=True,
         help_text="ЧАСЫ:МИНУТЫ:СЕКУНДЫ",
         verbose_name="Время, за которое нужно предупредить",
-        default=timedelta(hours = 6),
+        default=timedelta(hours=6),
     )
     bonus_lesson = models.SmallIntegerField(
         default=0, verbose_name="Количество отыгрышей"
     )
-    
-    n_cancelled_lessons  = models.SmallIntegerField(
+
+    n_cancelled_lessons = models.SmallIntegerField(
         default=0, verbose_name="Количество отмен"
     )
-    
+
     max_lessons_for_bonus_in_future = models.PositiveSmallIntegerField(
         default=3, verbose_name="Ограничение на кол-во тренировок за отыгрыши"
     )
@@ -281,8 +281,8 @@ class GroupTrainingDay(ModelwithTime):
     GROUP_ADULT_TRAIN = "M"
     INDIVIDUAL_TRAIN = "I"
     RENT_COURT_STATUS = "R"
-    
-    CANCELLED ="C"
+
+    CANCELLED = "C"
     NOT_AVAILABLE = "N"
     AVAILABLE = "A"
 
@@ -293,11 +293,11 @@ class GroupTrainingDay(ModelwithTime):
     )
 
     TR_DAY_AVALIABLE_STATUSES = (
-        (AVAILABLE,"доступно"),
-        (NOT_AVAILABLE,"недоступно"),
-        (CANCELLED,"отменено")        
+        (AVAILABLE, "доступно"),
+        (NOT_AVAILABLE, "недоступно"),
+        (CANCELLED, "отменено"),
     )
-    
+
     group = models.ForeignKey(
         TrainingGroup, on_delete=models.PROTECT, verbose_name="Группа"
     )
@@ -382,7 +382,7 @@ class GroupTrainingDay(ModelwithTime):
             .prefetch_related(
                 "absent", "visitors", "pay_visitors", "pay_bonus_visitors"
             )
-            .filter(available_status= GroupTrainingDay.AVAILABLE)
+            .filter(available_status=GroupTrainingDay.AVAILABLE)
         )
         for tr_day in available_tr_days.iterator():
             if tr_day.start_dttm > now and tr_day.start_dttm - now < timedelta(
@@ -452,7 +452,12 @@ class Payment(models.Model):
     YEAR_2022 = "2"
     YEAR_2023 = "3"
 
-    YEARS = ((YEAR_2020, "2020"), (YEAR_2021, "2021"), (YEAR_2022, "2022"), (YEAR_2023, "2023"))
+    YEARS = (
+        (YEAR_2020, "2020"),
+        (YEAR_2021, "2021"),
+        (YEAR_2022, "2022"),
+        (YEAR_2023, "2023"),
+    )
 
     player = models.ForeignKey(
         Player, on_delete=models.SET_NULL, verbose_name="игрок", null=True
@@ -497,7 +502,7 @@ class Payment(models.Model):
             Q(visitors__in=[self.player]) | Q(group__players__in=[self.player]),
             date__gte=begin_day_month,
             date__lte=datetime.now().date(),
-            available_status= GroupTrainingDay.AVAILABLE,
+            available_status=GroupTrainingDay.AVAILABLE,
             date__month=month,
         ).exclude(absent__in=[self.player])
 

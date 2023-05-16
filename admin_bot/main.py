@@ -23,8 +23,8 @@ from admin_bot.calendar.handlers import inline_calendar_handler, show_coach_sche
 from admin_bot.ind_train.handlers import permission_for_ind_train, save_many_ind_trains
 from admin_bot.view_schedule.handlers import (
     show_trainingroupday_info,
-    show_confirm_train_action,
-    train_action_handler,
+    confirm_change_available_status_handler,
+    change_available_status_handler,
 )
 from admin_bot.send_message import handlers as send_message_handlers
 from admin_bot.payment import handlers as payment_handlers
@@ -183,13 +183,14 @@ def setup_dispatcher(dp):
 
     dp.add_handler(
         CallbackQueryHandler(
-            train_action_handler, pattern="^{}".format(AVAILABLE_TRAIN_DAY_ACTION)
+            change_available_status_handler,
+            pattern="^{}".format(AVAILABLE_TRAIN_DAY_ACTION),
         )
     )
 
     dp.add_handler(
         CallbackQueryHandler(
-            show_confirm_train_action,
+            confirm_change_available_status_handler,
             pattern="^{}".format(AVAILABLE_TRAIN_DAY_ACTION_CONFIRM),
         )
     )

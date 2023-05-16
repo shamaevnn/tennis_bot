@@ -1,11 +1,12 @@
 from django.db.models import F
+
+from base.common_for_bots.static_text import ERROR_UNKNOWN_AVAILABLE_STATUS
 from base.common_for_bots.utils import (
     get_actual_players_without_absent,
     get_dttm_info_for_tr_day,
 )
 from base.django_admin.static_text import (
     CANCEL_TRAIN_PLUS_BONUS_LESSON_2,
-    ERROR_UNKNOWN_AVAILABLE_STATUS,
     TRAIN_IS_AVAILABLE_CONGRATS,
 )
 
@@ -84,11 +85,14 @@ def get_text_about_the_available_status_change(
 # Отправка уведомлений об изменении статуса
 def send_alert_changing_tr_day_status(tr_day: GroupTrainingDay, available_status):
     text = get_text_about_the_available_status_change(tr_day, available_status)
-    broadcast_messages(
-        chat_ids=list(get_players_for_tr_day(tr_day).values_list("tg_id", flat=True)),
-        message=text,
-        reply_markup=construct_main_menu(),
-    )
+
+    players = get_actual_players_without_absent(tr_day)
+    if players.count() > 0:
+        broadcast_messages(
+            chat_ids=list(players.values_list("tg_id", flat=True)),
+            message=text,
+            reply_markup=construct_main_menu(),
+        )
 
 
 def change_tr_day_available_status_and_send_alert(

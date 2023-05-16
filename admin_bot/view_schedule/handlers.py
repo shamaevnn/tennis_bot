@@ -2,19 +2,27 @@ from telegram import Update
 from telegram.ext import CallbackContext
 
 from admin_bot.view_schedule.keyboards import (
-    show_grouptrainingday_info_keyboard,
-    show_grouptrainingday_confirm_keyboard,
+    show_grouptrainingday_available_change_keyboard,
+    show_grouptrainingday_available_change_confirm_keyboard,
 )
 from admin_bot.view_schedule import static_text
 from admin_bot.view_schedule.manage_data import SHOW_GROUPDAY_INFO
+from admin_bot.view_schedule.static_text import (
+    CONFIRM_CANCEL_TRAIN,
+    CONFIRM_AVAILABLE_TRAIN,
+    DAY_FIND_ERROR,
+)
 from admin_bot.view_schedule.utils import schedule_players_info
+from base.common_for_bots.static_text import ERROR_UNKNOWN_AVAILABLE_STATUS
 from base.models import GroupTrainingDay, TrainingGroup
+
 from base.common_for_bots.utils import (
     bot_edit_message,
     get_time_info_from_tr_day,
     get_actual_players_without_absent,
     separate_callback_data,
 )
+
 from base.utils.change_available_status import (
     change_tr_day_available_status_and_send_alert,
     get_text_about_the_available_status_change,
@@ -89,35 +97,43 @@ def show_trainingroupday_info(update, context: CallbackContext):
     players_info = f"{group_name}{group_level}{group_players}{visitors}{pay_visitors}{pay_bonus_visitors}{absents}"
     text = f"{general_info}{players_info}"
 
-    markup = show_grouptrainingday_info_keyboard(tr_day)
+    markup = show_grouptrainingday_available_change_keyboard(tr_day)
 
     bot_edit_message(context.bot, text, update, markup)
 
 
-def show_confirm_train_action(update: Update, context: CallbackContext):
+def confirm_change_available_status_handler(update: Update, context: CallbackContext):
+    """
+    Обработчик для создания подтверждения перед изменением: available_status у дня по его id
+    """
     query = update.callback_query
-    (purpose, action, year, month, day, start_time) = separate_callback_data(query.data)
-    markup = show_grouptrainingday_confirm_keyboard(
-        year, month, day, start_time, action
-    )
+    (purpose, action, id) = separate_callback_data(query.data)
+    markup = show_grouptrainingday_available_change_confirm_keyboard(action, id)
 
-    if action != GroupTrainingDay.AVAILABLE:
-        text = "Подтверди отмену занятия"
+    if action == GroupTrainingDay.AVAILABLE:
+        text = CONFIRM_AVAILABLE_TRAIN
+
+    elif action == GroupTrainingDay.NOT_AVAILABLE:
+        text = CONFIRM_CANCEL_TRAIN
+
+    elif action == GroupTrainingDay.CANCELLED:
+        text = CONFIRM_AVAILABLE_TRAIN
     else:
-        text = "Подтверди доступность занятия"
+        raise ValueError(ERROR_UNKNOWN_AVAILABLE_STATUS.format(action))
 
     bot_edit_message(context.bot, text, update, markup)
 
 
-def train_action_handler(update: Update, context: CallbackContext):
+def change_available_status_handler(update: Update, context: CallbackContext):
+    """
+    Обработчик для изменения: available_status у дня по его id
+    """
     query = update.callback_query
-    (purpose, action, year, month, day, start_time) = separate_callback_data(query.data)
+    (purpose, action, id) = separate_callback_data(query.data)
 
-    tr_day = GroupTrainingDay.objects.filter(
-        date__year=year, date__month=month, date__day=day, start_time=start_time
-    ).first()
+    tr_day = GroupTrainingDay.objects.filter(id=id).first()
 
-    if tr_day != None:
+    if tr_day is not None:
         change_tr_day_available_status_and_send_alert(
             tr_day=tr_day, available_status=action
         )
@@ -126,4 +142,4 @@ def train_action_handler(update: Update, context: CallbackContext):
 
         bot_edit_message(context.bot, text, update)
     else:
-        bot_edit_message(context.bot, "Произошла проблема, день не найден", update)
+        bot_edit_message(context.bot, DAY_FIND_ERROR, update)

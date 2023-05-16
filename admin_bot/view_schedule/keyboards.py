@@ -18,16 +18,13 @@ from base.models import GroupTrainingDay
 
 
 def show_grouptrainingday_available_change_confirm_keyboard(action, tr_day_id):
-
     text: str = ""
     if action == GroupTrainingDay.AVAILABLE:
         text = AVAILABLE_BUTTON
 
-    elif action == GroupTrainingDay.CANCELLED:
+    elif action in (GroupTrainingDay.NOT_AVAILABLE, GroupTrainingDay.CANCELLED):
         text = CANCEL_BUTTON
 
-    elif action == GroupTrainingDay.NOT_AVAILABLE:
-        text = CANCEL_BUTTON
     else:
         raise ValueError(ERROR_UNKNOWN_AVAILABLE_STATUS.format(action))
 
@@ -50,14 +47,13 @@ def show_grouptrainingday_available_change_confirm_keyboard(action, tr_day_id):
 
 
 def show_grouptrainingday_available_change_keyboard(tr_day: GroupTrainingDay):
-
     action = ""
     text = ""
-    if tr_day.available_status == GroupTrainingDay.CANCELLED:
-        text = AVAILABLE_BUTTON
-        action = GroupTrainingDay.AVAILABLE
 
-    elif tr_day.available_status == GroupTrainingDay.NOT_AVAILABLE:
+    if tr_day.available_status in (
+        GroupTrainingDay.NOT_AVAILABLE,
+        GroupTrainingDay.CANCELLED,
+    ):
         text = AVAILABLE_BUTTON
         action = GroupTrainingDay.AVAILABLE
 

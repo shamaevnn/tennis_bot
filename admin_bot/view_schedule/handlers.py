@@ -107,7 +107,7 @@ def confirm_change_available_status_handler(update: Update, context: CallbackCon
     Обработчик для создания подтверждения перед изменением: available_status у дня по его id
     """
     query = update.callback_query
-    (_, action, tr_day_id) = separate_callback_data(query.data)
+    _, action, tr_day_id = separate_callback_data(query.data)
     markup = show_grouptrainingday_available_change_confirm_keyboard(action, tr_day_id)
 
     if action == GroupTrainingDay.AVAILABLE:
@@ -127,10 +127,9 @@ def change_available_status_handler(update: Update, context: CallbackContext):
     Обработчик для изменения: available_status у дня по его id
     """
     query = update.callback_query
-    (_, action, tr_day_id) = separate_callback_data(query.data)
+    _, action, tr_day_id = separate_callback_data(query.data)
 
     tr_day = GroupTrainingDay.objects.filter(id=tr_day_id).first()
-
     if tr_day is not None:
         change_tr_day_available_status_and_send_alert(
             tr_day=tr_day, available_status=action

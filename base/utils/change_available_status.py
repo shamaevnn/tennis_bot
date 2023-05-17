@@ -17,7 +17,6 @@ from player_bot.menu_and_commands.keyboards import construct_main_menu
 
 
 def change_tr_day_available_status(tr_day: GroupTrainingDay, available_status):
-
     if tr_day.available_status != available_status:
         # обновляем статус, если он не был изменён ранее, другой функцией
         tr_day.available_status = available_status
@@ -98,6 +97,5 @@ def send_alert_changing_tr_day_status(tr_day: GroupTrainingDay, available_status
 def change_tr_day_available_status_and_send_alert(
     tr_day: GroupTrainingDay, available_status
 ):
-
     change_tr_day_available_status(tr_day, available_status)
     send_alert_changing_tr_day_status(tr_day, available_status)

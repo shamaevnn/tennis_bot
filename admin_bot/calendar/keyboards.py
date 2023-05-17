@@ -4,7 +4,7 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from base.common_for_bots.utils import get_time_info_from_tr_day, create_callback_data
 from base.common_for_bots.manage_data import CLNDR_ACTION_BACK
 from admin_bot.view_schedule.manage_data import CLNDR_ADMIN_VIEW_SCHEDULE
-from base.common_for_bots.static_text import BACK_BUTTON
+from base.common_for_bots.static_text import BACK_BUTTON, CANCEL_BUTTON
 from base.models import GroupTrainingDay
 
 

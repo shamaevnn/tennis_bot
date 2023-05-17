@@ -1,4 +1,6 @@
 BACK_BUTTON = "⬅️ назад"
+CANCEL_BUTTON = "❌ отменить занятие"
+AVAILABLE_BUTTON = "✅ сделать доступным"
 from_digit_to_month = {
     1: "Январь",
     2: "Февраль",
@@ -33,3 +35,5 @@ from_eng_to_rus_day_week = {
     "Friday": "пятница",
     "Saturday": "суббота",
 }
+
+ERROR_UNKNOWN_AVAILABLE_STATUS = "Неизвестный статус тренировки {available_status}"

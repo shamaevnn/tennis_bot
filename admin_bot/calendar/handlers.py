@@ -5,6 +5,9 @@ from telegram.ext import CallbackContext
 
 from admin_bot.calendar.keyboards import day_buttons_coach_info
 from admin_bot.calendar.static_text import TRAIN_DAYS, NO_TRAINS_THIS_DAY
+from admin_bot.view_schedule.keyboards import (
+    show_grouptrainingday_available_change_confirm_keyboard,
+)
 from base.models import GroupTrainingDay
 from base.common_for_bots.utils import (
     bot_edit_message,

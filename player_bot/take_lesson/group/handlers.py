@@ -2,7 +2,7 @@ from telegram import Update
 from telegram.ext import CallbackContext
 
 import player_bot.take_lesson.group.manage_data
-from base.common_for_bots.static_text import DATE_INFO
+from base.common_for_bots.static_text import DATE_INFO, ATTENTION
 from base.common_for_bots.tasks import send_message_to_coaches
 from base.common_for_bots.utils import (
     get_time_info_from_tr_day,
@@ -18,7 +18,11 @@ from player_bot.take_lesson.group.utils import (
 )
 from player_bot.take_lesson.group.static_text import THIS_TRAIN_IS_PAID
 from player_bot.skip_lesson.static_text import ATTENDING_INFO_TEMPLATE
-
+from player_bot.take_lesson.static_text import (
+    NO_GAMES_IN_MOMENT_BASE,
+    YOU_SACRIFICE_ONE_GAME_BASE,
+    YOU_SACRIFICE_ONE_GAME_ATTENTION,
+)
 
 
 def select_group_time(update: Update, context: CallbackContext):
@@ -35,6 +39,7 @@ def select_group_time(update: Update, context: CallbackContext):
     time_tlg, _, _, date_tlg, day_of_week, _, _ = get_time_info_from_tr_day(tr_day)
     # сколько сейчас свободных мест
     players = get_actual_players_without_absent(tr_day)
+
     n_free_places = get_n_free_places(tr_day)
     all_players = players.values("first_name", "last_name")
     text = ""
@@ -48,12 +53,22 @@ def select_group_time(update: Update, context: CallbackContext):
     all_players = "\n".join(
         (f"{x['first_name']} {x['last_name']}" for x in all_players)
     )
+
+    player_id = update.effective_user.id
+    player = Player.objects.filter(tg_id=player_id).first()
+
     text += (
         f"{tr_day.group.name} — {TrainingGroup.GROUP_LEVEL_DICT[tr_day.group.level]}\n"
         f"{DATE_INFO.format(date_tlg, day_of_week, time_tlg)}"
         f"{ATTENDING_INFO_TEMPLATE.format(all_players)}"
         f'Свободные места: {n_free_places if n_free_places > 0 else "есть за деньги"}'
     )
+    if player in tr_day.absent.all():
+        if player.bonus_lesson == 0:
+            text = NO_GAMES_IN_MOMENT_BASE
+
+        else:
+            text = YOU_SACRIFICE_ONE_GAME_ATTENTION
 
     markup = take_lesson_back_keyboard(
         tr_day_id=tr_day_id,

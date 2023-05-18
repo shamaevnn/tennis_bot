@@ -49,9 +49,9 @@ def select_tr_days_for_skipping(
             **filters,
         )
         .exclude(absent__in=[player])
-        .exclude(is_deleted = True)
-        .exclude(available_status = GroupTrainingDay.NOT_AVAILABLE)
-        .exclude(available_status = GroupTrainingDay.CANCELLED)
+        .exclude(is_deleted=True)
+        .exclude(available_status=GroupTrainingDay.NOT_AVAILABLE)
+        .exclude(available_status=GroupTrainingDay.CANCELLED)
         .select_related("group")
         .order_by("id")
         .iterator()
@@ -152,31 +152,59 @@ def handle_skipping_train(
         )
         admin_text = ""
         return text, admin_text
-    elif  training_day.available_status != GroupTrainingDay.AVAILABLE:
+    elif training_day.available_status != GroupTrainingDay.AVAILABLE:
         text, admin_text = CANT_SKIP_UNAVAILABLE_LESSON, ""
         return text, admin_text
 
-   
     if player in training_day.visitors.all():
         # Игрок пропустил игру за отыгрыш, отыгрыш должен вернуться обратно
+
         player.bonus_lesson += 1
         training_day.visitors.remove(player)
+        """
+            Игрок может вернуться в свою группу, за отыгрыш
+            По этому он будет находиться в 2 состояниях
+            1) Пришедший за отыгрыш
+            2) Находящийся в группе
+
+           Если выписывающийся игрок, является игроком группы, то следует добавить информацию о выписке в absent
+        """
+
+        if player in training_day.group.players.all():
+            training_day.absent.add(player)
+
         admin_text = PLAYER_SKIPPED_TRAIN_FOR_BONUS.format(
             player.first_name, player.last_name, date_info
         )
-   
+
     elif player in training_day.pay_visitors.all():
         # Игрок пропустил игру оплатив её, отыгрыш должен начислиться
         player.bonus_lesson += 1
         training_day.pay_visitors.remove(player)
+
+        if player in training_day.group.all():
+            training_day.absent.add(player)
+
         admin_text = PLAYER_SKIPPED_TRAIN_FOR_MONEY.format(
             player.first_name, player.last_name, date_info
         )
 
-   
     elif player in training_day.pay_bonus_visitors.all():
         # В случае пропуска платного отыгрыша, отыгрыши не должны начисляться
         training_day.pay_bonus_visitors.remove(player)
+
+        """
+            Игрок может вернуться в свою группу, за платный отыгрыш.
+            По этому он будет находиться в 2 состояниях
+            1) Пришедший за платный отыгрыш
+            2) Находящийся в группе
+
+            Если выписывающийся игрок, является игроком группы, то следует добавить информацию о выписке в absent
+        """
+
+        if player in training_day.group.all():
+            training_day.absent.add(player)
+
         admin_text = PLAYER_SKIPPED_TRAIN_FOR_PAY_BONUS.format(
             player.first_name, player.last_name, date_info
         )

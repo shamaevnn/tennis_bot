@@ -62,6 +62,10 @@ def handle_taking_group_lesson(
         player_text = PLAYER_WRITTEN_TO_TRAIN_SHORT.format(date_info)
         player_markup = None
 
+        if player in tr_day.absent.all():
+            tr_day.absent.remove(player)
+            tr_day.save()
+
         if player.bonus_lesson > 0 and player.status == Player.STATUS_TRAINING:
             # Если пользователь имеет отыгрыши, то добавляем его в список пользователей за "отыгрыш"
             tr_day.visitors.add(player)

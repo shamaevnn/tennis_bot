@@ -1,12 +1,13 @@
 from datetime import timedelta, datetime
 
-from django.db.models import Count, F, ExpressionWrapper, DurationField, Q
-
+from django.db.models import Count, F, ExpressionWrapper, DurationField, Q, QuerySet
+from django.db.models import Exists, OuterRef
 from base.common_for_bots.utils import moscow_datetime
 from base.models import GroupTrainingDay, TrainingGroup, Player
 
 
 def get_potential_days_for_group_training(player: Player, **filters):
+
     potential_free_places = (
         GroupTrainingDay.objects.available_adult_train()
         .annotate(
@@ -26,7 +27,7 @@ def get_potential_days_for_group_training(player: Player, **filters):
             + F("visitors__count")
             + F("pay_bonus_visitors__count")
             + F("group__players__count")
-            - F("absent__count")
+            + F("absent__count")
         )
         .filter(
             Q(max_players__gt=F("all_players"))
@@ -42,9 +43,9 @@ def get_potential_days_for_group_training(player: Player, **filters):
         )
         .exclude(
             Q(visitors__in=[player])
-            | Q(group__players__in=[player])
             | Q(pay_visitors__in=[player])
             | Q(pay_bonus_visitors__in=[player])
+            | (Q(group__players__in=[player]) & ~Q(absent__in=[player]))
         )
         .order_by("start_time")
     )

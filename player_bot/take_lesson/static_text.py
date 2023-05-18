@@ -18,13 +18,19 @@ CHOOSE_TYPE_OF_PAYMENT = "Выбери тип оплаты"
 CHOOSE_DURATION_OF_TRAIN = "Выбери продолжительность занятия"
 
 CANT_TAKE_TRAIN_CHOOSE_ANOTHER_DAY = "Нельзя записаться на этот день, выбери другой."
-NO_GAMES_IN_MOMENT = (
+
+NO_GAMES_IN_MOMENT_BASE = (
     f"{ATTENTION}\n"
     f"В данный момент у тебя нет отыгрышей.\n"
-    f"<b> Занятие будет стоить {TARIF_ARBITRARY}₽ </b>\n"
-    f"{DAYS_AVAILABLE_FOR_GROUP_TRAIN}"
+    f"<b> Занятие будет стоить {TARIF_ARBITRARY}₽ </b>"
 )
 
+YOU_SACRIFICE_ONE_GAME_BASE = f"<b>Пожертвуешь одним отыгрышем.</b>"
+
+YOU_SACRIFICE_ONE_GAME_ATTENTION = f"{ATTENTION}\n" f"{YOU_SACRIFICE_ONE_GAME_BASE}"
+
+NO_GAMES_IN_MOMENT = f"{NO_GAMES_IN_MOMENT_BASE}" f"\n{DAYS_AVAILABLE_FOR_GROUP_TRAIN}"
+
 YOU_SACRIFICE_ONE_GAME = (
-    f"<b>Пожертвуешь одним отыгрышем.</b>\n" f"{DAYS_AVAILABLE_FOR_GROUP_TRAIN}"
+    f"{YOU_SACRIFICE_ONE_GAME_BASE}" f"\n{DAYS_AVAILABLE_FOR_GROUP_TRAIN}"
 )

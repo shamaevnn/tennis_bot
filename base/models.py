@@ -604,6 +604,39 @@ class Photo(models.Model):
         super().save(**kwargs)
 
 
+class Cancel(models.Model):
+
+    player = models.ForeignKey(Player, on_delete=models.PROTECT, verbose_name="Игрок")
+
+    n_cancelled_lessons = models.SmallIntegerField(
+        default=0, verbose_name="Количество отмен"
+    )
+
+    date = models.DateField(default=timezone.now, verbose_name="Дата")
+
+    @classmethod
+    def get_cancel_from_player(cls, player: Player, date=None):
+        if date is None:
+            date = timezone.now()
+        cancel = cls.objects.filter(player=player).filter(date=date.replace(day=1))
+        return cancel.first()
+
+    def save(self, **kwargs):
+        self.date = timezone.now().replace(day=1)
+        super().save(**kwargs)
+
+    @classmethod
+    def add_cancel(cls, player, date):
+        cancel = cls.get_cancel_from_player(player, date)
+
+        if cancel is not None:
+            cancel.n_cancelled_lessons += 1
+            cancel.save()
+        else:
+            cancel = cls(player=player, n_cancelled_lessons=1)
+            cancel.save()
+
+
 """раздел с сигналами, в отедльном файле что-то не пошло"""
 
 

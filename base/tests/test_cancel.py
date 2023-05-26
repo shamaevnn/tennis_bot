@@ -1,5 +1,5 @@
 from django.test import TestCase
-from base.models import GroupTrainingDay
+from base.models import GroupTrainingDay, Cancel
 from base.utils.for_tests import CreateData
 from base.utils import change_available_status
 
@@ -54,15 +54,25 @@ class CancelLessonCase(TestCase):
         trday.pay_visitors.add(player)
         trday.available_status = GroupTrainingDay.AVAILABLE
         trday.save()
-        pay_visitor_cancelled_lessons_before = player.n_cancelled_lessons
+
+        pay_visitor_cancelled_lesson_before = 0
+
+        pay_visitor_cancelled_lesson_after = 0
+
+        cancel = Cancel.get_cancel_from_player(player, trday.date)
+
+        if cancel is not None:
+            pay_visitor_cancelled_lessons_before = cancel.n_cancelled_lessons
+
         change_available_status.change_tr_day_available_status_and_send_alert(
             trday, GroupTrainingDay.CANCELLED
         )
 
-        pay_visitor = trday.pay_visitors.first()
+        cancel = Cancel.get_cancel_from_player(player, trday.date)
+        pay_visitor_cancelled_lesson_after = cancel.n_cancelled_lessons
 
         self.assertEqual(
-            pay_visitor.n_cancelled_lessons, pay_visitor_cancelled_lessons_before + 1
+            pay_visitor_cancelled_lesson_before + 1, pay_visitor_cancelled_lesson_after
         )
 
     def test_cancel_lesson_for_pay_bonus_visitors(self) -> None:
@@ -79,15 +89,27 @@ class CancelLessonCase(TestCase):
         trday.save()
 
         pay_visitor_bonus_lessons_before = player.bonus_lesson
-        pay_visitor_n_cancelled_lessons_before = player.n_cancelled_lessons
+
+        pay_visitor_cancelled_lesson_before = 0
+
+        pay_visitor_cancelled_lesson_after = 0
+
+        cancel = Cancel.get_cancel_from_player(player, trday.date)
+
+        if cancel is not None:
+            pay_visitor_cancelled_lesson_before = cancel.n_cancelled_lessons
 
         change_available_status.change_tr_day_available_status_and_send_alert(
             trday, GroupTrainingDay.CANCELLED
         )
 
+        cancel = Cancel.get_cancel_from_player(player, trday.date)
+        if cancel is not None:
+            pay_visitor_cancelled_lesson_after = cancel.n_cancelled_lessons
+
         pay_visitor = trday.pay_bonus_visitors.first()
 
         self.assertEqual(
-            pay_visitor.n_cancelled_lessons, pay_visitor_n_cancelled_lessons_before
+            pay_visitor_cancelled_lesson_before, pay_visitor_cancelled_lesson_after
         )
         self.assertEqual(pay_visitor.bonus_lesson, pay_visitor_bonus_lessons_before)

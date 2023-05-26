@@ -26,7 +26,7 @@ sentry-sdk
 
 gunicorn
 uvicorn==0.16.0
-
+uvloop
 httptools
 
 pytz

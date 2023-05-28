@@ -2,7 +2,7 @@ import datetime
 
 from django.db.models import QuerySet
 
-from base.models import GroupTrainingDay, Player, TrainingGroup, Cancel
+from base.models import GroupTrainingDay, Player, TrainingGroup, PlayerCancelLesson
 from tennis_bot.settings import BALLS_PRICE_FOR_1_TRAIN_PER_WEEK
 
 
@@ -43,13 +43,11 @@ def balls_lessons_payment(year: int, month: int, player: Player):
     pay_cancels = 0
     cancels_count = 0
 
-    prev_month = month
-    if prev_month > 1:
-        prev_month = prev_month - 1
+    prev_month = get_prev_month(month)
 
     date = datetime.date.today().replace(month=prev_month, day=1)
 
-    cancel = Cancel.get_cancel_from_player(player, date)
+    cancel = PlayerCancelLesson.get_cancel_from_player(player, date)
 
     if cancel is not None:
         cancels_count = cancel.n_cancelled_lessons
@@ -81,3 +79,14 @@ def group_players_info(players: QuerySet[Player]):
             for x in players.values("first_name", "last_name").order_by("last_name")
         )
     )
+
+
+def get_prev_month(month):
+    prev_month = month
+    if prev_month > 1:
+        prev_month = prev_month - 1
+
+    elif prev_month == 1:
+        prev_month = 12
+
+    return prev_month

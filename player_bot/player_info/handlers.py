@@ -4,7 +4,7 @@ from datetime import date, datetime, timedelta
 from telegram import Update
 from telegram.ext import ConversationHandler, CallbackContext
 
-from base.models import Payment, TrainingGroup, Player, Cancel
+from base.models import Payment, TrainingGroup, Player, PlayerCancelLesson
 from player_bot.menu_and_commands.keyboards import construct_main_menu
 from base.common_for_bots.utils import moscow_datetime
 
@@ -15,13 +15,19 @@ from player_bot.player_info.static_text import (
     N_CANCELLED_LESSON_COUNT_INFO,
     NO_PAYMENT_BUTTON,
     MY_DATA_BUTTON,
-    SHOULD_PAY_INFO_TEMPLATE,
+    SHOULD_PAY_INFO,
+    SHOULD_PAY_INFO_THIS_MONTH,
+    SHOULD_PAY_INFO_NEXT_MONTH,
     SUCCESS_PAYMENT,
 )
 
 from base.common_for_bots.static_text import PAYMENT_REQUISITES, from_digit_to_month
 from player_bot.registration.utils import check_status_decor
-from player_bot.player_info.utils import balls_lessons_payment, group_players_info
+from player_bot.player_info.utils import (
+    balls_lessons_payment,
+    group_players_info,
+    get_prev_month,
+)
 
 
 @check_status_decor
@@ -76,15 +82,9 @@ def player_main_info(update: Update, context: CallbackContext):
 
     number_of_add_games = BONUS_LESSON_COUNT_INFO.format(player.bonus_lesson)
 
-    cancel = Cancel.get_cancel_from_player(player, date.today())
-
-    if cancel is None:
-        cancelled_games = N_CANCELLED_LESSON_COUNT_INFO.format(0)
-
-    else:
-        cancelled_games = N_CANCELLED_LESSON_COUNT_INFO.format(
-            cancel.n_cancelled_lessons
-        )
+    cancel = PlayerCancelLesson.get_cancel_from_player(player, date.today())
+    _n_cancelled_lessons = 0 if cancel is None else cancel.n_cancelled_lessons
+    cancelled_games = N_CANCELLED_LESSON_COUNT_INFO.format(_n_cancelled_lessons)
 
     today = moscow_datetime(datetime.now()).date()
     number_of_days_in_month = monthrange(today.year, today.month)[1]
@@ -106,12 +106,9 @@ def player_main_info(update: Update, context: CallbackContext):
         cancel_next_count,
     ) = balls_lessons_payment(next_month.year, next_month.month, player)
 
-    # Нужно чтобы верно определить предыдущий месяц
-    prev_month = 1
-    if today.month > 1:
-        prev_month = today.month - 1
+    prev_month = get_prev_month(today.month)
 
-    should_pay_info = SHOULD_PAY_INFO_TEMPLATE.format(
+    this_month_pay_info = SHOULD_PAY_INFO_THIS_MONTH.format(
         from_digit_to_month[today.month],
         should_pay_this_month,
         should_pay_this_month_without_cancells,
@@ -120,6 +117,9 @@ def player_main_info(update: Update, context: CallbackContext):
         cancel_count,
         from_digit_to_month[prev_month],
         balls_this_month,
+    )
+
+    next_month_pay_info = SHOULD_PAY_INFO_NEXT_MONTH.format(
         from_digit_to_month[next_month.month],
         should_pay_money_next,
         should_pay_next_month_without_cancells,
@@ -128,6 +128,11 @@ def player_main_info(update: Update, context: CallbackContext):
         cancel_next_count,
         from_digit_to_month[today.month],
         balls_next_month,
+    )
+
+    should_pay_info = SHOULD_PAY_INFO.format(
+        this_month_pay_info,
+        next_month_pay_info,
         PAYMENT_REQUISITES,
     )
 

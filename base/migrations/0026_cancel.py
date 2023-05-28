@@ -5,13 +5,13 @@ import django.db.models.deletion
 import django.utils.timezone
 from django.utils import timezone
 
-from base.models import Cancel
+from base.models import PlayerCancelLesson
 
 
 def create_сancels(apps, schema_editor):
     player_model = apps.get_model("base", "Player")
     for player in player_model.objects.All():
-        Cancel.add_cancel(player, timezone.now())
+        PlayerCancelLesson.add_cancel(player, timezone.now())
 
 
 class Migration(migrations.Migration):
@@ -55,10 +55,10 @@ class Migration(migrations.Migration):
                 ),
             ],
         ),
-        migrations.RunPython(create_сancels),
-        migrations.RemoveField(
-            model_name="player",
-            name="n_cancelled_lessons",
-        ),
-        migrations.RunSQL("ALTER TABLE base_player DROP COLUMN n_cancelled_lessons"),
+        # migrations.RunPython(create_сancels),
+        # migrations.RunSQL("ALTER TABLE base_player DROP COLUMN n_cancelled_lessons")
+        # migrations.RemoveField(
+        #   model_name="player",
+        #  name="n_cancelled_lessons",
+        # ),
     ]

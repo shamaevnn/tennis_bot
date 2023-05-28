@@ -20,7 +20,13 @@ from admin_bot.payment.utils import (
     have_not_paid_players_info,
     payment_players_info,
 )
-from base.models import Payment, TrainingGroup, Player, GroupTrainingDay, Cancel
+from base.models import (
+    Payment,
+    TrainingGroup,
+    Player,
+    GroupTrainingDay,
+    PlayerCancelLesson,
+)
 from base.common_for_bots.utils import moscow_datetime, bot_edit_message
 
 from base.common_for_bots.static_text import from_digit_to_month, UP_TO_YOU

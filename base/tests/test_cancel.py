@@ -1,5 +1,5 @@
 from django.test import TestCase
-from base.models import GroupTrainingDay, Cancel
+from base.models import GroupTrainingDay, PlayerCancelLesson
 from base.utils.for_tests import CreateData
 from base.utils import change_available_status
 
@@ -59,16 +59,16 @@ class CancelLessonCase(TestCase):
 
         pay_visitor_cancelled_lesson_after = 0
 
-        cancel = Cancel.get_cancel_from_player(player, trday.date)
+        cancel = PlayerCancelLesson.get_cancel_from_player(player, trday.date)
 
         if cancel is not None:
-            pay_visitor_cancelled_lessons_before = cancel.n_cancelled_lessons
+            pay_visitor_cancelled_lesson_before = cancel.n_cancelled_lessons
 
         change_available_status.change_tr_day_available_status_and_send_alert(
             trday, GroupTrainingDay.CANCELLED
         )
 
-        cancel = Cancel.get_cancel_from_player(player, trday.date)
+        cancel = PlayerCancelLesson.get_cancel_from_player(player, trday.date)
         pay_visitor_cancelled_lesson_after = cancel.n_cancelled_lessons
 
         self.assertEqual(
@@ -94,7 +94,7 @@ class CancelLessonCase(TestCase):
 
         pay_visitor_cancelled_lesson_after = 0
 
-        cancel = Cancel.get_cancel_from_player(player, trday.date)
+        cancel = PlayerCancelLesson.get_cancel_from_player(player, trday.date)
 
         if cancel is not None:
             pay_visitor_cancelled_lesson_before = cancel.n_cancelled_lessons
@@ -103,7 +103,7 @@ class CancelLessonCase(TestCase):
             trday, GroupTrainingDay.CANCELLED
         )
 
-        cancel = Cancel.get_cancel_from_player(player, trday.date)
+        cancel = PlayerCancelLesson.get_cancel_from_player(player, trday.date)
         if cancel is not None:
             pay_visitor_cancelled_lesson_after = cancel.n_cancelled_lessons
 

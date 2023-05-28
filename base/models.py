@@ -604,8 +604,7 @@ class Photo(models.Model):
         super().save(**kwargs)
 
 
-class Cancel(models.Model):
-
+class PlayerCancelLesson(models.Model):
     player = models.ForeignKey(Player, on_delete=models.PROTECT, verbose_name="Игрок")
 
     n_cancelled_lessons = models.SmallIntegerField(
@@ -622,19 +621,23 @@ class Cancel(models.Model):
         return cancel.first()
 
     def save(self, **kwargs):
-        self.date = timezone.now().replace(day=1)
-        super().save(**kwargs)
+        _date = kwargs.get("date")
+        self.date = _date
+        super().save()
 
     @classmethod
-    def add_cancel(cls, player, date):
-        cancel = cls.get_cancel_from_player(player, date)
-
+    def add_cancel_lesson(cls, player: Player, cancell_date: date):
+        """
+        Если в месяце уже есть отмены, то прибавляем еще одну
+        Иначе создаем новую запись с 1 отменой
+        """
+        cancel = cls.get_cancel_from_player(player, cancell_date)
         if cancel is not None:
             cancel.n_cancelled_lessons += 1
-            cancel.save()
         else:
             cancel = cls(player=player, n_cancelled_lessons=1)
-            cancel.save()
+
+        cancel.save(date=cancell_date.replace(day=1))
 
 
 """раздел с сигналами, в отедльном файле что-то не пошло"""

@@ -6,10 +6,10 @@ from base.models import GroupTrainingDay, Player, TrainingGroup, PlayerCancelLes
 from tennis_bot.settings import BALLS_PRICE_FOR_1_TRAIN_PER_WEEK
 
 
-def balls_lessons_payment(year: int, month: int, player: Player):
+def calculation_lessons_payment(year: int, month: int, player: Player):
     tr_days_this_month: QuerySet[GroupTrainingDay] = GroupTrainingDay.objects.filter(
         date__year=year, date__month=month
-    ).exclude(available_status=GroupTrainingDay.NOT_AVAILABLE)
+    )
 
     if player.status == Player.STATUS_TRAINING:
         tr_days_num_this_month: int = (
@@ -46,9 +46,7 @@ def balls_lessons_payment(year: int, month: int, player: Player):
     prev_month = get_prev_month(month)
 
     date = datetime.date.today().replace(month=prev_month, day=1)
-
     cancel = PlayerCancelLesson.get_cancel_from_player(player, date)
-
     if cancel is not None:
         cancels_count = cancel.n_cancelled_lessons
         pay_cancels = cancel.n_cancelled_lessons * tarif

@@ -22,7 +22,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name="Cancel",
+            name="PlayerCancelLesson",
             fields=[
                 (
                     "id",
@@ -56,7 +56,6 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.RunPython(create_сancels),
-        # migrations.RunSQL("ALTER TABLE base_player DROP COLUMN n_cancelled_lessons"),
         migrations.RemoveField(
             model_name="player",
             name="n_cancelled_lessons",

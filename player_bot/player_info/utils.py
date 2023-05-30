@@ -29,7 +29,6 @@ def calculation_lessons_payment(year: int, month: int, player: Player):
             players__in=[player],
             status=TrainingGroup.STATUS_GROUP,
         ).first()
-
         tarif: int = group.tarif_for_one_lesson if group else 0
 
     elif player.status == Player.STATUS_ARBITRARY:
@@ -47,17 +46,15 @@ def calculation_lessons_payment(year: int, month: int, player: Player):
     cancels_count = 0
 
     prev_month = get_prev_month(month)
-
-    date = datetime.date.today().replace(month=prev_month, day=1)
-    cancel = PlayerCancelLesson.get_cancel_from_player(player, date)
+    first_date_of_prev_month = datetime.date.today().replace(month=prev_month, day=1)
+    cancel = PlayerCancelLesson.get_cancel_from_player(player, first_date_of_prev_month)
     if cancel is not None:
+        # если есть отмены за прошлый месяц
         cancels_count = cancel.n_cancelled_lessons
         pay_cancels = cancel.n_cancelled_lessons * tarif
 
     should_pay_this_month_without_cancels = tr_days_num_this_month * tarif
-
     should_pay_this_month = should_pay_this_month_without_cancels - pay_cancels
-
     if should_pay_this_month < 0:
         should_pay_this_month_without_cancels = 0
         should_pay_this_month = 0

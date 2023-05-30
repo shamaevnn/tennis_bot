@@ -14,7 +14,6 @@ from player_bot.player_info.static_text import (
     GROUP_INFO_TEMPLATE,
     N_CANCELLED_LESSON_COUNT_INFO,
     NO_PAYMENT_BUTTON,
-    MY_DATA_BUTTON,
     SHOULD_PAY_INFO,
     SHOULD_PAY_INFO_THIS_MONTH,
     SHOULD_PAY_INFO_NEXT_MONTH,
@@ -24,9 +23,9 @@ from player_bot.player_info.static_text import (
 from base.common_for_bots.static_text import PAYMENT_REQUISITES, from_digit_to_month
 from player_bot.registration.utils import check_status_decor
 from player_bot.player_info.utils import (
-    balls_lessons_payment,
     group_players_info,
     get_prev_month,
+    calculation_lessons_payment,
 )
 
 
@@ -97,14 +96,14 @@ def player_main_info(update: Update, context: CallbackContext):
         balls_this_month,
         pay_cancels,
         cancel_count,
-    ) = balls_lessons_payment(today.year, today.month, player)
+    ) = calculation_lessons_payment(today.year, today.month, player)
     (
         should_pay_money_next,
         should_pay_next_month_without_cancells,
         balls_next_month,
         pay_next_cancels,
         cancel_next_count,
-    ) = balls_lessons_payment(next_month.year, next_month.month, player)
+    ) = calculation_lessons_payment(next_month.year, next_month.month, player)
 
     prev_month = get_prev_month(today.month)
 

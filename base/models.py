@@ -101,10 +101,6 @@ class Player(models.Model):
         default=0, verbose_name="Количество отыгрышей"
     )
 
-    n_cancelled_lessons = models.SmallIntegerField(
-        default=0, verbose_name="Количество отмен"
-    )
-
     max_lessons_for_bonus_in_future = models.PositiveSmallIntegerField(
         default=3, verbose_name="Ограничение на кол-во тренировок за отыгрыши"
     )
@@ -144,8 +140,7 @@ class Player(models.Model):
     def from_update(cls, update: Update) -> Optional[Player]:
         data = extract_user_data_from_update(update)
         tg_id = data["id"]
-        player = cls.objects.get_or_none(tg_id=tg_id)
-        return player
+        return cls.objects.get_or_none(tg_id=tg_id)
 
     @classmethod
     def get_player_and_created(

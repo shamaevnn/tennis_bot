@@ -24,7 +24,7 @@ ATTENTION_2 = "❌ATTENTION❌"
 
 DAYS_AVAILABLE_FOR_GROUP_TRAIN = "✅ — дни, доступные для групповых тренировок."
 DAYS_AVAILABLE_FOR_GROUP_CANCEL = "✅ — дни, доступные для отмены."
-PAYMENT_REQUISITES = "Реквизиты: \n\n2202200316376548\n\n Сергей Николаевич Ю."
+PAYMENT_REQUISITES = "<b>Реквизиты</b>:\n2202200316376548\nСергей Николаевич Ю."
 
 from_eng_to_rus_day_week = {
     "Sunday": "воскресенье",

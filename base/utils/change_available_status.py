@@ -10,7 +10,7 @@ from base.django_admin.static_text import (
     TRAIN_IS_AVAILABLE_CONGRATS,
 )
 
-from base.models import GroupTrainingDay, Player
+from base.models import GroupTrainingDay, Player, PlayerCancelLesson
 from base.common_for_bots.tasks import broadcast_messages
 from base.common_for_bots.utils import get_players_for_tr_day
 from player_bot.menu_and_commands.keyboards import construct_main_menu
@@ -53,7 +53,7 @@ def change_tr_day_available_status(tr_day: GroupTrainingDay, available_status):
                     continue
                 # если у ученика занятие по расписанию группы, то ему начисляется в личный кабинет одна "отмена".
                 else:
-                    player.n_cancelled_lessons += 1
+                    PlayerCancelLesson.add_cancel_lesson(player, tr_day.date)
 
                 player.save()
     else:

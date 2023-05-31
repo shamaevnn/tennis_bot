@@ -101,10 +101,6 @@ class Player(models.Model):
         default=0, verbose_name="Количество отыгрышей"
     )
 
-    n_cancelled_lessons = models.SmallIntegerField(
-        default=0, verbose_name="Количество отмен"
-    )
-
     max_lessons_for_bonus_in_future = models.PositiveSmallIntegerField(
         default=3, verbose_name="Ограничение на кол-во тренировок за отыгрыши"
     )
@@ -144,8 +140,7 @@ class Player(models.Model):
     def from_update(cls, update: Update) -> Optional[Player]:
         data = extract_user_data_from_update(update)
         tg_id = data["id"]
-        player = cls.objects.get_or_none(tg_id=tg_id)
-        return player
+        return cls.objects.get_or_none(tg_id=tg_id)
 
     @classmethod
     def get_player_and_created(
@@ -602,6 +597,42 @@ class Photo(models.Model):
             ).to_dict()
             self.telegram_id = photo_message["photo"][-1]["file_id"]
         super().save(**kwargs)
+
+
+class PlayerCancelLesson(models.Model):
+    player = models.ForeignKey(Player, on_delete=models.PROTECT, verbose_name="Игрок")
+
+    n_cancelled_lessons = models.SmallIntegerField(
+        default=0, verbose_name="Количество отмен"
+    )
+
+    date = models.DateField(default=timezone.now, verbose_name="Дата")
+
+    @classmethod
+    def get_cancel_from_player(cls, player: Player, date=None):
+        if date is None:
+            date = timezone.now()
+        cancel = cls.objects.filter(player=player).filter(date=date.replace(day=1))
+        return cancel.first()
+
+    def save(self, **kwargs):
+        _date = kwargs.get("date")
+        self.date = _date
+        super().save()
+
+    @classmethod
+    def add_cancel_lesson(cls, player: Player, cancell_date: date):
+        """
+        Если в месяце уже есть отмены, то прибавляем еще одну
+        Иначе создаем новую запись с 1 отменой
+        """
+        cancel = cls.get_cancel_from_player(player, cancell_date)
+        if cancel is not None:
+            cancel.n_cancelled_lessons += 1
+        else:
+            cancel = cls(player=player, n_cancelled_lessons=1)
+
+        cancel.save(date=cancell_date.replace(day=1))
 
 
 """раздел с сигналами, в отедльном файле что-то не пошло"""

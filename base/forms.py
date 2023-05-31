@@ -41,7 +41,6 @@ class PlayerForm(forms.ModelForm):
             "status",
             "time_before_cancel",
             "bonus_lesson",
-            "n_cancelled_lessons",
             "max_lessons_for_bonus_in_future",
             "is_coach",
         ]

@@ -20,7 +20,13 @@ from admin_bot.payment.utils import (
     have_not_paid_players_info,
     payment_players_info,
 )
-from base.models import Payment, TrainingGroup, Player, GroupTrainingDay
+from base.models import (
+    Payment,
+    TrainingGroup,
+    Player,
+    GroupTrainingDay,
+    PlayerCancelLesson,
+)
 from base.common_for_bots.utils import moscow_datetime, bot_edit_message
 
 from base.common_for_bots.static_text import from_digit_to_month, UP_TO_YOU
@@ -78,7 +84,9 @@ def month_payment(update: Update, context: CallbackContext):
         choose_group_text=static_text.CHOOSE_GROUP,
     )
 
-    groups = TrainingGroup.objects.filter(status=TrainingGroup.STATUS_GROUP).order_by("order")
+    groups = TrainingGroup.objects.filter(status=TrainingGroup.STATUS_GROUP).order_by(
+        "order"
+    )
     markup = construct_menu_groups(
         groups, f"{manage_data.PAYMENT_YEAR_MONTH_GROUP}{year}|{month}|"
     )
@@ -133,24 +141,22 @@ def group_payment(update: Update, context: CallbackContext):
 
         check_if_players_not_in_payments(group_id, payments, year, month)
 
-        
         paid_this_month = payments.aggregate(sigma=Sum("fact_amount"))
-        paid = 0;
+        paid = 0
         # в некоторых случаях paid_this_month["sigma"], может иметь значение None
         if paid_this_month["sigma"] is not None:
             paid = paid_this_month["sigma"]
-            
-        this_month_payment_info = (
-            f'{static_text.TOTAL_PAID}: {paid}\n\n'
-        )
+
+        this_month_payment_info = f"{static_text.TOTAL_PAID}: {paid}\n\n"
 
         group = TrainingGroup.objects.get(id=group_id)
         n_lessons = GroupTrainingDay.objects.filter(
             date__month=month,
             date__year=int(year) + 2020,
             group=group,
-            available_status= GroupTrainingDay.AVAILABLE,
+            available_status=GroupTrainingDay.AVAILABLE,
         ).count()
+
         n_lessons_info = f"{static_text.NUMBER_OF_TRAINS}: {n_lessons}\n"
         tarif_info = f"{static_text.TARIF}: {group.tarif_for_one_lesson}\n"
         if group.status == TrainingGroup.STATUS_GROUP:

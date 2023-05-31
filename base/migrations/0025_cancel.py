@@ -23,7 +23,7 @@ def create_cancels(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("base", "0024_auto_20230507_2205.py"),
+        ("base", "0024_auto_20230507_2205"),
     ]
 
     operations = [

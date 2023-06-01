@@ -617,7 +617,8 @@ class PlayerCancelLesson(models.Model):
 
     def save(self, **kwargs):
         _date = kwargs.get("date")
-        self.date = _date
+        if _date:
+            self.date = _date
         super().save()
 
     @classmethod

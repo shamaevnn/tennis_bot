@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 
 from django.contrib import admin
 
@@ -6,6 +6,8 @@ from django.contrib import admin
 from django.db.models import Q
 from django.utils.http import urlencode
 
+from player_bot.player_info.utils import get_prev_month, get_next_month
+from .common_for_bots.static_text import from_digit_to_month
 from .forms import PlayerForm, TrainingGroupForm, GroupTrainingDayForm
 from django.contrib.admin import SimpleListFilter
 from django.core.exceptions import ValidationError
@@ -13,10 +15,17 @@ from django import forms
 from django.shortcuts import redirect
 from django.utils.html import format_html
 
-from .models import TrainingGroup, Player, GroupTrainingDay, Payment, Photo, User
+from .models import (
+    TrainingGroup,
+    Player,
+    GroupTrainingDay,
+    Payment,
+    Photo,
+    User,
+    PlayerCancelLesson,
+)
 from .utils.change_available_status import (
     change_tr_day_available_status_and_send_alert,
-    send_alert_changing_tr_day_status,
 )
 
 
@@ -47,15 +56,69 @@ class UserAdmin(admin.ModelAdmin):
     list_display = ("username", "first_name")
 
 
+@admin.register(PlayerCancelLesson)
+class PlayerCancelLessonAdmin(admin.ModelAdmin):
+    list_display = ("player", "date", "n_cancelled_lessons")
+
+    date_hierarchy = "date"
+
+    def changelist_view(self, request, extra_context=None):
+        """
+        Если заходим на главную страницу,
+        то сразу редиректим с фильтрами на текущий месяц
+        """
+        if (
+            request.GET
+            or "/tgadmin/base/playercancellesson/?date__year"
+            in request.META.get("HTTP_REFERER")
+        ):
+            return super().changelist_view(request, extra_context=extra_context)
+
+        today_date = datetime.now().date()
+        params = ["month", "year"]
+        field_keys = ["{}__{}".format(self.date_hierarchy, i) for i in params]
+        field_values = [getattr(today_date, i) for i in params]
+        query_params = dict(zip(field_keys, field_values))
+        url = "{}?{}".format(request.path, urlencode(query_params))
+        return redirect(url)
+
+
 @admin.register(Player)
 class PlayerAdmin(admin.ModelAdmin):
     form = PlayerForm
     inlines = [PlayerTabularInline]
     list_display = ("tg_id", "first_name", "last_name", "phone_number", "status")
     search_fields = ("first_name", "last_name")
-    readonly_fields = ("tg_id",)
+    readonly_fields = ("tg_id", "cancels_for_player")
     list_filter = ("status",)
     ordering = ["first_name"]
+
+    def cancels_for_player(self, obj: Player):
+        today = date.today()
+
+        prev_month = get_prev_month(today.month)
+        first_date_of_prev_month = today.replace(month=prev_month, day=1)
+
+        next_month = get_next_month(today.month)
+        first_date_of_next_month = today.replace(month=next_month, day=1)
+
+        player_cancels_for_three_months = PlayerCancelLesson.objects.filter(
+            player=obj,
+            date__gte=first_date_of_prev_month,
+            date__lte=first_date_of_next_month,
+        )
+
+        cancels_by_months = []
+        for x in player_cancels_for_three_months.values(
+            "n_cancelled_lessons", "date__month"
+        ):
+            month = from_digit_to_month[x["date__month"]]
+            n_cancelled = x["n_cancelled_lessons"]
+            cancels_by_months.append(f"{month} -- {n_cancelled}")
+
+        return ", ".join(cancels_by_months)
+
+    cancels_for_player.short_description = "Отмены для игрока"
 
 
 class DefaultGroupStatus(SimpleListFilter):

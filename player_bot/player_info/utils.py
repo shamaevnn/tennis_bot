@@ -80,11 +80,16 @@ def group_players_info(players: QuerySet[Player]):
 
 
 def get_prev_month(month):
-    prev_month = month
-    if prev_month > 1:
-        prev_month = prev_month - 1
+    return 12 if month == 1 else month - 1
+    # prev_month = month
+    # if prev_month > 1:
+    #     prev_month = prev_month - 1
+    #
+    # elif prev_month == 1:
+    #     prev_month = 12
+    #
+    # return prev_month
 
-    elif prev_month == 1:
-        prev_month = 12
 
-    return prev_month
+def get_next_month(month: int) -> int:
+    return 1 if month == 12 else month + 1

@@ -53,17 +53,17 @@ def calculation_lessons_payment(year: int, month: int, player: Player):
         cancels_count = cancel.n_cancelled_lessons
         pay_cancels = cancel.n_cancelled_lessons * tarif
 
-    should_pay_this_month_without_cancels = tr_days_num_this_month * tarif
-    should_pay_this_month = should_pay_this_month_without_cancels - pay_cancels
-    if should_pay_this_month < 0:
-        should_pay_this_month_without_cancels = 0
-        should_pay_this_month = 0
+    should_pay_without_cancels = tr_days_num_this_month * tarif
+    should_pay = should_pay_without_cancels - pay_cancels + should_pay_balls
+    if should_pay < 0:
+        should_pay_without_cancels = 0
+        should_pay = 0
         should_pay_balls = 0
         pay_cancels = 0
 
     return (
-        should_pay_this_month,
-        should_pay_this_month_without_cancels,
+        should_pay,
+        should_pay_without_cancels,
         should_pay_balls,
         pay_cancels,
         cancels_count,

@@ -7,10 +7,11 @@ from tennis_bot.settings import BALLS_PRICE_FOR_1_TRAIN_PER_WEEK
 
 
 def calculation_lessons_payment(year: int, month: int, player: Player):
+    # берем все тренировки в месяце, включая отмененные
     tr_days_this_month: QuerySet[GroupTrainingDay] = GroupTrainingDay.objects.filter(
         date__year=year,
         date__month=month,
-        available_status=GroupTrainingDay.AVAILABLE,
+        available_status__in=[GroupTrainingDay.AVAILABLE, GroupTrainingDay.CANCELLED],
     )
 
     if player.status == Player.STATUS_TRAINING:

@@ -1,4 +1,4 @@
-from typing import Union, Tuple, Dict
+from typing import Union, Tuple, Dict, List
 
 from django.db.models import QuerySet
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
@@ -55,25 +55,23 @@ def change_payment_info_keyboard(
                 text=f"{payment['player__last_name']} {payment['player__first_name']}",
                 callback_data=f"{manage_data.COACH_GET_PLAYER_INFO}{payment['id']}|{group_id}",
             )
-            for payment in payments_values
         ]
+        for payment in payments_values
     ]
 
-    _buttons = [
-        [
-            InlineKeyboardButton(
-                static_text.CHANGE_DATA,
-                callback_data=f"{manage_data.PAYMENT_START_CHANGE}{year}|{month}|{group_id}",
-            )
-        ],
-        [
-            InlineKeyboardButton(
-                BACK_BUTTON,
-                callback_data=f"{manage_data.PAYMENT_YEAR_MONTH}{year}|{month}",
-            )
-        ],
+    change_payment_button = [
+        InlineKeyboardButton(
+            static_text.CHANGE_DATA,
+            callback_data=f"{manage_data.PAYMENT_START_CHANGE}{year}|{month}|{group_id}",
+        )
     ]
-    buttons = player_info_buttons + _buttons
+    back_button = [
+        InlineKeyboardButton(
+            BACK_BUTTON,
+            callback_data=f"{manage_data.PAYMENT_YEAR_MONTH}{year}|{month}",
+        )
+    ]
+    buttons = player_info_buttons + [change_payment_button] + [back_button]
     return InlineKeyboardMarkup(buttons)
 
 
@@ -123,8 +121,8 @@ def choose_year_to_group_payment_keyboard(
 
 
 def construct_menu_groups(groups: QuerySet[TrainingGroup], button_text: str):
-    buttons = []
-    row = []
+    buttons: List[List[InlineKeyboardButton]] = []
+    row: List[InlineKeyboardButton] = []
     for group in groups:
         row.append(
             InlineKeyboardButton(group.name, callback_data=f"{button_text}{group.id}")

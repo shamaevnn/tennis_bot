@@ -20,12 +20,12 @@ from admin_bot.payment.utils import (
     have_not_paid_players_info,
     payment_players_info,
 )
+from base.common_for_bots.player_info import get_player_info
 from base.models import (
     Payment,
     TrainingGroup,
     Player,
     GroupTrainingDay,
-    PlayerCancelLesson,
 )
 from base.common_for_bots.utils import moscow_datetime, bot_edit_message
 
@@ -101,15 +101,18 @@ def group_payment(update: Update, context: CallbackContext):
     ].split("|")
 
     if int(group_id) == 0:
-        # нажал на "не заплатили"
-        title = f"{static_text.HAVE_NOT_PAID}\n"
-
         payments = get_not_paid_payments(year, month)
-
-        help_info = (
-            static_text.FIRST_LAST_NAME_NUMBER_OF_VISITS_GROUP
-            if payments.exists()
-            else static_text.NO_SUCH
+        payments_values = payments.values(
+            "player__first_name",
+            "player__last_name",
+            "n_fact_visiting",
+            "player_id",
+            "id",
+            "group_name",
+        ).order_by("group_order", "player__last_name", "player__first_name")
+    else:
+        payments = Payment.objects.filter(
+            player__traininggroup__id=group_id, month=month, year=year
         )
         for payment in payments:
             payment.save()
@@ -117,10 +120,21 @@ def group_payment(update: Update, context: CallbackContext):
         payments_values = payments.values(
             "player__first_name",
             "player__last_name",
+            "player_id",
+            "fact_amount",
             "n_fact_visiting",
             "id",
-            "group_name",
-        ).order_by("group_order", "player__last_name", "player__first_name")
+        ).order_by("player__last_name", "player__first_name")
+
+    if int(group_id) == 0:
+        # нажал на "не заплатили"
+        title = f"{static_text.HAVE_NOT_PAID}\n"
+
+        help_info = (
+            static_text.FIRST_LAST_NAME_NUMBER_OF_VISITS_GROUP
+            if payments.exists()
+            else static_text.NO_SUCH
+        )
 
         players_info = have_not_paid_players_info(payments_values)
         (
@@ -133,11 +147,6 @@ def group_payment(update: Update, context: CallbackContext):
         ) = ("", "", "", "", "", "")
     else:
         should_pay = 0
-        payments = Payment.objects.filter(
-            player__traininggroup__id=group_id, month=month, year=year
-        )
-        for payment in payments:
-            payment.save()
 
         check_if_players_not_in_payments(group_id, payments, year, month)
 
@@ -174,7 +183,7 @@ def group_payment(update: Update, context: CallbackContext):
             should_pay, should_pay_balls
         )
 
-        players_info = payment_players_info(payments)
+        players_info = payment_players_info(payments_values)
 
     date_info = f"{from_digit_to_month[int(month)]} {int(year) + 2020}\n"
 
@@ -185,10 +194,25 @@ def group_payment(update: Update, context: CallbackContext):
     )
 
     markup = keyboards.change_payment_info_keyboard(
-        year=year, month=month, group_id=group_id
+        payments_values=payments_values, year=year, month=month, group_id=group_id
     )
 
     bot_edit_message(context.bot, text, update, markup)
+
+
+def get_player_info_for_coach(update: Update, context: CallbackContext):
+    payment_id, group_id = update.callback_query.data[
+        len(manage_data.COACH_GET_PLAYER_INFO) :
+    ].split("|")
+
+    payment = Payment.objects.get(id=payment_id)
+
+    player = Player.objects.get_or_none(id=payment.player_id)
+    player_info = get_player_info(player=player)
+    markup = keyboards.back_to_group_payment_from_player_info(
+        year=payment.year, month=payment.month, group_id=group_id
+    )
+    bot_edit_message(context.bot, player_info, update, markup)
 
 
 def change_payment_data(update: Update, context: CallbackContext):

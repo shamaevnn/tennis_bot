@@ -6,7 +6,7 @@ from django.contrib import admin
 from django.db.models import Q
 from django.utils.http import urlencode
 
-from player_bot.player_info.utils import get_prev_month, get_next_month
+from .common_for_bots.utils import get_prev_month, get_next_month
 from .common_for_bots.static_text import from_digit_to_month
 from .forms import PlayerForm, TrainingGroupForm, GroupTrainingDayForm
 from django.contrib.admin import SimpleListFilter

@@ -181,3 +181,11 @@ def create_callback_data_id(purpose, action, id):
 def separate_callback_data(data):
     """Separate the callback data"""
     return data.split(";")
+
+
+def get_prev_month(month):
+    return 12 if month == 1 else month - 1
+
+
+def get_next_month(month: int) -> int:
+    return 1 if month == 12 else month + 1

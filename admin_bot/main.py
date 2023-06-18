@@ -48,11 +48,13 @@ from admin_bot.payment.manage_data import (
     PAYMENT_YEAR_MONTH_GROUP,
     PAYMENT_START_CHANGE,
     PAYMENT_CONFIRM_OR_CANCEL,
+    COACH_GET_PLAYER_INFO,
 )
 from admin_bot.view_schedule.static_text import ADMIN_TIME_SCHEDULE_BUTTON
 from admin_bot.send_message.static_text import ADMIN_SEND_MESSAGE
 from admin_bot.go_to_site.static_text import ADMIN_SITE
 from admin_bot.payment.static_text import ADMIN_PAYMENT
+
 
 payment_handler = ConversationHandler(
     entry_points=[
@@ -171,6 +173,12 @@ def setup_dispatcher(dp):
         CallbackQueryHandler(
             payment_handlers.group_payment,
             pattern="^{}".format(PAYMENT_YEAR_MONTH_GROUP),
+        )
+    )
+    dp.add_handler(
+        CallbackQueryHandler(
+            payment_handlers.get_player_info_for_coach,
+            pattern="^{}".format(COACH_GET_PLAYER_INFO),
         )
     )
 

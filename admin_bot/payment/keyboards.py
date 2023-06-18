@@ -1,4 +1,4 @@
-from typing import Union, Tuple
+from typing import Union, Tuple, Dict
 
 from django.db.models import QuerySet
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
@@ -8,7 +8,7 @@ from base.common_for_bots.static_text import from_digit_to_month, CONFIRM
 from admin_bot.payment import static_text
 from admin_bot.payment import manage_data
 from base.common_for_bots.static_text import BACK_BUTTON
-from base.models import TrainingGroup
+from base.models import TrainingGroup, Payment
 
 
 def back_to_payment_groups_when_changing_payment_keyboard(
@@ -44,9 +44,22 @@ def cancel_confirm_changing_payment_info_keyboard(
 
 
 def change_payment_info_keyboard(
-    year: Union[str, int], month: Union[str, int], group_id: Union[str, int]
+    payments_values: QuerySet[Dict],
+    year: Union[str, int],
+    month: Union[str, int],
+    group_id: Union[str, int],
 ):
-    buttons = [
+    player_info_buttons = [
+        [
+            InlineKeyboardButton(
+                text=f"{payment['player__last_name']} {payment['player__first_name']}",
+                callback_data=f"{manage_data.COACH_GET_PLAYER_INFO}{payment['id']}|{group_id}",
+            )
+            for payment in payments_values
+        ]
+    ]
+
+    _buttons = [
         [
             InlineKeyboardButton(
                 static_text.CHANGE_DATA,
@@ -60,7 +73,23 @@ def change_payment_info_keyboard(
             )
         ],
     ]
+    buttons = player_info_buttons + _buttons
+    return InlineKeyboardMarkup(buttons)
 
+
+def back_to_group_payment_from_player_info(
+    year: Union[str, int],
+    month: Union[str, int],
+    group_id: int,
+) -> InlineKeyboardMarkup:
+    buttons = [
+        [
+            InlineKeyboardButton(
+                BACK_BUTTON,
+                callback_data=f"{manage_data.PAYMENT_YEAR_MONTH_GROUP}{year}|{month}|{group_id}",
+            )
+        ],
+    ]
     return InlineKeyboardMarkup(buttons)
 
 

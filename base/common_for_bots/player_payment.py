@@ -2,7 +2,8 @@ import datetime
 
 from django.db.models import QuerySet
 
-from base.models import GroupTrainingDay, Player, TrainingGroup, PlayerCancelLesson
+from base.models import Player, GroupTrainingDay, TrainingGroup, PlayerCancelLesson
+from base.common_for_bots.utils import get_prev_month
 from tennis_bot.settings import BALLS_PRICE_FOR_1_TRAIN_PER_WEEK
 
 
@@ -69,28 +70,3 @@ def calculation_lessons_payment(year: int, month: int, player: Player):
         pay_cancels,
         cancels_count,
     )
-
-
-def group_players_info(players: QuerySet[Player]):
-    return "\n".join(
-        (
-            f"👤{x['last_name']} {x['first_name']}"
-            for x in players.values("first_name", "last_name").order_by("last_name")
-        )
-    )
-
-
-def get_prev_month(month):
-    return 12 if month == 1 else month - 1
-    # prev_month = month
-    # if prev_month > 1:
-    #     prev_month = prev_month - 1
-    #
-    # elif prev_month == 1:
-    #     prev_month = 12
-    #
-    # return prev_month
-
-
-def get_next_month(month: int) -> int:
-    return 1 if month == 12 else month + 1

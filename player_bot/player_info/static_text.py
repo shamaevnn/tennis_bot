@@ -7,7 +7,7 @@ GROUP_INFO_TEMPLATE = "Твоя группа — {}:\n{}\n\n"
 BONUS_LESSON_COUNT_INFO = "Количество отыгрышей: <b>{}</b>\n"
 
 
-N_CANCELLED_LESSON_COUNT_INFO = "Количество отмен: <b>{}</b>\n\n"
+N_CANCELLED_LESSON_COUNT_INFO = "Количество отмен в этом месяце: <b>{}</b>\n\n"
 
 SHOULD_PAY_INFO_THIS_MONTH = (
     "В этом месяце (<i>{}</i>) <b>нужно заплатить: {} ₽</b>\n"

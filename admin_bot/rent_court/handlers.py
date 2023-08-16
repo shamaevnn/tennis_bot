@@ -15,8 +15,10 @@ from .static_text import (
 from base.common_for_bots.static_text import DATE_INFO, ATTENTION
 from base.common_for_bots.utils import get_time_info_from_tr_day, bot_edit_message
 from base.models import GroupTrainingDay, Player
+from ..menu_and_commands.utils import check_coach_status_decor
 
 
+@check_coach_status_decor
 def permission_for_rent_court(update: Update, context: CallbackContext):
     permission, tg_id, tr_day_id = update.callback_query.data[
         len(PERMISSION_FOR_RENT_COURT) :

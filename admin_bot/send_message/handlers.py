@@ -9,10 +9,12 @@ from base.common_for_bots.utils import bot_edit_message
 from base.common_for_bots.tasks import broadcast_messages
 from .manage_data import SEND_MESSAGE, CONFIRM_SENDING
 from .utils import get_text_and_player_ids_to_send_message_to
+from ..menu_and_commands.utils import check_coach_status_decor
 
 GROUP_IDS, TEXT_TO_SEND = 2, 3
 
 
+@check_coach_status_decor
 def select_groups_where_should_send(update: Update, context: CallbackContext):
     text = static_text.WHOM_TO_SEND_TO
 

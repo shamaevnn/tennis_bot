@@ -1,6 +1,7 @@
 from telegram import Update
 from telegram.ext import CallbackContext
 
+from admin_bot.menu_and_commands.utils import check_coach_status_decor
 from admin_bot.view_schedule.keyboards import (
     show_grouptrainingday_available_change_keyboard,
     show_grouptrainingday_available_change_confirm_keyboard,
@@ -29,6 +30,7 @@ from base.utils.change_available_status import (
 )
 
 
+@check_coach_status_decor
 def show_trainingroupday_info(update, context: CallbackContext):
     tr_day_id = update.callback_query.data[len(SHOW_GROUPDAY_INFO) :]
     tr_day: GroupTrainingDay = (

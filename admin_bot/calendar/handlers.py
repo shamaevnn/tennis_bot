@@ -5,6 +5,7 @@ from telegram.ext import CallbackContext
 
 from admin_bot.calendar.keyboards import day_buttons_coach_info
 from admin_bot.calendar.static_text import TRAIN_DAYS, NO_TRAINS_THIS_DAY
+from admin_bot.menu_and_commands.utils import check_coach_status_decor
 from admin_bot.view_schedule.keyboards import (
     show_grouptrainingday_available_change_confirm_keyboard,
 )
@@ -59,6 +60,7 @@ def admin_calendar_selection(bot: Bot, update: Update):
     return False, purpose, []
 
 
+@check_coach_status_decor
 def inline_calendar_handler(update: Update, context: CallbackContext):
     selected, purpose, date_my = admin_calendar_selection(context.bot, update)
     if selected:

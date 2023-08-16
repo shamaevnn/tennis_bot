@@ -10,6 +10,7 @@ from admin_bot.ind_train.manage_data import (
     PERMISSION_YES,
     AMOUNT_ONE,
 )
+from admin_bot.menu_and_commands.utils import check_coach_status_decor
 from base.common_for_bots.static_text import DATE_INFO, ATTENTION
 from base.models import GroupTrainingDay, Player
 from base.common_for_bots.utils import bot_edit_message, get_time_info_from_tr_day
@@ -21,6 +22,7 @@ from player_bot.take_lesson.individual.static_text import (
 from tennis_bot.settings import TELEGRAM_TOKEN
 
 
+@check_coach_status_decor
 def permission_for_ind_train(update: Update, context: CallbackContext):
     permission, tg_id, tr_day_id = update.callback_query.data[
         len(PERMISSION_FOR_IND_TRAIN) :

@@ -5,6 +5,7 @@ from django.db.models import Sum
 from telegram import Update, ParseMode
 from telegram.ext import ConversationHandler, CallbackContext
 
+from admin_bot.menu_and_commands.utils import check_coach_status_decor
 from admin_bot.payment.keyboards import construct_menu_groups, construct_menu_months
 from admin_bot.payment import keyboards
 from admin_bot.payment import manage_data
@@ -39,6 +40,7 @@ from tennis_bot.settings import (
 START_CHANGE_PAYMENT, CONFIRM_OR_CANCEL = range(2)
 
 
+@check_coach_status_decor
 def start_payment(update: Update, context: CallbackContext):
     text = static_text.CHOOSE_YEAR
     now_date = moscow_datetime(datetime.datetime.now()).date()
